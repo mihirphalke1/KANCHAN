@@ -308,7 +308,7 @@
   margin: 0;
 }
 
-.submitBtn:hover:not(:disabled) { background: var(--brand-light); }
+.submitBtn:hover:not(:disabled) { background: var(--brand-dark); }
 
 .submitBtn:disabled {
   opacity: 0.45;

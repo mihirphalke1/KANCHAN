@@ -7,12 +7,12 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:     'border-transparent bg-[var(--brand)] text-white',
-        secondary:   'border-transparent bg-[var(--brand-muted)] text-[var(--brand)]',
-        gold:        'border-transparent bg-[var(--canara-yellow-bg)] text-[var(--gold)] border-[var(--gold-border)]',
-        outline:     'border-[var(--border-mid)] text-[var(--text-muted)]',
-        success:     'border-transparent bg-[var(--ok-bg)] text-[var(--ok)] border-[var(--ok-border)]',
-        warning:     'border-transparent bg-[var(--warn-bg)] text-[var(--warn)] border-[var(--warn-border)]',
-        destructive: 'border-transparent bg-[var(--danger-bg)] text-[var(--danger)] border-[var(--danger-border)]',
+        secondary:   'border-[var(--brand-border)] bg-[var(--brand-muted)] text-[var(--brand-dark)]',
+        yellow:      'border-[var(--yellow-border)] bg-[var(--yellow-bg)] text-[var(--yellow-dark)]',
+        outline:     'border-[var(--border-mid)] bg-transparent text-[var(--text-muted)]',
+        success:     'border-[var(--ok-border)] bg-[var(--ok-bg)] text-[var(--ok)]',
+        warning:     'border-[var(--warn-border)] bg-[var(--warn-bg)] text-[var(--warn)]',
+        destructive: 'border-[var(--danger-border)] bg-[var(--danger-bg)] text-[var(--danger)]',
       },
     },
     defaultVariants: { variant: 'default' },
