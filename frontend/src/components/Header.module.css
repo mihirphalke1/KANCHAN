@@ -1,6 +1,6 @@
 .header {
-  background: var(--green-dark);
-  border-bottom: 3px solid var(--gold);
+  background: var(--brand);
+  border-bottom: 3px solid var(--canara-yellow);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -26,7 +26,7 @@
 .logoMark {
   width: 38px;
   height: 38px;
-  background: var(--gold);
+  background: var(--canara-yellow);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -50,7 +50,7 @@
 }
 
 .logoAI {
-  color: var(--gold-light);
+  color: var(--canara-yellow);
 }
 
 .tagline {

@@ -104,8 +104,8 @@
 
 .input:focus {
   outline: none;
-  border-color: var(--green-dark);
-  box-shadow: 0 0 0 3px rgba(0, 107, 60, 0.12);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.12);
 }
 
 .input::placeholder { color: var(--text-faint); }
@@ -130,8 +130,8 @@
 
 .select:focus {
   outline: none;
-  border-color: var(--green-dark);
-  box-shadow: 0 0 0 3px rgba(0, 107, 60, 0.12);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.12);
 }
 
 .selectIcon {
@@ -148,11 +148,11 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background: var(--green-light);
-  border: 1px solid rgba(0, 107, 60, 0.2);
+  background: var(--brand-muted);
+  border: 1px solid rgba(0, 48, 135, 0.2);
   border-radius: var(--radius-sm);
   font-size: 13px;
-  color: var(--green-dark);
+  color: var(--brand);
   animation: fadeIn 200ms ease;
 }
 
@@ -184,8 +184,8 @@
 }
 
 .dropzone:hover {
-  border-color: var(--green-mid);
-  background: var(--green-light);
+  border-color: var(--brand-light);
+  background: var(--brand-muted);
 }
 
 .dropzoneSmall {
@@ -193,7 +193,7 @@
 }
 
 .dropzoneIcon { color: var(--text-muted); }
-.dropzone:hover .dropzoneIcon { color: var(--green-dark); }
+.dropzone:hover .dropzoneIcon { color: var(--brand); }
 
 .dropzoneText {
   font-size: 13px;
@@ -298,7 +298,7 @@
   gap: 8px;
   width: 100%;
   padding: 13px 20px;
-  background: var(--green-dark);
+  background: var(--brand);
   color: #fff;
   border: none;
   font-size: 15px;
@@ -308,7 +308,7 @@
   margin: 0;
 }
 
-.submitBtn:hover:not(:disabled) { background: #005530; }
+.submitBtn:hover:not(:disabled) { background: var(--brand-light); }
 
 .submitBtn:disabled {
   opacity: 0.45;

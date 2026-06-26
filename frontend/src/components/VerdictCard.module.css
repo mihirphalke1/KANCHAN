@@ -6,7 +6,7 @@
 }
 
 .card.green {
-  border-color: rgba(0, 107, 60, 0.35);
+  border-color: rgba(5, 122, 69, 0.3);
   background: linear-gradient(135deg, #f0faf5 0%, #ffffff 60%);
 }
 
@@ -35,11 +35,12 @@
   gap: 10px;
 }
 
-.card.green .verdictBadge { color: var(--green-dark); }
+.card.green .verdictBadge { color: var(--ok); }
 .card.amber .verdictBadge { color: var(--amber); }
 .card.red   .verdictBadge { color: var(--red-alert); }
 
 .verdictLabel {
+  font-family: var(--font);
   font-size: 26px;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -73,7 +74,7 @@
   border-radius: var(--radius-sm);
 }
 
-.loanApprove  { background: var(--green-light);  color: var(--green-dark); }
+.loanApprove  { background: var(--ok-bg);  color: var(--ok); }
 .loanHold     { background: var(--amber-light);  color: #92400e; }
 .loanDecline  { background: var(--red-light);    color: var(--red-alert); }
 
