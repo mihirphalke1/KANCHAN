@@ -1,0 +1,40 @@
+{
+  "project": "KANCHAN-AI",
+  "version": "1.1.0-production",
+  "last_updated": "2026-06-26T06:10:44.600970Z",
+  "phases_complete": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "phases_in_progress": [],
+  "models_trained": [
+    "acoustic_svm.pkl",
+    "image_probe.pkl",
+    "fusion_xgb.pkl"
+  ],
+  "datasets_downloaded": [
+    "DS-1",
+    "DS-2",
+    "DS-3",
+    "DS-6"
+  ],
+  "known_issues": [
+    "Streak model runs in heuristic mode \u2014 no public touchstone dataset; collect DS-7 to train",
+    "DS-4 (Roboflow) skipped \u2014 requires Roboflow API key",
+    "DS-5 (ESC-50) used for pipeline validation only, not training",
+    "Fusion model includes synthetic tungsten-core samples; improves with DS-7 real data",
+    "Tungsten blind-spot in density (19.25 \u2248 24K) \u2014 caught by contradiction module",
+    "LLM verdict falls back to heuristic if no GROQ_API_KEY or GOOGLE_API_KEY in .env"
+  ],
+  "demo_ready": true,
+  "presentation_date": "2nd week of July 2025",
+  "frontend": "React + Vite (run: cd frontend && npm install && npm run dev)",
+  "backend": "FastAPI (run: uvicorn app.main:app --reload)",
+  "quick_start": "bash scripts/run_demo.sh"
+}
