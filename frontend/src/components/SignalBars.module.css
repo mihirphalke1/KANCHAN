@@ -1,0 +1,139 @@
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  animation: fadeIn 400ms ease both;
+  animation-delay: 80ms;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.barRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.barMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.barLabelGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.barIcon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.barLabel {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.barDesc {
+  display: block;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.barRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.statusDot.dot_green { background: var(--ok); }
+.statusDot.dot_amber { background: var(--warn); }
+.statusDot.dot_red   { background: var(--danger); }
+
+.barPct {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  min-width: 36px;
+  text-align: right;
+}
+
+.barPct.green { color: var(--green-dark); }
+.barPct.amber { color: var(--amber); }
+.barPct.red   { color: var(--red-alert); }
+
+.barMode {
+  font-size: 10px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  padding: 1px 5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  display: none;
+}
+
+@media (min-width: 480px) {
+  .barMode { display: inline; }
+}
+
+.track {
+  height: 7px;
+  background: var(--bg);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 800ms cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: width;
+}
+
+.fill.green { background: linear-gradient(90deg, #00913F, #4ade80); }
+.fill.amber { background: linear-gradient(90deg, #D97706, #fbbf24); }
+.fill.red   { background: linear-gradient(90deg, #C0392B, #f87171); }
+
+.footer {
+  font-size: 11px;
+  color: var(--text-faint);
+  text-align: right;
+  margin-top: 10px;
+}

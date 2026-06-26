@@ -1,0 +1,129 @@
+/* ─── Design tokens ─────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Brand */
+  --green-dark:   #005C33;
+  --green-mid:    #00713F;
+  --green-light:  #E6F4EC;
+  --green-muted:  #B7D9C6;
+  --gold:         #B8882E;
+  --gold-light:   #F0D98A;
+  --gold-pale:    #FAF3DC;
+  --gold-border:  #D4AA50;
+
+  /* Semantic status */
+  --ok:           #16A34A;
+  --ok-bg:        #F0FDF4;
+  --ok-border:    #86EFAC;
+  --warn:         #B45309;
+  --warn-bg:      #FFFBEB;
+  --warn-border:  #FCD34D;
+  --danger:       #B91C1C;
+  --danger-bg:    #FEF2F2;
+  --danger-border:#FECACA;
+
+  /* Neutrals */
+  --text:         #111827;
+  --text-mid:     #374151;
+  --text-muted:   #6B7280;
+  --text-faint:   #9CA3AF;
+  --bg:           #F5F4EF;
+  --surface:      #FFFFFF;
+  --surface-raised:#FAFAF8;
+  --border:       #E2E1DC;
+  --border-mid:   #CCCCC4;
+
+  /* Elevation */
+  --shadow-xs:    0 1px 2px rgb(0 0 0 / .04);
+  --shadow-sm:    0 1px 3px rgb(0 0 0 / .07), 0 1px 2px rgb(0 0 0 / .04);
+  --shadow:       0 2px 8px rgb(0 0 0 / .08), 0 1px 3px rgb(0 0 0 / .05);
+  --shadow-md:    0 4px 16px rgb(0 0 0 / .10), 0 2px 6px rgb(0 0 0 / .06);
+  --shadow-lg:    0 12px 32px rgb(0 0 0 / .10), 0 4px 12px rgb(0 0 0 / .07);
+
+  /* Radius */
+  --r-xs:  4px;
+  --r-sm:  6px;
+  --r:     10px;
+  --r-lg:  14px;
+  --r-xl:  18px;
+
+  /* Type */
+  --font:  'Inter', system-ui, -apple-system, sans-serif;
+  --mono:  'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Motion */
+  --ease:  cubic-bezier(0.4, 0, 0.2, 1);
+  --fast:  120ms;
+  --base:  200ms;
+  --slow:  350ms;
+
+  /* Backward-compat aliases (components still reference these names) */
+  --card-bg:      var(--surface);
+  --font-mono:    var(--mono);
+  --radius-xs:    var(--r-xs);
+  --radius-sm:    var(--r-sm);
+  --radius:       var(--r);
+  --radius-lg:    var(--r-lg);
+  --radius-xl:    var(--r-xl);
+  --transition:   var(--base);
+  --amber:        var(--warn);
+  --amber-light:  var(--warn-bg);
+  --amber-border: var(--warn-border);
+  --red-alert:    var(--danger);
+  --red-light:    var(--danger-bg);
+}
+
+/* ─── Reset ─────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+img { display: block; max-width: 100%; }
+button { cursor: pointer; font-family: inherit; }
+input, select, textarea { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
+
+/* ─── Focus ──────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--green-mid);
+  outline-offset: 2px;
+}
+
+/* ─── Animations ─────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .4; }
+}
+@keyframes barGrow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}

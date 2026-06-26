@@ -1,0 +1,117 @@
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  animation: fadeIn 500ms ease both;
+  animation-delay: 160ms;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.tungstenWarn {
+  padding: 10px 12px;
+  background: #fff8f0;
+  border: 1px solid rgba(217,119,6,0.4);
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+.tungstenTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.tungstenTitle strong { font-size: 13px; }
+
+.gauge {
+  margin-bottom: 16px;
+}
+
+.gaugeBar {
+  height: 10px;
+  background: var(--bg);
+  border-radius: 999px;
+  overflow: visible;
+  position: relative;
+  border: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.gaugeFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 800ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: absolute;
+  top: -1px;
+  left: 0;
+}
+
+.gaugeFill.good { background: linear-gradient(90deg, var(--green-dark), #4ade80); }
+.gaugeFill.bad  { background: linear-gradient(90deg, var(--amber), var(--red-alert)); }
+
+.rangeIndicator {
+  position: absolute;
+  top: -3px;
+  height: calc(100% + 6px);
+  background: rgba(0, 107, 60, 0.12);
+  border-left:  2px dashed var(--green-dark);
+  border-right: 2px dashed var(--green-dark);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.gaugeLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--bg);
+  gap: 8px;
+}
+
+.row:last-child { border-bottom: none; }
+
+.rowLabel {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.rowValue {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  text-align: right;
+}
+
+.rowValue.mono { font-family: var(--font-mono); font-size: 12px; }
+.rowValue.highlight { color: var(--amber); font-weight: 700; }
+.rowValue.ok  { color: var(--green-dark); }
+.rowValue.warn { color: var(--amber); }

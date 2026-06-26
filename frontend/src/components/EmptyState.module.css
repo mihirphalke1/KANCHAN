@@ -1,0 +1,105 @@
+.wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: 40px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  animation: fadeUp 300ms var(--ease) both;
+}
+
+.iconWrap {
+  width: 60px;
+  height: 60px;
+  background: var(--gold-pale);
+  border: 1px solid var(--gold-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.textGroup {
+  text-align: center;
+}
+
+.heading {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+
+.body {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+.tips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;
+}
+
+@media (max-width: 420px) {
+  .tips { grid-template-columns: 1fr; }
+}
+
+.tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 11px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+
+.tipIcon {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.tipText {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.45;
+  padding-top: 3px;
+}
+
+.novelties {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.noveltyChip {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gold);
+  background: var(--gold-pale);
+  border: 1px solid var(--gold-light);
+  border-radius: 999px;
+  padding: 2px 9px;
+  white-space: nowrap;
+}
