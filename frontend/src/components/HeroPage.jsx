@@ -1,4 +1,7 @@
-import { Shield, ArrowRight, Check, Minus, ChevronRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Shield, ArrowRight, Check, Minus, Zap, Eye, Waves, GitMerge } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import styles from './HeroPage.module.css'
 
 const STATS = [
@@ -9,74 +12,94 @@ const STATS = [
 ]
 
 const STEPS = [
-  { n: 1, title: 'Density test', desc: 'Archimedes principle: dry vs. submerged weight gives density. 24K gold = 19.32 g/cm³.', badge: 'always required' },
-  { n: 2, title: 'Acoustic ring', desc: 'Tap-test recording. MFCC-ΔΔ captures the unique ring decay of pure gold vs. fakes.', badge: 'Novelty 1' },
-  { n: 3, title: 'Visual analysis', desc: 'EfficientNet-B3 embeddings detect surface plating, discoloration, and forgery marks.', badge: '4–6 photos' },
-  { n: 4, title: 'AI verdict', desc: 'XGBoost fuses all signals. SHAP values explain every decision. LLM writes the action.', badge: 'SHAP explainable' },
+  { n: 1, title: 'Density test',   desc: 'Archimedes principle — dry vs. submerged weight. 24K gold = 19.32 g/cm³. Non-destructive, branch-safe.', badge: 'Always required', Icon: Zap },
+  { n: 2, title: 'Acoustic ring',  desc: 'MFCC-ΔΔ features capture the unique ring decay of pure gold. Fakes produce a fundamentally different envelope.', badge: 'Novelty 1', Icon: Waves },
+  { n: 3, title: 'Visual analysis', desc: 'EfficientNet-B3 embeddings detect surface plating, discoloration, and forgery marks across multiple angles.', badge: '4–6 photos', Icon: Eye },
+  { n: 4, title: 'AI fusion',      desc: 'XGBoost fuses all four signals. SHAP values explain every decision. Groq LLM writes a branch-ready action.', badge: 'SHAP explainable', Icon: GitMerge },
 ]
 
 const NOVELTIES = [
   {
-    n: 'Novelty 1',
-    title: 'MFCC-ΔΔ acoustic fingerprinting',
-    desc: 'Delta-delta MFCC captures the temporal ring decay of pure gold. Fake items — plated brass, tungsten core — produce a fundamentally different acoustic envelope, undetectable by the human ear.',
+    n: '01',
+    tag: 'Novelty 1',
+    title: 'MFCC-ΔΔ Acoustic Fingerprinting',
+    desc: 'Delta-delta MFCC captures temporal ring decay unique to pure gold. Plated brass, tungsten-core items produce a fundamentally different acoustic envelope — undetectable by the human ear.',
     pill: 'SVM · RBF kernel · AUC 0.999',
   },
   {
-    n: 'Novelty 2',
-    title: "Benford's Law density monitor",
-    desc: "At branch population level, first digits of submerged weight measurements follow Benford's distribution for genuine items. Organised fraud rings show detectable deviation — catching collusion.",
+    n: '02',
+    tag: 'Novelty 2',
+    title: "Benford's Law Density Monitor",
+    desc: "First digits of submerged weight measurements follow Benford's distribution for genuine items. Organised fraud rings show detectable deviation — catching branch-level collusion in real time.",
     pill: 'Population-level fraud ring detection',
   },
   {
-    n: 'Novelty 3',
-    title: 'Cross-modal contradiction detection',
-    desc: 'Density says genuine, acoustic says fake? That contradiction is itself a signal. Six modality-pair scores are injected into XGBoost — critical for tungsten-core fraud where density alone passes.',
+    n: '03',
+    tag: 'Novelty 3',
+    title: 'Cross-Modal Contradiction Detection',
+    desc: "Density passes but acoustic fails? That contradiction is itself a signal. Six modality-pair scores are injected into XGBoost — critical for tungsten-core fraud where density alone passes.",
     pill: '0.40× contradiction boost in fusion',
   },
 ]
 
 const FRAUD_ROWS = [
-  { type: 'Gold-plated base metal', sub: 'Brass/copper core with gold layer', trad: 'Acid test (destructive) or XRF', kanchan: 'Density + visual + acoustic', full: true },
+  { type: 'Gold-plated base metal', sub: 'Brass or copper core with gold layer', trad: 'Acid test (destructive) or XRF', kanchan: 'Density + visual + acoustic', full: true },
   { type: 'Tungsten-core bar', sub: 'Density ≈ 24K gold (19.25 vs 19.32)', trad: 'XRF or drill test — invasive', kanchan: 'Cross-modal contradiction detection', full: true },
   { type: 'Under-karat item', sub: '22K declared, 18K actual', trad: 'Touchstone + acid reagent', kanchan: 'Density deviation model', full: true },
-  { type: 'Coordinated branch fraud', sub: 'Multiple staff colluding on appraisals', trad: 'Manual audit — weeks later', kanchan: "Benford's Law realtime monitor", full: true },
-  { type: 'Surface-only plating', sub: 'Thin gold layer on silver/alloy', trad: 'Visual inspection — unreliable', kanchan: 'EfficientNet-B3 visual probe', full: true },
-  { type: 'Recycled/mixed gold', sub: 'Melted mix below declared karat', trad: 'Fire assay — lab only', kanchan: 'Density range check (partial)', full: false },
+  { type: 'Coordinated fraud ring', sub: 'Multiple staff colluding on appraisals', trad: 'Manual audit — weeks later', kanchan: "Benford's Law realtime monitor", full: true },
+  { type: 'Surface-only plating', sub: 'Thin gold layer on silver or alloy', trad: 'Visual inspection — unreliable', kanchan: 'EfficientNet-B3 visual probe', full: true },
+  { type: 'Recycled or mixed gold', sub: 'Melted mix below declared karat', trad: 'Fire assay — lab only', kanchan: 'Density range check (partial)', full: false },
 ]
 
-export default function HeroPage({ onLaunch }) {
+export default function HeroPage() {
+  const navigate = useNavigate()
+
   return (
     <div className={styles.page}>
+
+      {/* ── Dot grid background ── */}
+      <div className={styles.dotGrid} aria-hidden="true" />
+      <div className={styles.spotlight} aria-hidden="true" />
+
+      {/* ── Nav ── */}
       <nav className={styles.nav}>
         <div className={styles.navBrand}>
           <div className={styles.navMark}><Shield size={16} strokeWidth={2.5} /></div>
-          <span className={styles.navName}>KANCHAN<span>-AI</span></span>
+          <span className={styles.navName}>KANCHAN<span className={styles.navAI}>-AI</span></span>
         </div>
         <div className={styles.navRight}>
           <span className={styles.navBadge}>SuRaksha Cyber Hackathon 2.0</span>
-          <button className={styles.navCta} onClick={onLaunch}>Open dashboard <ArrowRight size={14} /></button>
+          <Button size="sm" variant="gold" onClick={() => navigate('/dashboard')}>
+            Open dashboard <ArrowRight size={13} />
+          </Button>
         </div>
       </nav>
 
+      {/* ── Hero ── */}
       <section className={styles.hero}>
-        <div className={styles.heroEyebrow}>Canara Bank · IISc Bangalore</div>
+        <div className={styles.heroEyebrow}>
+          <span className={styles.eyebrowDot} />
+          Canara Bank · IISc Bangalore
+        </div>
         <h1 className={styles.heroH1}>
           Detect <span className={styles.heroAccent}>Spurious Gold</span><br />
-          in Under 10 Seconds
+          <span className={styles.heroAccent2}>in Under 10 Seconds</span>
         </h1>
         <p className={styles.heroSub}>
           Non-destructive, branch-deployable fraud detection for gold loan appraisal.
-          Four AI modalities fused into a single verdict — with full SHAP explainability for every decision.
+          Four AI modalities fused into one verdict — with full SHAP explainability for every decision.
         </p>
         <div className={styles.heroActions}>
-          <button className={styles.heroCta} onClick={onLaunch}>
+          <Button size="lg" onClick={() => navigate('/dashboard')}>
             <ArrowRight size={16} /> Launch dashboard
-          </button>
-          <button className={styles.heroSecondary}>Watch 60-second demo</button>
+          </Button>
+          <Button size="lg" variant="outline" className={styles.heroSecondary}>
+            View architecture
+          </Button>
         </div>
       </section>
 
+      {/* ── Stats bar ── */}
       <div className={styles.statsBar}>
         {STATS.map(s => (
           <div key={s.label} className={styles.stat}>
@@ -86,31 +109,41 @@ export default function HeroPage({ onLaunch }) {
         ))}
       </div>
 
+      {/* ── Content ── */}
       <div className={styles.contentWrap}>
+
+        {/* Steps */}
         <section className={styles.section}>
-          <p className={styles.sectionTag}>How it works</p>
-          <h2 className={styles.sectionH2}>Four independent signals. One fused verdict.</h2>
-          <p className={styles.sectionSub}>Each modality runs independently. The XGBoost fusion engine detects when signals contradict each other — a key indicator of sophisticated fraud.</p>
+          <Badge variant="secondary" className={styles.sectionBadge}>How it works</Badge>
+          <h2 className={styles.sectionH2}>Four independent signals.<br />One fused verdict.</h2>
+          <p className={styles.sectionSub}>Each modality runs independently. XGBoost detects when signals contradict each other — a key indicator of sophisticated fraud.</p>
           <div className={styles.steps}>
             {STEPS.map(s => (
               <div key={s.n} className={styles.step}>
-                <div className={styles.stepNum}>{s.n}</div>
+                <div className={styles.stepTop}>
+                  <span className={styles.stepNum}>{s.n}</span>
+                  <Badge variant="gold" className={styles.stepBadge}>{s.badge}</Badge>
+                </div>
+                <div className={styles.stepIcon}><s.Icon size={20} strokeWidth={1.5} /></div>
                 <div className={styles.stepTitle}>{s.title}</div>
                 <div className={styles.stepDesc}>{s.desc}</div>
-                <span className={styles.stepBadge}>{s.badge}</span>
               </div>
             ))}
           </div>
         </section>
 
+        {/* Novelties */}
         <section className={styles.section}>
-          <p className={styles.sectionTag}>What makes us different</p>
+          <Badge variant="secondary" className={styles.sectionBadge}>What makes us different</Badge>
           <h2 className={styles.sectionH2}>Three novel contributions</h2>
-          <p className={styles.sectionSub}>Built specifically for the Indian gold loan context — addressing fraud vectors that traditional XRF and visual inspection miss entirely.</p>
+          <p className={styles.sectionSub}>Built for the Indian gold loan context — addressing fraud vectors that traditional XRF and visual inspection miss entirely.</p>
           <div className={styles.novelties}>
             {NOVELTIES.map(n => (
               <div key={n.n} className={styles.novelty}>
-                <div className={styles.noveltyN}>{n.n}</div>
+                <div className={styles.noveltyHeader}>
+                  <span className={styles.noveltyN}>{n.n}</span>
+                  <Badge variant="secondary">{n.tag}</Badge>
+                </div>
                 <div className={styles.noveltyTitle}>{n.title}</div>
                 <p className={styles.noveltyDesc}>{n.desc}</p>
                 <span className={styles.noveltyPill}>{n.pill}</span>
@@ -119,8 +152,9 @@ export default function HeroPage({ onLaunch }) {
           </div>
         </section>
 
+        {/* Fraud table */}
         <section className={styles.section}>
-          <p className={styles.sectionTag}>Detection coverage</p>
+          <Badge variant="secondary" className={styles.sectionBadge}>Detection coverage</Badge>
           <h2 className={styles.sectionH2}>Fraud types we detect</h2>
           <div className={styles.fraudTable}>
             <div className={`${styles.fraudHeader} ${styles.fraudCol1}`}>Fraud type</div>
@@ -142,8 +176,9 @@ export default function HeroPage({ onLaunch }) {
           </div>
         </section>
 
+        {/* Verdict preview */}
         <section className={styles.section}>
-          <p className={styles.sectionTag}>Live verdict preview</p>
+          <Badge variant="secondary" className={styles.sectionBadge}>Live verdict preview</Badge>
           <h2 className={styles.sectionH2}>What a bank officer sees</h2>
           <div className={styles.previewWrap}>
             <div className={styles.previewCard}>
@@ -153,14 +188,16 @@ export default function HeroPage({ onLaunch }) {
                 <span className={styles.previewConf}>HIGH confidence · Approve loan</span>
               </div>
               <div className={styles.previewMeter}>
-                <div className={styles.previewMeterLabel}>Fusion risk score — 18%</div>
-                <div className={styles.previewTrack}><div className={styles.previewFill} style={{ width: '18%' }} /></div>
+                <div className={styles.previewMeterLabel}>Fusion risk score — <strong>18%</strong></div>
+                <div className={styles.previewTrack}>
+                  <div className={styles.previewFill} style={{ width: '18%' }} />
+                </div>
               </div>
               {[
-                { label: 'Density',  pct: 12, color: '#4ade80' },
-                { label: 'Acoustic', pct: 8,  color: '#4ade80' },
-                { label: 'Visual',   pct: 21, color: '#4ade80' },
-                { label: 'Streak',   pct: 34, color: '#fbbf24' },
+                { label: 'Density',  pct: 12, color: 'var(--ok)' },
+                { label: 'Acoustic', pct: 8,  color: 'var(--ok)' },
+                { label: 'Visual',   pct: 21, color: 'var(--ok)' },
+                { label: 'Streak',   pct: 34, color: 'var(--warn)' },
               ].map(b => (
                 <div key={b.label} className={styles.previewBarRow}>
                   <span className={styles.previewBarLabel}>{b.label}</span>
@@ -179,10 +216,10 @@ export default function HeroPage({ onLaunch }) {
             </div>
             <div className={styles.previewCta}>
               <h3 className={styles.previewCtaTitle}>Ready to try it?</h3>
-              <p className={styles.previewCtaDesc}>Upload an item's photos, audio, and weight measurements to get a real verdict in under 10 seconds.</p>
-              <button className={styles.previewCtaBtn} onClick={onLaunch}>
-                Open analysis dashboard <ChevronRight size={16} />
-              </button>
+              <p className={styles.previewCtaDesc}>Upload photos, audio, and weight measurements. Get a real SHAP-explainable verdict in under 10 seconds.</p>
+              <Button size="lg" onClick={() => navigate('/dashboard')}>
+                Open analysis dashboard <ArrowRight size={16} />
+              </Button>
             </div>
           </div>
         </section>
