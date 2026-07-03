@@ -34,4 +34,7 @@
 
 .resultsCol { min-height: 400px; }
 
-@media (max-width: 767px) { .formCol { position: static; } }
+@media (max-width: 767px) {
+  .formCol { position: static; }
+  .resultsCol { min-height: 200px; }
+}

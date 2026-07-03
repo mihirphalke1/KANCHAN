@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { X, CheckCircle2, AlertTriangle, XCircle, ChevronRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { X, CheckCircle2, AlertTriangle, XCircle, ChevronRight, ExternalLink } from 'lucide-react'
 import styles from './HistoryDrawer.module.css'
 
 const ICONS = {
@@ -9,6 +10,7 @@ const ICONS = {
 }
 
 export default function HistoryDrawer({ onClose }) {
+  const navigate = useNavigate()
   const [cases, setCases]   = useState([])
   const [total, setTotal]   = useState(0)
   const [loading, setLoading] = useState(true)
@@ -32,6 +34,14 @@ export default function HistoryDrawer({ onClose }) {
           <h2 className={styles.title}>Case History</h2>
           <div className={styles.headerRight}>
             <span className={styles.count}>{total} cases</span>
+            <button
+              className={styles.viewAllBtn}
+              onClick={() => { onClose(); navigate('/history') }}
+              title="Open full history page"
+            >
+              <ExternalLink size={13} />
+              View all
+            </button>
             <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
               <X size={18} />
             </button>

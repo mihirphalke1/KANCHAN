@@ -1,4 +1,4 @@
-import { CheckCircle2, AlertTriangle, XCircle, Copy, Check } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, XCircle, Copy, Check, Download } from 'lucide-react'
 import { useState } from 'react'
 import styles from './VerdictCard.module.css'
 
@@ -96,9 +96,23 @@ export default function VerdictCard({ verdict, caseId }) {
             ? <Check size={12} className={styles.copyIcon} />
             : <Copy size={12} className={styles.copyIcon} />}
         </button>
-        {verdict.llm_provider && verdict.llm_provider !== 'heuristic' && (
-          <span className={styles.llmTag}>via {verdict.llm_provider}</span>
-        )}
+        <div className={styles.footerRight}>
+          {verdict.llm_provider && verdict.llm_provider !== 'heuristic' && (
+            <span className={styles.llmTag}>via {verdict.llm_provider}</span>
+          )}
+          {caseId && (
+            <a
+              href={`/api/history/${caseId}/report`}
+              target="_blank"
+              rel="noreferrer"
+              className={styles.downloadBtn}
+              title="Download PDF report"
+            >
+              <Download size={12} />
+              Download Report
+            </a>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -5,6 +5,7 @@ import ContradictionAlert from './ContradictionAlert'
 import DensityDetails from './DensityDetails'
 import SHAPBreakdown from './SHAPBreakdown'
 import BenfordStatus from './BenfordStatus'
+import MediaEvidence from './MediaEvidence'
 import EmptyState from './EmptyState'
 import LoadingState from './LoadingState'
 import styles from './ResultsPanel.module.css'
@@ -19,6 +20,7 @@ export default function ResultsPanel({ result, loading, error }) {
   return (
     <div className={styles.panel}>
       <VerdictCard verdict={verdict} caseId={case_id} />
+      <MediaEvidence caseData={result} />
       <SignalBars scores={modality_scores} />
       {contradiction?.flags?.length > 0 && (
         <ContradictionAlert contradiction={contradiction} />

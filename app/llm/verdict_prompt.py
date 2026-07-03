@@ -11,21 +11,36 @@ logger = logging.getLogger(__name__)
 
 def _build_prompt(payload: dict) -> str:
     scores = payload.get("modality_scores", {})
-    verdict = payload.get("fusion_risk", 0.5)
+    fusion_risk = payload.get("fusion_risk", 0.5)
     contra = payload.get("contradiction", {})
     density = payload.get("density_details", {})
     karat = payload.get("declared_karat", "unknown")
     desc = payload.get("item_description", "gold item")
+    risk_level = payload.get("risk_level", "UNKNOWN")
+    loan_action = payload.get("loan_action", "HOLD")
+    density_risk = payload.get("density_risk", 0.0)
 
     flags_text = "; ".join(contra.get("flags", [])) or "none"
     contra_score = contra.get("contradiction_score", 0.0)
 
+    density_note = ""
+    if density_risk >= 0.85:
+        measured = density.get("measured_density", "N/A")
+        exp_low  = density.get("expected_low", "N/A")
+        exp_high = density.get("expected_high", "N/A")
+        density_note = (
+            f"\n⚠️  DENSITY OVERRIDE ACTIVE: Measured density ({measured} g/cm³) is critically outside "
+            f"the expected range for {karat}K gold ({exp_low}–{exp_high} g/cm³). "
+            "This alone triggered the REJECT decision regardless of other signals."
+        )
+
     return f"""You are a senior gold appraiser at a bank helping a junior officer understand an AI analysis result.
 
 Item: {desc} (declared {karat}K gold)
+FINAL SYSTEM DECISION: {risk_level} — {loan_action}{density_note}
 
 Analysis results:
-- Overall risk score: {verdict:.2f} (0=genuine, 1=fake)
+- Overall fusion risk score: {fusion_risk:.2f} (0=genuine, 1=fake)
 - Image analysis risk: {scores.get('image', {}).get('risk_score', 'N/A')}
 - Density analysis risk: {scores.get('density', {}).get('risk_score', 'N/A')} (measured density: {density.get('measured_density', 'N/A')} g/cm³, expected {density.get('expected_low', 'N/A')}-{density.get('expected_high', 'N/A')} g/cm³)
 - Acoustic analysis risk: {scores.get('acoustic', {}).get('risk_score', 'N/A')}
@@ -33,20 +48,58 @@ Analysis results:
 - Cross-modal contradiction score: {contra_score:.2f}
 - Contradiction flags: {flags_text}
 
+Your explanation MUST be consistent with the FINAL SYSTEM DECISION above.
 Write TWO short paragraphs for a bank officer with no ML background:
-1. What these results mean in plain English (2-3 sentences). Mention which signals are concerning.
-2. What action the officer should take next (1-2 sentences).
+1. What these results mean in plain English (2-3 sentences). If REJECT, clearly state why. If density triggered the rejection, explain the density anomaly.
+2. What action the officer should take next (1-2 sentences), consistent with the {loan_action} decision.
 
 Be direct and specific. Do not use jargon. Do not repeat the numbers verbatim."""
 
 
-def _heuristic_verdict(fusion_risk: float, contradiction_flags: list) -> tuple[str, str]:
+def _heuristic_verdict(
+    fusion_risk: float,
+    contradiction_flags: list,
+    risk_level: str = "GENUINE",
+    density_risk: float = 0.0,
+    density_details: dict = None,
+    declared_karat: int = 22,
+) -> tuple[str, str]:
     """Fallback plain-English verdict when no LLM is available."""
     has_flags = len(contradiction_flags) > 0
+    density_details = density_details or {}
+
+    # Density-triggered rejection: explain the physical anomaly specifically
+    if density_risk >= 0.85 or risk_level == "REJECT":
+        measured = density_details.get("measured_density")
+        exp_low  = density_details.get("expected_low")
+        exp_high = density_details.get("expected_high")
+
+        if density_risk >= 0.85 and measured is not None:
+            explanation = (
+                f"The Archimedes density test returned a critically anomalous reading of "
+                f"{measured:.2f} g/cm³ for a declared {declared_karat}K gold item "
+                f"(expected range: {exp_low}–{exp_high} g/cm³). "
+                "This physical measurement cannot be explained by any legitimate gold alloy and "
+                "indicates the item is either not gold or contains a high-density non-gold core."
+            )
+        elif has_flags:
+            flag_summary = contradiction_flags[0]
+            explanation = (
+                f"Multiple analysis signals indicate this item is likely not genuine gold at the declared karat. "
+                f"Key concern: {flag_summary}. The cross-modal conflict pattern is consistent with a "
+                "composite item (e.g., tungsten core with thin gold plating)."
+            )
+        else:
+            explanation = (
+                "Multiple analysis signals indicate this item is likely not genuine gold at the declared karat. "
+                "The combined risk score across density, acoustic, visual, and streak tests is critically high."
+            )
+        action = "Do not approve the loan. Escalate to the branch gold appraiser for physical XRF or acid testing."
+        return explanation, action
 
     if fusion_risk < 0.25:
         explanation = (
-            "All four analysis signals — visual appearance, density, sound, and streak test — "
+            "All analysis signals — visual appearance, density, sound, and streak test — "
             "are consistent with genuine gold at the declared karat. No suspicious patterns were detected."
         )
         action = "The item appears genuine. You may proceed with loan approval subject to standard documentation checks."
@@ -80,7 +133,10 @@ async def generate_verdict(payload: dict) -> dict:
     Generate LLM verdict. Tries Groq first, then Gemini, then heuristic.
     """
     provider = os.getenv("LLM_PROVIDER", "groq").lower()
-    fusion_risk = payload.get("fusion_risk", 0.5)
+    fusion_risk  = payload.get("fusion_risk", 0.5)
+    density_risk = payload.get("density_risk", 0.0)
+    risk_level   = payload.get("risk_level", "GENUINE")
+    loan_action  = payload.get("loan_action", "APPROVE")
     contra = payload.get("contradiction", {})
     flags  = contra.get("flags", [])
 
@@ -93,7 +149,7 @@ async def generate_verdict(payload: dict) -> dict:
                 from groq import Groq
                 client = Groq(api_key=api_key)
                 response = client.chat.completions.create(
-                    model="llama3-70b-8192",
+                    model="llama-3.3-70b-versatile",
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.3,
                     max_tokens=300,
@@ -105,7 +161,7 @@ async def generate_verdict(payload: dict) -> dict:
                 return {
                     "plain_english":  explanation,
                     "action":         action,
-                    "llm_provider":   "groq:llama3-70b-8192",
+                    "llm_provider":   "groq:llama-3.3-70b-versatile",
                 }
             except Exception as e:
                 logger.warning("Groq LLM failed (%s), trying Gemini", e)
@@ -130,7 +186,14 @@ async def generate_verdict(payload: dict) -> dict:
             except Exception as e:
                 logger.warning("Gemini LLM failed (%s), using heuristic", e)
 
-    explanation, action = _heuristic_verdict(fusion_risk, flags)
+    explanation, action = _heuristic_verdict(
+        fusion_risk,
+        flags,
+        risk_level=risk_level,
+        density_risk=density_risk,
+        density_details=payload.get("density_details", {}),
+        declared_karat=payload.get("declared_karat", 22),
+    )
     return {
         "plain_english":  explanation,
         "action":         action,

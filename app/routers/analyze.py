@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 HISTORY_PATH = Path("data/case_history.json")
+CASES_DIR    = Path("data/cases")
 
 
 def _load_history() -> list:
@@ -76,6 +77,10 @@ async def analyze(
     weight_dry: float = Form(...),
     weight_submerged: float = Form(...),
     branch_id: str = Form("default"),
+    customer_name: str = Form(""),
+    customer_account: str = Form(""),
+    loan_app_no: str = Form(""),
+    officer_name: str = Form(""),
     images: list[UploadFile] = File(default=[]),
     audio: Optional[UploadFile] = File(default=None),
     streak_image: Optional[UploadFile] = File(default=None),
@@ -93,6 +98,21 @@ async def analyze(
     image_bytes_list = [await img.read() for img in images] if images else []
     audio_bytes      = await audio.read() if audio else None
     streak_bytes     = await streak_image.read() if streak_image else None
+
+    # ── Save media files for PDF report ──
+    case_dir = CASES_DIR / case_id
+    case_dir.mkdir(parents=True, exist_ok=True)
+    saved_images, saved_audio, saved_streak = [], None, None
+    for i, b in enumerate(image_bytes_list):
+        p = case_dir / f"img_{i}.jpg"
+        p.write_bytes(b)
+        saved_images.append(str(p))
+    if audio_bytes:
+        saved_audio = str(case_dir / "audio.wav")
+        (case_dir / "audio.wav").write_bytes(audio_bytes)
+    if streak_bytes:
+        saved_streak = str(case_dir / "streak.jpg")
+        (case_dir / "streak.jpg").write_bytes(streak_bytes)
 
     density_result  = analyze_density(weight_dry, weight_submerged, declared_karat)
     image_result    = analyze_image(image_bytes_list)
@@ -118,8 +138,7 @@ async def analyze(
         streak_risk   = streak_result["risk_score"],
     )
 
-    benford = run_benford_test()
-
+    # Append first so the current item is included in the Benford test
     try:
         append_density_reading(
             density          = density_result["measured_density"],
@@ -131,6 +150,9 @@ async def analyze(
     except Exception as e:
         logger.warning("Failed to append density log: %s", e)
 
+    benford = run_benford_test()
+
+    boosted_risk = round(min(1.0, fusion["risk_score"] + contra["contradiction_score"] * 0.40), 4)
     risk_level, confidence, loan_action = _determine_verdict(
         fusion["risk_score"],
         contra["contradiction_score"],
@@ -141,6 +163,9 @@ async def analyze(
         "item_description": item_description,
         "declared_karat":   declared_karat,
         "fusion_risk":      fusion["risk_score"],
+        "density_risk":     density_result["risk_score"],
+        "risk_level":       risk_level,
+        "loan_action":      loan_action,
         "modality_scores": {
             "image":    image_result,
             "density":  density_result,
@@ -158,6 +183,17 @@ async def analyze(
         "item_description": item_description,
         "declared_karat":   declared_karat,
         "branch_id":        branch_id,
+        "customer": {
+            "name":        customer_name,
+            "account_no":  customer_account,
+            "loan_app_no": loan_app_no,
+            "officer_name": officer_name,
+        },
+        "media": {
+            "images": saved_images,
+            "audio":  saved_audio,
+            "streak": saved_streak,
+        },
         "modality_scores": {
             "image":    image_result,
             "density":  density_result,
@@ -172,6 +208,7 @@ async def analyze(
             "confidence":    confidence,
             "loan_action":   loan_action,
             "fusion_risk":   round(float(fusion["risk_score"]), 4),
+            "boosted_risk":  boosted_risk,
             "plain_english": llm_result["plain_english"],
             "action":        llm_result["action"],
             "llm_provider":  llm_result["llm_provider"],

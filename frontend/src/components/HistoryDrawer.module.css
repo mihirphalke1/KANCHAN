@@ -54,6 +54,21 @@
   border: 1px solid var(--border);
 }
 
+.viewAllBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--brand);
+  background: var(--brand-muted);
+  border: 1px solid var(--brand-border);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  transition: all var(--transition);
+}
+.viewAllBtn:hover { background: var(--brand-border); }
+
 .closeBtn {
   width: 32px;
   height: 32px;

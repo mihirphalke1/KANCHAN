@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import {
   Upload, Mic, Camera, Weight, ChevronDown,
-  Loader2, Sparkles, X, Image, FileAudio
+  Loader2, Sparkles, X, Image, FileAudio, User, Zap
 } from 'lucide-react'
 import styles from './AnalysisForm.module.css'
 
@@ -17,18 +17,97 @@ const LLM_PROVIDERS = [
   { value: 'gemini', label: 'Google Gemini 1.5 Flash' },
 ]
 
+// Demo scenarios — pre-fill all fields for one-click demo
+const SCENARIOS = [
+  {
+    id:    'genuine22',
+    label: 'Genuine 22K',
+    color: 'green',
+    hint:  'Expected: GENUINE HIGH',
+    data: {
+      item_description:  '22K gold necklace with antique finish',
+      declared_karat:    22,
+      weight_dry:        '10.00',
+      weight_submerged:  '9.42',
+      branch_id:         'BLR-001',
+      customer_name:     'Meera Raghunathan',
+      customer_account:  'CNR0012345678',
+      loan_app_no:       'GL/2025/BLR001/00142',
+      officer_name:      'Suresh Kumar (EMP-4421)',
+    },
+  },
+  {
+    id:    'genuine18',
+    label: 'Genuine 18K',
+    color: 'green',
+    hint:  'Expected: GENUINE MED',
+    data: {
+      item_description:  '18K gold ring, diamond-set solitaire',
+      declared_karat:    18,
+      weight_dry:        '15.00',
+      weight_submerged:  '14.03',
+      branch_id:         'MUM-003',
+      customer_name:     'Anjali Sharma',
+      customer_account:  'CNR0087654321',
+      loan_app_no:       'GL/2025/MUM003/00389',
+      officer_name:      'Priya Nair (EMP-2203)',
+    },
+  },
+  {
+    id:    'density',
+    label: 'Fake (Density)',
+    color: 'red',
+    hint:  'Expected: REJECT (physics override)',
+    data: {
+      item_description:  '22K gold bangle — density anomaly',
+      declared_karat:    22,
+      weight_dry:        '10.00',
+      weight_submerged:  '9.75',
+      branch_id:         'CHN-007',
+      customer_name:     'Rajan Pillai',
+      customer_account:  'CNR0056781234',
+      loan_app_no:       'GL/2025/CHN007/00061',
+      officer_name:      'Anand Krishnan (EMP-3317)',
+    },
+  },
+  {
+    id:    'tungsten',
+    label: 'Tungsten Core',
+    color: 'amber',
+    hint:  'Expected: REJECT (contradiction)',
+    data: {
+      item_description:  '24K gold bar — tungsten-core forgery',
+      declared_karat:    24,
+      weight_dry:        '20.00',
+      weight_submerged:  '18.96',
+      branch_id:         'HYD-002',
+      customer_name:     'Vijay Bhattacharya',
+      customer_account:  'CNR0033219876',
+      loan_app_no:       'GL/2025/HYD002/00215',
+      officer_name:      'Kavitha Reddy (EMP-1108)',
+    },
+  },
+]
+
+const BLANK_FORM = {
+  item_description:  '',
+  declared_karat:    22,
+  weight_dry:        '',
+  weight_submerged:  '',
+  branch_id:         'BLR-001',
+  customer_name:     '',
+  customer_account:  '',
+  loan_app_no:       '',
+  officer_name:      '',
+  llm_provider:      'groq',
+}
+
 export default function AnalysisForm({ onSubmit, loading }) {
-  const [form, setForm] = useState({
-    item_description:  '',
-    declared_karat:    22,
-    weight_dry:        '',
-    weight_submerged:  '',
-    branch_id:         'main',
-    llm_provider:      'groq',
-  })
-  const [images,      setImages]      = useState([])
-  const [audio,       setAudio]       = useState(null)
-  const [streak,      setStreak]      = useState(null)
+  const [form, setForm]     = useState(BLANK_FORM)
+  const [images, setImages] = useState([])
+  const [audio,  setAudio]  = useState(null)
+  const [streak, setStreak] = useState(null)
+  const [activeScenario, setActiveScenario] = useState(null)
 
   const imageRef  = useRef()
   const audioRef  = useRef()
@@ -42,6 +121,11 @@ export default function AnalysisForm({ onSubmit, loading }) {
   )
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const applyScenario = (scenario) => {
+    setForm(f => ({ ...f, ...scenario.data }))
+    setActiveScenario(scenario.id)
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -62,6 +146,86 @@ export default function AnalysisForm({ onSubmit, loading }) {
         <h2 className={styles.formTitle}>Item Analysis</h2>
         <p className={styles.formSub}>Enter all available details for best accuracy</p>
       </div>
+
+      {/* ── Demo Scenarios ── */}
+      <fieldset className={styles.section}>
+        <legend className={styles.sectionLabel}>
+          <Zap size={13} />
+          Quick Demo Scenarios
+        </legend>
+        <p className={styles.helpText}>Pre-fill all fields for a realistic demo case</p>
+        <div className={styles.scenarioGrid}>
+          {SCENARIOS.map(s => (
+            <button
+              key={s.id}
+              type="button"
+              className={`${styles.scenarioBtn} ${styles[`scenario_${s.color}`]} ${activeScenario === s.id ? styles.scenarioActive : ''}`}
+              onClick={() => applyScenario(s)}
+            >
+              <span className={styles.scenarioBtnLabel}>{s.label}</span>
+              <span className={styles.scenarioBtnHint}>{s.hint}</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      {/* ── Customer Information ── */}
+      <fieldset className={styles.section}>
+        <legend className={styles.sectionLabel}>
+          <User size={13} />
+          Customer Information
+        </legend>
+
+        <div className={styles.row}>
+          <div className={styles.field}>
+            <label htmlFor="customer_name" className={styles.label}>Customer Name</label>
+            <input
+              id="customer_name"
+              className={styles.input}
+              type="text"
+              placeholder="Full name"
+              value={form.customer_name}
+              onChange={e => set('customer_name', e.target.value)}
+            />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="customer_account" className={styles.label}>Account Number</label>
+            <input
+              id="customer_account"
+              className={styles.input}
+              type="text"
+              placeholder="CNR00XXXXXXXX"
+              value={form.customer_account}
+              onChange={e => set('customer_account', e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className={styles.row}>
+          <div className={styles.field}>
+            <label htmlFor="loan_app_no" className={styles.label}>Loan Application No.</label>
+            <input
+              id="loan_app_no"
+              className={styles.input}
+              type="text"
+              placeholder="GL/2025/XXX/XXXXX"
+              value={form.loan_app_no}
+              onChange={e => set('loan_app_no', e.target.value)}
+            />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="officer_name" className={styles.label}>Assessment Officer</label>
+            <input
+              id="officer_name"
+              className={styles.input}
+              type="text"
+              placeholder="Name (EMP-XXXX)"
+              value={form.officer_name}
+              onChange={e => set('officer_name', e.target.value)}
+            />
+          </div>
+        </div>
+      </fieldset>
 
       {/* ── Item Details ── */}
       <fieldset className={styles.section}>

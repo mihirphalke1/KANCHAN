@@ -29,7 +29,7 @@ def _numpy_safe(data):
     """Round-trip through JSON to convert all numpy scalars to Python primitives."""
     return json.loads(json.dumps(data, cls=_NumpyEncoder))
 
-from app.routers import analyze, benford, history
+from app.routers import analyze, benford, history, report
 
 app = FastAPI(
     title="KANCHAN-AI",
@@ -48,12 +48,17 @@ app.add_middleware(
 app.include_router(analyze.router,  prefix="/api")
 app.include_router(benford.router,  prefix="/api")
 app.include_router(history.router,  prefix="/api")
+app.include_router(report.router,   prefix="/api")
 
 
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "service": "kanchan-ai"}
 
+
+CASES_MEDIA = Path("data/cases")
+CASES_MEDIA.mkdir(parents=True, exist_ok=True)
+app.mount("/cases", StaticFiles(directory=str(CASES_MEDIA)), name="cases")
 
 FRONTEND_DIST = Path("frontend/dist")
 if FRONTEND_DIST.exists():

@@ -18,7 +18,7 @@ export default function Header({ onHistoryClick }) {
         <div className={styles.right}>
           <span className={styles.badge}>
             <span className={styles.badgeDot} />
-            Canara Bank · SuRaksha 2.0
+            Canara Bank · Gold Loan Division
           </span>
           <button className={styles.historyBtn} onClick={onHistoryClick} aria-label="View case history">
             <History size={17} />
