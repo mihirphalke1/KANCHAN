@@ -16,3 +16,4 @@ frontend/dist/
 INSTRUCTIONS.md
 AGENT_LOG.md
 .claude/
+venv/

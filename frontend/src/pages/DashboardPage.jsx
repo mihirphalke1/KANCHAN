@@ -3,6 +3,7 @@ import Header from '@/components/Header'
 import AnalysisForm from '@/components/AnalysisForm'
 import ResultsPanel from '@/components/ResultsPanel'
 import HistoryDrawer from '@/components/HistoryDrawer'
+import MobileTabBar from '@/components/MobileTabBar'
 import styles from './DashboardPage.module.css'
 
 export default function DashboardPage() {
@@ -48,6 +49,7 @@ export default function DashboardPage() {
         </div>
       </main>
       {showHistory && <HistoryDrawer onClose={() => setShowHistory(false)} />}
+      <MobileTabBar />
     </div>
   )
 }

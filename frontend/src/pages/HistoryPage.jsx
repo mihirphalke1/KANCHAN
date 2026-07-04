@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft, Search, CheckCircle2, AlertTriangle, XCircle,
-  Clock, ChevronRight, BarChart3, X, Shield, Filter,
+  Search, CheckCircle2, AlertTriangle, XCircle,
+  Clock, ChevronRight, BarChart3, X, Filter,
   Calendar, Tag, Building2, SlidersHorizontal
 } from 'lucide-react'
+import MobileTabBar from '@/components/MobileTabBar'
 import VerdictCard from '@/components/VerdictCard'
 import SignalBars from '@/components/SignalBars'
 import ContradictionAlert from '@/components/ContradictionAlert'
@@ -84,48 +85,35 @@ export default function HistoryPage() {
   return (
     <div className={styles.page}>
 
-      {/* ── Sidebar ── */}
-      <aside className={styles.sidebar}>
-        <div className={styles.sidebarBrand}>
-          <div className={styles.brandMark}><Shield size={15} strokeWidth={2.5} /></div>
-          <div>
-            <div className={styles.brandName}>KANCHAN<span className={styles.brandAi}>-AI</span></div>
-            <div className={styles.brandSub}>Gold Loan Division</div>
-          </div>
-        </div>
-
-        <nav className={styles.sidebarNav}>
-          <button className={styles.navItem} onClick={() => navigate('/dashboard')}>
-            <BarChart3 size={16} strokeWidth={1.75} />
-            <span>Dashboard</span>
-          </button>
-          <button className={`${styles.navItem} ${styles.navActive}`}>
-            <Clock size={16} strokeWidth={1.75} />
-            <span>Case History</span>
-          </button>
-        </nav>
-
-        <div className={styles.sidebarFooter}>
-          <div className={styles.statusPill}>
-            <span className={styles.statusDot} />
-            <span>Canara Bank · Branch system</span>
-          </div>
-        </div>
-      </aside>
-
       {/* ── Main ── */}
       <div className={styles.main}>
 
-        {/* ── Top bar ── */}
+        {/* ── Top navbar ── */}
         <header className={styles.topbar}>
-          <div className={styles.topbarLeft}>
-            <button className={styles.backBtn} onClick={() => navigate('/dashboard')}>
-              <ArrowLeft size={14} />
-            </button>
+          <button className={styles.topbarLeft} onClick={() => navigate('/')} title="Go to home page">
+            <div className={styles.brandMark}><img src="/logo.png" alt="KANCHAN-AI logo" /></div>
             <div>
-              <h1 className={styles.pageTitle}>Case History</h1>
-              <p className={styles.pageSub}>as of now · {total} total records</p>
+              <div className={styles.brandName}>KANCHAN<span className={styles.brandAi}>-AI</span></div>
+              <div className={styles.brandSub}>Gold Loan Division</div>
             </div>
+          </button>
+
+          <div className={styles.topbarRight}>
+            <span className={styles.recordCount}>{total} total records</span>
+            <div className={styles.statusPill}>
+              <span className={styles.statusDot} />
+              <span>Canara Bank · Branch system</span>
+            </div>
+            <nav className={styles.topNav}>
+              <button className={styles.navItem} onClick={() => navigate('/dashboard')}>
+                <BarChart3 size={16} strokeWidth={1.75} />
+                <span>Dashboard</span>
+              </button>
+              <button className={`${styles.navItem} ${styles.navActive}`}>
+                <Clock size={16} strokeWidth={1.75} />
+                <span>Case History</span>
+              </button>
+            </nav>
           </div>
         </header>
 
@@ -249,6 +237,7 @@ export default function HistoryPage() {
           </div>
         </div>
       </div>
+      <MobileTabBar />
     </div>
   )
 }

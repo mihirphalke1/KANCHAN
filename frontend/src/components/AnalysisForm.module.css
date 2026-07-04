@@ -1,8 +1,8 @@
 .form {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+  background: #fff;
+  border: 1px solid rgba(16,24,40,0.06);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(16,24,40,0.04), 0 8px 24px rgba(16,24,40,0.04);
   overflow: hidden;
 }
 
@@ -24,7 +24,7 @@
 
 .section {
   border: none;
-  padding: 16px 20px;
+  padding: 20px 20px 18px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -32,7 +32,11 @@
   border-bottom: none;
 }
 
+/* legends escape normal flow — float pulls them back in so the
+   fieldset's top padding creates space ABOVE the heading */
 .sectionLabel {
+  float: left;
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -41,8 +45,10 @@
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--text-muted);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
+
+.sectionLabel + * { clear: both; }
 
 .field {
   display: flex;
@@ -58,7 +64,10 @@
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-bottom: 12px;
+  min-width: 0;
 }
+
+.row > * { min-width: 0; }
 
 .label {
   font-size: 13px;
@@ -87,6 +96,8 @@
 
 .input {
   height: 38px;
+  width: 100%;
+  min-width: 0;
   padding: 0 12px;
   border: 1px solid var(--border-mid);
   border-radius: var(--radius-sm);
@@ -296,16 +307,18 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
+  width: calc(100% - 32px);
   padding: 13px 20px;
   background: var(--brand);
   color: #fff;
   border: none;
+  border-radius: 999px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: background var(--transition), opacity var(--transition);
-  margin: 0;
+  margin: 4px 16px 16px;
+  box-shadow: 0 4px 12px rgba(1,158,236,0.25);
 }
 
 .submitBtn:hover:not(:disabled) { background: var(--brand-dark); }
@@ -368,9 +381,9 @@
 .scenario_red   .scenarioBtnLabel { color: var(--danger); }
 .scenario_amber .scenarioBtnLabel { color: var(--warn); }
 
-.scenario_green { border-color: #bbf7d0; }
-.scenario_red   { border-color: #fecaca; }
-.scenario_amber { border-color: #fde68a; }
+.scenario_green { border-color: var(--ok-border); }
+.scenario_red   { border-color: var(--danger-border); }
+.scenario_amber { border-color: var(--warn-border); }
 
 .scenario_green:hover { background: var(--green-light); border-color: var(--ok); }
 .scenario_red:hover   { background: var(--danger-bg);   border-color: var(--danger); }

@@ -136,7 +136,7 @@
   transition: width 600ms ease;
 }
 
-.pairFill.hot  { background: linear-gradient(90deg, var(--amber), var(--red-alert)); }
+.pairFill.hot  { background: var(--danger); }
 .pairFill.cool { background: var(--border-mid); }
 
 .pairVal {

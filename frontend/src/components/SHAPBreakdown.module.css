@@ -84,8 +84,8 @@
   transition: width 700ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.fill.pos { background: linear-gradient(90deg, #fca5a5, var(--red-alert)); }
-.fill.neg { background: linear-gradient(90deg, #6ee7b7, var(--green-dark)); }
+.fill.pos { background: var(--danger); }
+.fill.neg { background: var(--ok); }
 
 .value {
   font-size: 11px;

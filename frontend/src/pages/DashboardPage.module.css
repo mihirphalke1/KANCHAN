@@ -2,16 +2,16 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: var(--bg);
+  background: #E7F1FA;
 }
 
 .main {
   flex: 1;
-  padding: 24px 16px 48px;
+  padding: 18px 16px 48px;
 }
 
 .layout {
-  max-width: 1280px;
+  max-width: 1440px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
@@ -29,7 +29,7 @@
 
 .formCol {
   position: sticky;
-  top: 24px;
+  top: 96px;
 }
 
 .resultsCol { min-height: 400px; }
@@ -37,4 +37,5 @@
 @media (max-width: 767px) {
   .formCol { position: static; }
   .resultsCol { min-height: 200px; }
+  .main { padding-bottom: 96px; }
 }

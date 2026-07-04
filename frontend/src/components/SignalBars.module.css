@@ -127,9 +127,9 @@
   will-change: width;
 }
 
-.fill.green { background: linear-gradient(90deg, #00913F, #4ade80); }
-.fill.amber { background: linear-gradient(90deg, #D97706, #fbbf24); }
-.fill.red   { background: linear-gradient(90deg, #C0392B, #f87171); }
+.fill.green { background: var(--ok); }
+.fill.amber { background: var(--warn); }
+.fill.red   { background: var(--danger); }
 
 .footer {
   font-size: 11px;

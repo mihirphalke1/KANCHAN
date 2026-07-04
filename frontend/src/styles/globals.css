@@ -57,11 +57,11 @@
   --yellow-bg:        #FFFBEB;
   --yellow-border:    #FEF3C7;
 
-  /* Legacy green (status only) */
-  --green-dark:   #15803D;
-  --green-mid:    #16A34A;
-  --green-light:  #F0FDF4;
-  --green-muted:  #BBF7D0;
+  /* Legacy green (status only) — muted sage */
+  --green-dark:   #27794F;
+  --green-mid:    #2F9461;
+  --green-light:  #EDF6F0;
+  --green-muted:  #C4E2D0;
 
   /* Gold for detail accents */
   --gold:         #B8882E;
@@ -69,16 +69,16 @@
   --gold-pale:    #FAF3DC;
   --gold-border:  #D4AA50;
 
-  /* Semantic */
-  --ok:           #16A34A;
-  --ok-bg:        #F0FDF4;
-  --ok-border:    #86EFAC;
-  --warn:         #B45309;
-  --warn-bg:      #FFFBEB;
-  --warn-border:  #FCD34D;
-  --danger:       #B91C1C;
-  --danger-bg:    #FEF2F2;
-  --danger-border:#FECACA;
+  /* Semantic — muted, editorial status tones */
+  --ok:           #2F9461;
+  --ok-bg:        #EDF6F0;
+  --ok-border:    #C4E2D0;
+  --warn:         #B47B16;
+  --warn-bg:      #FAF3E3;
+  --warn-border:  #EBD9A9;
+  --danger:       #C94A44;
+  --danger-bg:    #FAEFED;
+  --danger-border:#F0D0CB;
 
   /* Neutrals */
   --text:         #111827;
@@ -134,7 +134,9 @@
 }
 
 /* ─── Reset ─────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* box-sizing only: margin/padding zeroing comes from Tailwind preflight.
+   An unlayered reset here would override layered padding utilities. */
+*, *::before, *::after { box-sizing: border-box; }
 
 html { font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 

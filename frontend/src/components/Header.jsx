@@ -1,19 +1,21 @@
-import { History, Shield } from 'lucide-react'
+import { History } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import styles from './Header.module.css'
 
 export default function Header({ onHistoryClick }) {
+  const navigate = useNavigate()
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
-        <div className={styles.brand}>
+        <button className={styles.brand} onClick={() => navigate('/')} title="Go to home page">
           <div className={styles.logoMark}>
-            <Shield size={22} strokeWidth={2.5} />
+            <img src="/logo.png" alt="KANCHAN-AI logo" />
           </div>
           <div className={styles.brandText}>
             <span className={styles.logoName}>KANCHAN<span className={styles.logoAI}>-AI</span></span>
             <span className={styles.tagline}>Spurious Gold Intelligence System</span>
           </div>
-        </div>
+        </button>
 
         <div className={styles.right}>
           <span className={styles.badge}>

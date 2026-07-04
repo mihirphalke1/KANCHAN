@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import {
-  Shield, ArrowRight, Check, Minus, Zap, Eye, Waves, GitMerge,
-  ChevronRight, BarChart3, Brain, FlaskConical, Clock, AlertTriangle,
-  CheckCircle2, XCircle, Lock, Cpu, TrendingUp, Database
+  Shield, ArrowRight, Check, Eye, Waves, GitMerge,
+  ChevronRight, BarChart3, Brain, FlaskConical, AlertTriangle,
+  CheckCircle2, XCircle, Lock, Cpu, Scale, Mic, Camera, Layers
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import styles from './HeroPage.module.css'
@@ -21,56 +21,28 @@ const PIPELINE = [
   { id: 'streak',   label: 'Streak',   sub: 'HSV analysis',  color: 'amber',  Icon: FlaskConical },
 ]
 
-const STEPS = [
-  {
-    n: '01', title: 'Density test', badge: 'Physics — always required', Icon: FlaskConical,
-    desc: 'Archimedes principle: dry ÷ (dry − submerged) = density. 24K gold = 19.32 g/cm³. Impossible to fake without perfectly matching weight ratio.',
-  },
-  {
-    n: '02', title: 'Acoustic ring', badge: 'Novelty 1', Icon: Waves,
-    desc: 'MFCC-ΔΔ features capture the ring-decay envelope of genuine gold. Plated brass or tungsten-core items produce a fundamentally different temporal signature — imperceptible to the human ear.',
-  },
-  {
-    n: '03', title: 'Visual analysis', badge: '2–4 photos recommended', Icon: Eye,
-    desc: 'EfficientNet-B3 embeddings detect surface plating, discoloration, and forgery marks. LogReg probe trained on genuine jewellery (DS-3) vs. surface defects (DS-2).',
-  },
-  {
-    n: '04', title: 'AI fusion + LLM', badge: 'SHAP explainable', Icon: GitMerge,
-    desc: 'XGBoost fuses 10 features (4 modality + 6 contradiction pairs). SHAP explains every decision. Groq Llama-3 70B writes a branch-ready plain-English action statement.',
-  },
-]
-
 const NOVELTIES = [
   {
     n: '01', tag: 'Novelty 1', Icon: Waves,
     title: 'MFCC-ΔΔ Acoustic Fingerprinting',
-    desc: 'Delta-delta MFCC captures temporal ring decay unique to pure gold. Plated brass or tungsten-core items produce a significantly different acoustic envelope — undetectable to the human ear but trivial for our SVM.',
+    desc: 'Genuine gold rings differently. Our SVM hears what the human ear cannot — plated brass and tungsten cores fail the tap test.',
     pill: 'SVM · RBF kernel · AUC 0.999',
     color: 'blue',
   },
   {
     n: '02', tag: 'Novelty 2', Icon: BarChart3,
     title: "Benford's Law Density Monitor",
-    desc: "First significant digits of submerged weights follow Benford's distribution for genuine items. Systematic deviations expose fraud rings — catching branch-level collusion in real time, weeks ahead of manual audit.",
+    desc: 'Weight digits follow Benford’s distribution — systematic deviations expose branch-level fraud rings in real time.',
     pill: 'Chi-squared test · p < 0.05 alert',
     color: 'gold',
   },
   {
     n: '03', tag: 'Novelty 3', Icon: GitMerge,
     title: 'Cross-Modal Contradiction Detection',
-    desc: 'Density passes but acoustic fails? That contradiction is itself a high-value signal. Six modality-pair contradiction scores are fed into XGBoost — critical for tungsten-core fraud where density alone passes at ≥19.25 g/cm³.',
+    desc: 'Density passes but acoustic fails? The contradiction itself is a signal — how we catch tungsten-core fakes.',
     pill: '0.40× contradiction boost in fusion',
     color: 'purple',
   },
-]
-
-const FRAUD_ROWS = [
-  { type: 'Gold-plated base metal',  sub: 'Brass / copper core',        trad: 'Acid test (destructive)', kanchan: 'Density + visual + acoustic',        full: true  },
-  { type: 'Tungsten-core bar',       sub: 'Density ≈ 24K (19.25 vs 19.32)', trad: 'XRF or drill — invasive',   kanchan: 'Cross-modal contradiction',          full: true  },
-  { type: 'Under-karat item',        sub: '22K declared, 18K actual',   trad: 'Touchstone + acid',       kanchan: 'Density deviation model',            full: true  },
-  { type: 'Coordinated fraud ring',  sub: 'Staff collusion on appraisals', trad: 'Manual audit — weeks later', kanchan: "Benford's Law realtime monitor",     full: true  },
-  { type: 'Surface-only plating',    sub: 'Thin layer on silver/alloy', trad: 'Visual — unreliable',     kanchan: 'EfficientNet-B3 visual probe',        full: true  },
-  { type: 'Recycled / mixed alloy',  sub: 'Melted below declared karat', trad: 'Fire assay — lab only',  kanchan: 'Density range check',                full: false },
 ]
 
 export default function HeroPage() {
@@ -78,20 +50,17 @@ export default function HeroPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.dotGrid} aria-hidden />
-      <div className={styles.spotlight} aria-hidden />
-      <div className={styles.spotlightGold} aria-hidden />
+      <div className={styles.heroFrame}>
 
       {/* ── Nav ── */}
       <nav className={styles.nav}>
         <div className={styles.navBrand}>
-          <div className={styles.navMark}><Shield size={15} strokeWidth={2.5} /></div>
+          <div className={styles.navMark}><img src="/logo.png" alt="KANCHAN-AI logo" /></div>
           <span className={styles.navName}>KANCHAN<span className={styles.aiSuffix}>-AI</span></span>
         </div>
         <div className={styles.navLinks}>
           <a href="#pipeline" className={styles.navLink}>Pipeline</a>
           <a href="#novelties" className={styles.navLink}>Novelties</a>
-          <a href="#coverage" className={styles.navLink}>Coverage</a>
         </div>
         <div className={styles.navRight}>
           <span className={styles.navPill}>
@@ -119,8 +88,7 @@ export default function HeroPage() {
         </h1>
 
         <p className={styles.heroSub}>
-          Non-destructive, branch-deployable fraud detection for gold loan appraisal.
-          Four independent AI modalities fused into one SHAP-explainable verdict —
+          Four AI signals fused into one explainable verdict —
           no lab, no acid, no damage.
         </p>
 
@@ -156,18 +124,30 @@ export default function HeroPage() {
         </div>
       </div>
 
+      </div>{/* /heroFrame */}
+
       {/* ── Pipeline Architecture ── */}
       <div id="pipeline" className={styles.pipelineSection}>
         <div className={styles.sectionEyebrow}>System architecture</div>
         <h2 className={styles.sectionH2}>Four modalities. One fused verdict.</h2>
-        <p className={styles.sectionSub}>Each signal runs independently. Contradiction between modalities is itself a fraud signal — critical for tungsten-core attacks where density alone passes.</p>
+        <p className={styles.sectionSub}>Each signal runs independently — contradiction between them is itself a fraud signal.</p>
 
         <div className={styles.pipelineFlow}>
           {/* Inputs */}
           <div className={styles.pipelineCol}>
             <p className={styles.pipelineColLabel}>Inputs</p>
-            {['Weight (dry + submerged)', 'Audio (tap test)', 'Item photos (2–4)', 'Streak photo'].map(i => (
-              <div key={i} className={styles.pipelineInput}>{i}</div>
+            {[
+              { label: 'Weight (dry + submerged)', Icon: Scale },
+              { label: 'Audio (tap test)',          Icon: Mic },
+              { label: 'Item photos (2–4)',         Icon: Camera },
+              { label: 'Streak photo',              Icon: Layers },
+            ].map(({ label, Icon }) => (
+              <div key={label} className={styles.pCard}>
+                <span className={`${styles.pIcon} ${styles.pIcon_gray}`}><Icon size={15} strokeWidth={2} /></span>
+                <div className={styles.pText}>
+                  <div className={styles.pTitle}>{label}</div>
+                </div>
+              </div>
             ))}
           </div>
 
@@ -177,11 +157,11 @@ export default function HeroPage() {
           <div className={styles.pipelineCol}>
             <p className={styles.pipelineColLabel}>Modalities</p>
             {PIPELINE.map(m => (
-              <div key={m.id} className={`${styles.pipelineModal} ${styles[`modal_${m.color}`]}`}>
-                <m.Icon size={14} strokeWidth={2} />
-                <div>
-                  <div className={styles.pipelineModalName}>{m.label}</div>
-                  <div className={styles.pipelineModalSub}>{m.sub}</div>
+              <div key={m.id} className={styles.pCard}>
+                <span className={`${styles.pIcon} ${styles[`pIcon_${m.color}`]}`}><m.Icon size={15} strokeWidth={2} /></span>
+                <div className={styles.pText}>
+                  <div className={styles.pTitle}>{m.label}</div>
+                  <div className={styles.pSub}>{m.sub}</div>
                 </div>
               </div>
             ))}
@@ -192,18 +172,18 @@ export default function HeroPage() {
           {/* Fusion */}
           <div className={styles.pipelineCol}>
             <p className={styles.pipelineColLabel}>Fusion</p>
-            <div className={styles.pipelineFusion}>
-              <Cpu size={18} strokeWidth={1.75} />
-              <div>
-                <div className={styles.pipelineFusionTitle}>XGBoost</div>
-                <div className={styles.pipelineFusionSub}>10 features + SHAP</div>
+            <div className={styles.pCard}>
+              <span className={`${styles.pIcon} ${styles.pIcon_blue}`}><Cpu size={15} strokeWidth={2} /></span>
+              <div className={styles.pText}>
+                <div className={styles.pTitle}>XGBoost</div>
+                <div className={styles.pSub}>10 features + SHAP</div>
               </div>
             </div>
-            <div className={`${styles.pipelineFusion} ${styles.fusionContra}`} style={{ marginTop: 8 }}>
-              <GitMerge size={14} strokeWidth={2} />
-              <div>
-                <div className={styles.pipelineFusionTitle}>Contradiction</div>
-                <div className={styles.pipelineFusionSub}>6 cross-modal pairs</div>
+            <div className={styles.pCard}>
+              <span className={`${styles.pIcon} ${styles.pIcon_purple}`}><GitMerge size={15} strokeWidth={2} /></span>
+              <div className={styles.pText}>
+                <div className={styles.pTitle}>Contradiction</div>
+                <div className={styles.pSub}>6 cross-modal pairs</div>
               </div>
             </div>
           </div>
@@ -213,14 +193,33 @@ export default function HeroPage() {
           {/* Verdict */}
           <div className={styles.pipelineCol}>
             <p className={styles.pipelineColLabel}>Verdict</p>
-            <div className={styles.pipelineVerdict}>
-              <div className={styles.verdictGenuine}><CheckCircle2 size={16} /> Genuine</div>
-              <div className={styles.verdictBorderline}><AlertTriangle size={16} /> Borderline</div>
-              <div className={styles.verdictReject}><XCircle size={16} /> Reject</div>
+            <div className={styles.pCard}>
+              <span className={`${styles.pIcon} ${styles.pIcon_green}`}><CheckCircle2 size={15} strokeWidth={2} /></span>
+              <div className={styles.pText}>
+                <div className={styles.pTitle}>Genuine</div>
+                <div className={styles.pSub}>Approve loan</div>
+              </div>
             </div>
-            <div className={styles.pipelineLLM}>
-              <Brain size={14} />
-              <span>Groq Llama-3 70B</span>
+            <div className={styles.pCard}>
+              <span className={`${styles.pIcon} ${styles.pIcon_amber}`}><AlertTriangle size={15} strokeWidth={2} /></span>
+              <div className={styles.pText}>
+                <div className={styles.pTitle}>Borderline</div>
+                <div className={styles.pSub}>Escalate for review</div>
+              </div>
+            </div>
+            <div className={styles.pCard}>
+              <span className={`${styles.pIcon} ${styles.pIcon_red}`}><XCircle size={15} strokeWidth={2} /></span>
+              <div className={styles.pText}>
+                <div className={styles.pTitle}>Reject</div>
+                <div className={styles.pSub}>Decline loan</div>
+              </div>
+            </div>
+            <div className={`${styles.pCard} ${styles.pCardDashed}`}>
+              <span className={`${styles.pIcon} ${styles.pIcon_gray}`}><Brain size={15} strokeWidth={2} /></span>
+              <div className={styles.pText}>
+                <div className={styles.pTitle}>Groq Llama-3 70B</div>
+                <div className={styles.pSub}>Plain-English verdict</div>
+              </div>
             </div>
           </div>
         </div>
@@ -228,33 +227,11 @@ export default function HeroPage() {
 
       <div className={styles.contentWrap}>
 
-        {/* ── How it works ── */}
-        <section className={styles.section}>
-          <div className={styles.sectionEyebrow}>How it works</div>
-          <h2 className={styles.sectionH2}>Each signal, explained.</h2>
-          <p className={styles.sectionSub}>Run sequentially or in parallel — the system works with whatever inputs are available, degrading gracefully when modalities are missing.</p>
-          <div className={styles.steps}>
-            {STEPS.map(s => (
-              <div key={s.n} className={styles.step}>
-                <div className={styles.stepHeader}>
-                  <span className={styles.stepN}>{s.n}</span>
-                  <span className={styles.stepBadge}>{s.badge}</span>
-                </div>
-                <div className={styles.stepIconWrap}>
-                  <s.Icon size={22} strokeWidth={1.75} />
-                </div>
-                <h3 className={styles.stepTitle}>{s.title}</h3>
-                <p className={styles.stepDesc}>{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* ── Novelties ── */}
         <section id="novelties" className={styles.section}>
           <div className={styles.sectionEyebrow}>What makes us different</div>
           <h2 className={styles.sectionH2}>Three novel contributions</h2>
-          <p className={styles.sectionSub}>Addressing fraud vectors that traditional XRF and visual inspection miss entirely — built for the Indian gold loan context.</p>
+          <p className={styles.sectionSub}>Fraud vectors that XRF and visual inspection miss entirely.</p>
           <div className={styles.novelties}>
             {NOVELTIES.map(n => (
               <div key={n.n} className={`${styles.novelty} ${styles[`novelty_${n.color}`]}`}>
@@ -268,39 +245,6 @@ export default function HeroPage() {
                 <h3 className={styles.noveltyTitle}>{n.title}</h3>
                 <p className={styles.noveltyDesc}>{n.desc}</p>
                 <div className={styles.noveltyPill}>{n.pill}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Fraud coverage ── */}
-        <section id="coverage" className={styles.section}>
-          <div className={styles.sectionEyebrow}>Detection coverage</div>
-          <h2 className={styles.sectionH2}>Fraud types we detect</h2>
-          <div className={styles.fraudTable}>
-            <div className={styles.fraudHead}>
-              <div className={styles.fraudTh} style={{ gridColumn: '1' }}>Fraud type</div>
-              <div className={styles.fraudTh} style={{ gridColumn: '2' }}>Traditional method</div>
-              <div className={styles.fraudTh} style={{ gridColumn: '3' }}>KANCHAN-AI approach</div>
-            </div>
-            {FRAUD_ROWS.map((row, i) => (
-              <div key={i} className={`${styles.fraudRow} ${row.full ? styles.fraudRowFull : styles.fraudRowPartial}`}>
-                <div className={styles.fraudCell}>
-                  <div className={styles.fraudLeftBar} />
-                  <div>
-                    <div className={styles.fraudName}>{row.type}</div>
-                    <div className={styles.fraudSub}>{row.sub}</div>
-                  </div>
-                </div>
-                <div className={styles.fraudCell}>
-                  <span className={styles.fraudTrad}>{row.trad}</span>
-                </div>
-                <div className={styles.fraudCell}>
-                  {row.full
-                    ? <span className={styles.fraudCover}><Check size={12} strokeWidth={2.5} />{row.kanchan}</span>
-                    : <span className={styles.fraudPartial}><Minus size={12} strokeWidth={2} />{row.kanchan}</span>
-                  }
-                </div>
               </div>
             ))}
           </div>
@@ -363,14 +307,14 @@ export default function HeroPage() {
               <div className={styles.ctaIcon}><Shield size={28} strokeWidth={1.75} /></div>
               <h3 className={styles.ctaTitle}>Ready to analyse a gold item?</h3>
               <p className={styles.ctaDesc}>
-                Upload item photos, record a tap test, enter the weight measurements.
-                Get a SHAP-explainable verdict with a branch-ready action statement in under 10 seconds.
+                Photos, a tap-test recording, and two weights — get an explainable
+                verdict in under 10 seconds.
               </p>
               <Button size="lg" className={styles.ctaBtn} onClick={() => navigate('/dashboard')}>
                 Open analysis dashboard <ArrowRight size={16} />
               </Button>
               <div className={styles.ctaChecks}>
-                {['No destructive testing required', 'Works with any standard scale', 'Groq LLM plain-English verdict', 'Full case history with audit trail'].map(f => (
+                {['No destructive testing', 'Works with any standard scale', 'Full case history & audit trail'].map(f => (
                   <div key={f} className={styles.ctaCheck}>
                     <div className={styles.ctaCheckIcon}><Check size={10} strokeWidth={3} /></div>
                     {f}
@@ -381,35 +325,13 @@ export default function HeroPage() {
           </div>
         </section>
 
-        {/* ── Tech stack ── */}
-        <section className={styles.techSection}>
-          <div className={styles.techGrid}>
-            {[
-              { icon: Database, label: 'Backend', items: ['FastAPI', 'scikit-learn', 'XGBoost', 'librosa'] },
-              { icon: Brain,    label: 'AI/ML',   items: ['EfficientNet-B3', 'MFCC-ΔΔ SVM', 'Fusion XGBoost', 'SHAP'] },
-              { icon: Cpu,      label: 'LLM',     items: ['Groq Llama-3 70B', 'Gemini 1.5 Flash', 'Rule heuristic'] },
-              { icon: TrendingUp, label: 'Frontend', items: ['React + Vite', 'ShadCN UI', 'Radix primitives'] },
-            ].map(t => (
-              <div key={t.label} className={styles.techCard}>
-                <div className={styles.techCardHeader}>
-                  <t.icon size={16} strokeWidth={2} />
-                  <span>{t.label}</span>
-                </div>
-                <div className={styles.techItems}>
-                  {t.items.map(i => <span key={i} className={styles.techItem}>{i}</span>)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
       </div>
 
       {/* ── Footer ── */}
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <div className={styles.footerBrand}>
-            <div className={styles.footerMark}><Shield size={13} /></div>
+            <div className={styles.footerMark}><img src="/logo.png" alt="" /></div>
             <span className={styles.footerName}>KANCHAN<span className={styles.aiSuffix}>-AI</span></span>
           </div>
           <p className={styles.footerText}>
