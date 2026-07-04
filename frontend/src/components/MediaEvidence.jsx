@@ -71,7 +71,7 @@ function WaveformCanvas({ src }) {
       const isPast = i < played
       // colour: past = brand blue, future = grey, peak = red
       c.fillStyle = isPast
-        ? (amp > 0.75 ? '#DC2626' : '#019EEC')
+        ? (amp > 0.75 ? '#DC2626' : '#1E4E9C')
         : (amp > 0.75 ? '#FCA5A5' : '#D1D5DB')
       c.fillRect(x, mid - bh, bw * 0.72, bh * 2)
     })

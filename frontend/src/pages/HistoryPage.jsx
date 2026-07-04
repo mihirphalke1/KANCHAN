@@ -282,8 +282,8 @@ function CaseRow({ c, active, onClick }) {
   const cfg = VERDICT_META[rl] || VERDICT_META.BORDERLINE
   const Icon = cfg.icon
   const dt   = new Date(c.timestamp)
-  const date = isNaN(dt) ? '—' : dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
-  const time = isNaN(dt) ? '—' : dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+  const date = isNaN(dt) ? '-' : dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+  const time = isNaN(dt) ? '-' : dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
 
   return (
     <button
@@ -323,7 +323,7 @@ function CaseDetail({ c }) {
   const cfg = VERDICT_META[rl] || VERDICT_META.BORDERLINE
   const Icon = cfg.icon
   const dt   = new Date(c.timestamp)
-  const timeStr = isNaN(dt) ? '—' : dt.toLocaleString('en-IN', {
+  const timeStr = isNaN(dt) ? '-' : dt.toLocaleString('en-IN', {
     weekday: 'short', day: '2-digit', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   })

@@ -4,7 +4,9 @@
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  background: #E7F1FA;
+  background-color: #F2F3F5;
+  background-image: radial-gradient(circle, rgba(16,24,40,0.10) 1px, transparent 1px);
+  background-size: 22px 22px;
   font-size: 13px;
   padding: 14px;
   gap: 14px;
@@ -92,7 +94,7 @@
   display: flex; align-items: center; justify-content: center;
   color: var(--text-muted); transition: all var(--transition);
 }
-.backBtn:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-muted); }
+.backBtn:hover { border-color: var(--btn); color: var(--btn); background: var(--btn-muted); }
 .pageTitle { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: #16181D; line-height: 1.2; }
 .pageSub   { font-size: 11px; color: var(--text-faint); }
 
@@ -336,7 +338,7 @@
 
 .detailVerdictBadge {
   font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.06em; border-radius: 999px; padding: 4px 12px;
+  letter-spacing: 0.06em; border-radius: 8px; padding: 5px 12px;
   flex-shrink: 0;
 }
 .badge_genuine    { background: var(--green-light); color: var(--green-dark); }

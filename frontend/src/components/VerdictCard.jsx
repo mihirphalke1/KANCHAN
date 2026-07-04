@@ -6,6 +6,7 @@ const VERDICT_CONFIG = {
   GENUINE: {
     color:       'green',
     icon:        CheckCircle2,
+    iconImg:     '/tick.svg',
     label:       'Genuine',
     loanColor:   'green',
   },
@@ -48,7 +49,9 @@ export default function VerdictCard({ verdict, caseId }) {
     <div className={`${styles.card} ${styles[cfg.color]}`}>
       <div className={styles.topRow}>
         <div className={styles.verdictBadge}>
-          <Icon size={22} strokeWidth={2} />
+          {cfg.iconImg
+            ? <img src={cfg.iconImg} alt="" className={styles.verdictIconImg} />
+            : <Icon size={22} strokeWidth={2} />}
           <span className={styles.verdictLabel}>{cfg.label}</span>
         </div>
         <div className={styles.metaRight}>

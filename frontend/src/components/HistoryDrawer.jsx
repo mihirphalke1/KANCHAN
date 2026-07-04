@@ -67,7 +67,7 @@ function CaseRow({ c }) {
   const cfg  = ICONS[c.verdict?.risk_level] || ICONS.BORDERLINE
   const Icon = cfg.icon
   const dt   = new Date(c.timestamp)
-  const time = isNaN(dt) ? '—' : dt.toLocaleString('en-IN', {
+  const time = isNaN(dt) ? '-' : dt.toLocaleString('en-IN', {
     day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
   })
 

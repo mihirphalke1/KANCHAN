@@ -8,13 +8,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-[var(--brand)] text-white shadow-sm hover:bg-[var(--brand-dark)] active:scale-[.98]',
+          'bg-[var(--btn)] text-white shadow-sm hover:bg-[var(--btn-dark)] active:scale-[.98]',
         secondary:
           'bg-[var(--brand-muted)] text-[var(--brand-dark)] border border-[var(--brand-border)] hover:bg-[var(--brand-border)]/50',
         yellow:
           'bg-[var(--yellow)] text-[var(--text)] font-bold shadow-sm hover:bg-[var(--yellow-dark)] active:scale-[.98]',
         outline:
-          'border border-[var(--border-mid)] bg-white text-[var(--text-mid)] hover:bg-[var(--bg)] hover:border-[var(--brand)]',
+          'border border-[var(--border-mid)] bg-white text-[var(--text-mid)] hover:bg-[var(--bg)] hover:border-[var(--btn)]',
         ghost:
           'bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text)]',
         destructive:

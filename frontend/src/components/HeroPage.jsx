@@ -25,21 +25,21 @@ const NOVELTIES = [
   {
     n: '01', tag: 'Novelty 1', Icon: Waves,
     title: 'MFCC-ΔΔ Acoustic Fingerprinting',
-    desc: 'Genuine gold rings differently. Our SVM hears what the human ear cannot — plated brass and tungsten cores fail the tap test.',
+    desc: 'Genuine gold rings differently. Our SVM hears what the human ear cannot - plated brass and tungsten cores fail the tap test.',
     pill: 'SVM · RBF kernel · AUC 0.999',
     color: 'blue',
   },
   {
     n: '02', tag: 'Novelty 2', Icon: BarChart3,
     title: "Benford's Law Density Monitor",
-    desc: 'Weight digits follow Benford’s distribution — systematic deviations expose branch-level fraud rings in real time.',
+    desc: 'Weight digits follow Benford’s distribution - systematic deviations expose branch-level fraud rings in real time.',
     pill: 'Chi-squared test · p < 0.05 alert',
     color: 'gold',
   },
   {
     n: '03', tag: 'Novelty 3', Icon: GitMerge,
     title: 'Cross-Modal Contradiction Detection',
-    desc: 'Density passes but acoustic fails? The contradiction itself is a signal — how we catch tungsten-core fakes.',
+    desc: 'Density passes but acoustic fails? The contradiction itself is a signal - how we catch tungsten-core fakes.',
     pill: '0.40× contradiction boost in fusion',
     color: 'purple',
   },
@@ -75,6 +75,7 @@ export default function HeroPage() {
 
       {/* ── Hero ── */}
       <section className={styles.hero}>
+        <img src="/gold.png" alt="" aria-hidden className={styles.heroWreath} />
         <div className={styles.heroEyebrow}>
           <Lock size={11} strokeWidth={2.5} />
           Canara Bank · Gold Loan Division · AI Fraud Detection
@@ -88,7 +89,7 @@ export default function HeroPage() {
         </h1>
 
         <p className={styles.heroSub}>
-          Four AI signals fused into one explainable verdict —
+          Four AI signals fused into one explainable verdict -
           no lab, no acid, no damage.
         </p>
 
@@ -130,7 +131,7 @@ export default function HeroPage() {
       <div id="pipeline" className={styles.pipelineSection}>
         <div className={styles.sectionEyebrow}>System architecture</div>
         <h2 className={styles.sectionH2}>Four modalities. One fused verdict.</h2>
-        <p className={styles.sectionSub}>Each signal runs independently — contradiction between them is itself a fraud signal.</p>
+        <p className={styles.sectionSub}>Each signal runs independently - contradiction between them is itself a fraud signal.</p>
 
         <div className={styles.pipelineFlow}>
           {/* Inputs */}
@@ -307,7 +308,7 @@ export default function HeroPage() {
               <div className={styles.ctaIcon}><Shield size={28} strokeWidth={1.75} /></div>
               <h3 className={styles.ctaTitle}>Ready to analyse a gold item?</h3>
               <p className={styles.ctaDesc}>
-                Photos, a tap-test recording, and two weights — get an explainable
+                Photos, a tap-test recording, and two weights - get an explainable
                 verdict in under 10 seconds.
               </p>
               <Button size="lg" className={styles.ctaBtn} onClick={() => navigate('/dashboard')}>

@@ -2,7 +2,9 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: #E7F1FA;
+  background-color: #F2F3F5;
+  background-image: radial-gradient(circle, rgba(16,24,40,0.10) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
 
 .main {

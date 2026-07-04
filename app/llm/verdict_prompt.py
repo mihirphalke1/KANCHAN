@@ -37,7 +37,7 @@ def _build_prompt(payload: dict) -> str:
     return f"""You are a senior gold appraiser at a bank helping a junior officer understand an AI analysis result.
 
 Item: {desc} (declared {karat}K gold)
-FINAL SYSTEM DECISION: {risk_level} — {loan_action}{density_note}
+FINAL SYSTEM DECISION: {risk_level} - {loan_action}{density_note}
 
 Analysis results:
 - Overall fusion risk score: {fusion_risk:.2f} (0=genuine, 1=fake)
@@ -99,7 +99,7 @@ def _heuristic_verdict(
 
     if fusion_risk < 0.25:
         explanation = (
-            "All analysis signals — visual appearance, density, sound, and streak test — "
+            "All analysis signals - visual appearance, density, sound, and streak test - "
             "are consistent with genuine gold at the declared karat. No suspicious patterns were detected."
         )
         action = "The item appears genuine. You may proceed with loan approval subject to standard documentation checks."

@@ -6,18 +6,18 @@
 }
 
 .card.green {
-  border-color: rgba(47, 148, 97, 0.35);
-  background: linear-gradient(135deg, var(--ok-bg) 0%, #ffffff 65%);
+  border-color: rgba(47, 148, 97, 0.28);
+  background: var(--ok-bg);
 }
 
 .card.amber {
-  border-color: rgba(180, 123, 22, 0.35);
-  background: linear-gradient(135deg, var(--warn-bg) 0%, #ffffff 65%);
+  border-color: rgba(233, 168, 0, 0.32);
+  background: var(--warn-bg);
 }
 
 .card.red {
-  border-color: rgba(201, 74, 68, 0.35);
-  background: linear-gradient(135deg, var(--danger-bg) 0%, #ffffff 65%);
+  border-color: rgba(229, 72, 77, 0.28);
+  background: var(--danger-bg);
 }
 
 .topRow {
@@ -33,6 +33,14 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.verdictIconImg {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  transform: scale(1.45);
+  flex-shrink: 0;
 }
 
 .card.green .verdictBadge { color: var(--ok); }
@@ -59,24 +67,24 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  padding: 3px 8px;
-  border-radius: 999px;
+  padding: 4px 10px;
+  border-radius: 8px;
 }
 
-.confHIGH   { background: var(--ok-bg); border: 1px solid var(--ok-border); color: var(--green-dark); }
-.confMEDIUM { background: var(--amber-light); color: var(--amber); }
-.confLOW    { background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger); }
+.confHIGH   { background: #fff; color: var(--green-dark); }
+.confMEDIUM { background: #fff; color: var(--warn); }
+.confLOW    { background: #fff; color: var(--danger); }
 
 .loanTag {
   font-size: 12px;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
+  padding: 5px 12px;
+  border-radius: 8px;
 }
 
-.loanApprove  { background: var(--ok-bg);  color: var(--ok); }
-.loanHold     { background: var(--amber-light);  color: var(--warn); }
-.loanDecline  { background: var(--red-light);    color: var(--red-alert); }
+.loanApprove  { background: #fff; color: var(--green-dark); }
+.loanHold     { background: #fff; color: var(--warn); }
+.loanDecline  { background: #fff; color: var(--danger); }
 
 .riskMeter {
   margin-bottom: 16px;
@@ -202,7 +210,7 @@
   font-weight: 600;
   color: var(--brand);
   background: var(--brand-muted);
-  border: 1px solid rgba(1,158,236,0.3);
+  border: 1px solid rgba(30,78,156,0.3);
   border-radius: var(--radius-sm);
   padding: 4px 9px;
   text-decoration: none;
@@ -210,6 +218,6 @@
 }
 
 .downloadBtn:hover {
-  background: rgba(1,158,236,0.15);
+  background: rgba(30,78,156,0.12);
   border-color: var(--brand);
 }

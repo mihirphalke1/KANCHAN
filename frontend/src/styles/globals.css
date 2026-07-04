@@ -2,18 +2,18 @@
 
 /* ─── Tailwind v4 theme ─────────────────────────────────────── */
 @theme {
-  --font-sans:    "Inter", system-ui, -apple-system, sans-serif;
-  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans:    "Instrument Sans", system-ui, -apple-system, sans-serif;
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
   --font-mono:    "JetBrains Mono", "Fira Code", monospace;
 
-  /* Canara Bank blue */
-  --color-brand-50:  #EBF8FF;
-  --color-brand-100: #BEE8FB;
-  --color-brand-200: #7DD3F8;
-  --color-brand-400: #019EEC;
-  --color-brand-600: #0181C2;
-  --color-brand-800: #01538A;
-  --color-brand-900: #013A60;
+  /* Canara navy */
+  --color-brand-50:  #F0F4FA;
+  --color-brand-100: #D5E0F2;
+  --color-brand-200: #A8BFE3;
+  --color-brand-400: #1E4E9C;
+  --color-brand-600: #16407F;
+  --color-brand-800: #0B2C5F;
+  --color-brand-900: #071E42;
 
   /* Canara golden yellow */
   --color-canary-50:  #FFFBEB;
@@ -44,24 +44,29 @@
 
 /* ─── CSS custom properties ─────────────────────────────────── */
 :root {
-  /* Canara brand — exact colors */
-  --brand:            #019EEC;
-  --brand-dark:       #0181C2;
-  --brand-darker:     #01538A;
-  --brand-light:      #7DD3F8;
-  --brand-muted:      #EBF8FF;
-  --brand-border:     #BEE8FB;
+  /* Canara brand — navy */
+  --brand:            #1E4E9C;
+  --brand-dark:       #16407F;
+  --brand-darker:     #0B2C5F;
+  --brand-light:      #A8BFE3;
+  --brand-muted:      #F0F4FA;
+  --brand-border:     #D5E0F2;
+
+  /* Navy — solid action buttons */
+  --btn:              var(--brand);
+  --btn-dark:         var(--brand-darker);
+  --btn-muted:        var(--brand-muted);
 
   --yellow:           #FFB600;
   --yellow-dark:      #E09E00;
   --yellow-bg:        #FFFBEB;
   --yellow-border:    #FEF3C7;
 
-  /* Legacy green (status only) — muted sage */
-  --green-dark:   #27794F;
-  --green-mid:    #2F9461;
-  --green-light:  #EDF6F0;
-  --green-muted:  #C4E2D0;
+  /* Legacy green (status only) — deep green on mint */
+  --green-dark:   #1E6B4A;
+  --green-mid:    #2B8A5C;
+  --green-light:  #E4F4EC;
+  --green-muted:  #C4E5D4;
 
   /* Gold for detail accents */
   --gold:         #B8882E;
@@ -69,16 +74,16 @@
   --gold-pale:    #FAF3DC;
   --gold-border:  #D4AA50;
 
-  /* Semantic — muted, editorial status tones */
-  --ok:           #2F9461;
-  --ok-bg:        #EDF6F0;
-  --ok-border:    #C4E2D0;
-  --warn:         #B47B16;
-  --warn-bg:      #FAF3E3;
-  --warn-border:  #EBD9A9;
-  --danger:       #C94A44;
-  --danger-bg:    #FAEFED;
-  --danger-border:#F0D0CB;
+  /* Semantic — deep green, bright yellow, bright red */
+  --ok:           #217A54;
+  --ok-bg:        #E4F4EC;
+  --ok-border:    #C4E5D4;
+  --warn:         #E9A800;
+  --warn-bg:      #FFF6DC;
+  --warn-border:  #F5E3A8;
+  --danger:       #E5484D;
+  --danger-bg:    #FDECEC;
+  --danger-border:#F8CFD1;
 
   /* Neutrals */
   --text:         #111827;
@@ -102,7 +107,7 @@
   --r-xs: 4px; --r-sm: 6px; --r: 10px; --r-lg: 14px; --r-xl: 20px;
 
   /* Typography */
-  --font:  "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font:  "Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif;
   --mono:  "JetBrains Mono", monospace;
 
   /* Motion */

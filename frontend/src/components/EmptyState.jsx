@@ -1,4 +1,4 @@
-import { Gem, Camera, Mic, Scale, Layers } from 'lucide-react'
+import { Camera, Mic, Scale, Layers } from 'lucide-react'
 import styles from './EmptyState.module.css'
 
 const TIPS = [
@@ -12,7 +12,7 @@ export default function EmptyState() {
   return (
     <div className={styles.wrap}>
       <div className={styles.iconWrap}>
-        <Gem size={28} strokeWidth={1.5} />
+        <img src="/OG.svg" alt="KANCHAN-AI illustration" />
       </div>
       <div className={styles.textGroup}>
         <h2 className={styles.heading}>Ready to Analyse</h2>

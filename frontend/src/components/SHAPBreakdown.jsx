@@ -27,7 +27,7 @@ export default function SHAPBreakdown({ shap }) {
     <div className={styles.card}>
       <h3 className={styles.title}>
         Feature Importance
-        <span className={styles.subtitle}>SHAP values — XGBoost explainability</span>
+        <span className={styles.subtitle}>SHAP values - XGBoost explainability</span>
       </h3>
       <div className={styles.rows}>
         {entries.map(({ key, label, value }) => {

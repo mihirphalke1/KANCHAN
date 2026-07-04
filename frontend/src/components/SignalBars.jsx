@@ -67,7 +67,7 @@ export default function SignalBars({ scores }) {
           <Bar key={sig.key} signal={sig} score={scores[sig.key]} />
         ))}
       </div>
-      <p className={styles.footer}>Risk score per modality — lower is better</p>
+      <p className={styles.footer}>Risk score per modality - lower is better</p>
     </div>
   )
 }

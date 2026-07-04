@@ -68,13 +68,13 @@
   font-size: 12px;
   font-weight: 600;
   color: #fff;
-  background: var(--brand);
+  background: var(--btn);
   border: none;
   border-radius: 999px;
   padding: 7px 14px;
   transition: background var(--transition);
 }
-.viewAllBtn:hover { background: var(--brand-dark); }
+.viewAllBtn:hover { background: var(--btn-dark); }
 
 .closeBtn {
   width: 34px;

@@ -6,18 +6,18 @@ import {
 import styles from './AnalysisForm.module.css'
 
 const KARATS = [
-  { value: 14, label: '14K — 58.3% gold' },
-  { value: 18, label: '18K — 75.0% gold' },
-  { value: 22, label: '22K — 91.7% gold' },
-  { value: 24, label: '24K — 99.9% gold' },
+  { value: 14, label: '14K - 58.3% gold' },
+  { value: 18, label: '18K - 75.0% gold' },
+  { value: 22, label: '22K - 91.7% gold' },
+  { value: 24, label: '24K - 99.9% gold' },
 ]
 
 const LLM_PROVIDERS = [
-  { value: 'groq',   label: 'Groq (Llama 3 70B) — Fast' },
+  { value: 'groq',   label: 'Groq (Llama 3 70B) - Fast' },
   { value: 'gemini', label: 'Google Gemini 1.5 Flash' },
 ]
 
-// Demo scenarios — pre-fill all fields for one-click demo
+// Demo scenarios - pre-fill all fields for one-click demo
 const SCENARIOS = [
   {
     id:    'genuine22',
@@ -59,7 +59,7 @@ const SCENARIOS = [
     color: 'red',
     hint:  'Expected: REJECT (physics override)',
     data: {
-      item_description:  '22K gold bangle — density anomaly',
+      item_description:  '22K gold bangle - density anomaly',
       declared_karat:    22,
       weight_dry:        '10.00',
       weight_submerged:  '9.75',
@@ -76,7 +76,7 @@ const SCENARIOS = [
     color: 'amber',
     hint:  'Expected: REJECT (contradiction)',
     data: {
-      item_description:  '24K gold bar — tungsten-core forgery',
+      item_description:  '24K gold bar - tungsten-core forgery',
       declared_karat:    24,
       weight_dry:        '20.00',
       weight_submerged:  '18.96',
@@ -366,7 +366,7 @@ export default function AnalysisForm({ onSubmit, loading }) {
                 ? `${images.length} photo${images.length > 1 ? 's' : ''} selected`
                 : 'Tap to upload or drag photos here'}
             </span>
-            <span className={styles.dropzoneSub}>JPG, PNG, WebP — multiple angles recommended</span>
+            <span className={styles.dropzoneSub}>JPG, PNG, WebP - multiple angles recommended</span>
           </div>
           <input
             ref={imageRef}

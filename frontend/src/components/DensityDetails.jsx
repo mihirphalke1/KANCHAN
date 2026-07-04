@@ -92,7 +92,7 @@ function Row({ label, value, mono, highlight, status }) {
 
 const VERDICT_TEXT = {
   IN_RANGE:            'Within expected range',
-  LOW_DENSITY:         'Below expected — density too low',
-  HIGH_DENSITY:        'Above expected — density too high',
+  LOW_DENSITY:         'Below expected - density too low',
+  HIGH_DENSITY:        'Above expected - density too high',
   TUNGSTEN_BLIND_SPOT: 'Matches tungsten signature',
 }
