@@ -1,5 +1,6 @@
 import { CheckCircle2, AlertTriangle, XCircle, Copy, Check, Download } from 'lucide-react'
 import { useState } from 'react'
+import InfoTip from './ui/InfoTip'
 import styles from './VerdictCard.module.css'
 
 const VERDICT_CONFIG = {
@@ -67,7 +68,10 @@ export default function VerdictCard({ verdict, caseId }) {
       {verdict.fusion_risk !== undefined && (
         <div className={styles.riskMeter}>
           <div className={styles.riskMeterHeader}>
-            <span className={styles.riskMeterLabel}>Fusion risk</span>
+            <span className={styles.riskMeterLabel}>
+              Overall risk
+              <InfoTip text="Combined probability from all performed tests. Tests you didn't run contribute nothing — they never count for or against the item." />
+            </span>
             <span className={`${styles.riskMeterValue} ${styles[cfg.color]}`}>
               {Math.round(verdict.fusion_risk * 100)}%
             </span>

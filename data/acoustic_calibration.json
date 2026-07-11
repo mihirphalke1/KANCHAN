@@ -1,0 +1,9 @@
+{
+  "default": {
+    "f_low": 5533.1,
+    "f_high": 6997.1,
+    "n_samples": 10,
+    "calibrated_on": "2026-07-11",
+    "source_folder": "data/raw/counterfeit_gold/wav/genuine"
+  }
+}

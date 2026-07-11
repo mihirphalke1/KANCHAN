@@ -1,0 +1,10 @@
+{
+  "_comment": "Decision policy — these are POLICY DIALS, not measurements. They encode the bank's risk appetite: where evidence probability turns into APPROVE / HOLD / DECLINE. Tunable per pilot data; every change is auditable here rather than buried in code.",
+  "genuine_high_below": 0.25,
+  "genuine_medium_below": 0.45,
+  "borderline_medium_below": 0.60,
+  "borderline_low_below": 0.75,
+  "density_override_at": 0.85,
+  "contradiction_boost": 0.40,
+  "calibration_note": "Bands validated 2026-07-12 on real DS-1 recordings through the live scoring paths: genuine items 0.073-0.109 (all GENUINE HIGH), copper fakes 0.989-0.997 (REJECT; density override fires anyway), tungsten pattern 0.26-0.55 pre-boost -> HOLD/REJECT after contradiction boost, with the ring-pitch physics override forcing REJECT independently. Re-validate after any reliability-weight or calibration change."
+}

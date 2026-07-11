@@ -137,3 +137,17 @@
   text-align: right;
   margin-top: 10px;
 }
+
+/* ── Not-performed state ── */
+.notPerformed .barLabel,
+.notPerformed .barDesc,
+.notPerformed .barIcon { opacity: 0.45; }
+
+.naTag {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-faint);
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+}

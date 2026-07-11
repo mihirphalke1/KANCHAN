@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react'
 import {
   Upload, Mic, Camera, Weight, ChevronDown,
-  Loader2, Sparkles, X, Image, FileAudio, User, Zap
+  Loader2, Sparkles, X, Image, FileAudio, User
 } from 'lucide-react'
+import InfoTip from './ui/InfoTip'
 import styles from './AnalysisForm.module.css'
 
 const KARATS = [
@@ -12,92 +13,30 @@ const KARATS = [
   { value: 24, label: '24K - 99.9% gold' },
 ]
 
-const LLM_PROVIDERS = [
-  { value: 'groq',   label: 'Groq (Llama 3 70B) - Fast' },
-  { value: 'gemini', label: 'Google Gemini 1.5 Flash' },
+// CRC Handbook water density (g/cm³), linear interpolation — mirrors app/utils/density.py
+const WATER_DENSITY_TABLE = [
+  [10, 0.9997026], [15, 0.9991026], [20, 0.9982071], [25, 0.9970479],
+  [30, 0.9956502], [35, 0.9940349], [40, 0.9922152],
 ]
-
-// Demo scenarios - pre-fill all fields for one-click demo
-const SCENARIOS = [
-  {
-    id:    'genuine22',
-    label: 'Genuine 22K',
-    color: 'green',
-    hint:  'Expected: GENUINE HIGH',
-    data: {
-      item_description:  '22K gold necklace with antique finish',
-      declared_karat:    22,
-      weight_dry:        '10.00',
-      weight_submerged:  '9.42',
-      branch_id:         'BLR-001',
-      customer_name:     'Meera Raghunathan',
-      customer_account:  'CNR0012345678',
-      loan_app_no:       'GL/2025/BLR001/00142',
-      officer_name:      'Suresh Kumar (EMP-4421)',
-    },
-  },
-  {
-    id:    'genuine18',
-    label: 'Genuine 18K',
-    color: 'green',
-    hint:  'Expected: GENUINE MED',
-    data: {
-      item_description:  '18K gold ring, diamond-set solitaire',
-      declared_karat:    18,
-      weight_dry:        '15.00',
-      weight_submerged:  '14.03',
-      branch_id:         'MUM-003',
-      customer_name:     'Anjali Sharma',
-      customer_account:  'CNR0087654321',
-      loan_app_no:       'GL/2025/MUM003/00389',
-      officer_name:      'Priya Nair (EMP-2203)',
-    },
-  },
-  {
-    id:    'density',
-    label: 'Fake (Density)',
-    color: 'red',
-    hint:  'Expected: REJECT (physics override)',
-    data: {
-      item_description:  '22K gold bangle - density anomaly',
-      declared_karat:    22,
-      weight_dry:        '10.00',
-      weight_submerged:  '9.75',
-      branch_id:         'CHN-007',
-      customer_name:     'Rajan Pillai',
-      customer_account:  'CNR0056781234',
-      loan_app_no:       'GL/2025/CHN007/00061',
-      officer_name:      'Anand Krishnan (EMP-3317)',
-    },
-  },
-  {
-    id:    'tungsten',
-    label: 'Tungsten Core',
-    color: 'amber',
-    hint:  'Expected: REJECT (contradiction)',
-    data: {
-      item_description:  '24K gold bar - tungsten-core forgery',
-      declared_karat:    24,
-      weight_dry:        '20.00',
-      weight_submerged:  '18.96',
-      branch_id:         'HYD-002',
-      customer_name:     'Vijay Bhattacharya',
-      customer_account:  'CNR0033219876',
-      loan_app_no:       'GL/2025/HYD002/00215',
-      officer_name:      'Kavitha Reddy (EMP-1108)',
-    },
-  },
-]
+function waterDensity(tempC) {
+  const pts = WATER_DENSITY_TABLE
+  if (tempC <= pts[0][0]) return pts[0][1]
+  if (tempC >= pts[pts.length - 1][0]) return pts[pts.length - 1][1]
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [t0, r0] = pts[i], [t1, r1] = pts[i + 1]
+    if (tempC >= t0 && tempC <= t1) return r0 + (r1 - r0) * (tempC - t0) / (t1 - t0)
+  }
+  return pts[pts.length - 1][1]
+}
 
 const BLANK_FORM = {
   item_description:  '',
   declared_karat:    22,
   weight_dry:        '',
   weight_submerged:  '',
+  water_temp_c:      '25',
   branch_id:         'BLR-001',
   customer_name:     '',
-  customer_account:  '',
-  loan_app_no:       '',
   officer_name:      '',
   llm_provider:      'groq',
 }
@@ -107,25 +46,38 @@ export default function AnalysisForm({ onSubmit, loading }) {
   const [images, setImages] = useState([])
   const [audio,  setAudio]  = useState(null)
   const [streak, setStreak] = useState(null)
-  const [activeScenario, setActiveScenario] = useState(null)
 
   const imageRef  = useRef()
   const audioRef  = useRef()
   const streakRef = useRef()
 
+  // Live validation — errors show as you type, and block the submit button.
+  const dryW  = parseFloat(form.weight_dry)
+  const subW  = parseFloat(form.weight_submerged)
+  const tempC = parseFloat(form.water_temp_c)
+
+  const tempError =
+    form.water_temp_c !== '' && (isNaN(tempC) || tempC <= 0 || tempC >= 45)
+      ? 'Water temperature must be between 0 and 45 °C'
+      : null
+  const weightError =
+    form.weight_dry && dryW <= 0
+      ? 'Dry weight must be greater than zero'
+      : form.weight_dry && form.weight_submerged && subW <= 0
+        ? 'Submerged weight must be greater than zero'
+        : form.weight_dry && form.weight_submerged && dryW <= subW
+          ? 'Submerged weight must be less than dry weight — check for air bubbles or a touching container'
+          : null
+
   const isValid = (
     form.item_description.trim() &&
     form.weight_dry &&
     form.weight_submerged &&
-    parseFloat(form.weight_dry) > parseFloat(form.weight_submerged)
+    !weightError &&
+    !tempError
   )
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
-
-  const applyScenario = (scenario) => {
-    setForm(f => ({ ...f, ...scenario.data }))
-    setActiveScenario(scenario.id)
-  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -135,7 +87,9 @@ export default function AnalysisForm({ onSubmit, loading }) {
     images.forEach(img => fd.append('images', img))
     if (audio)  fd.append('audio', audio)
     if (streak) fd.append('streak_image', streak)
-    onSubmit(fd)
+    // the browser's own copies are what the results screen displays —
+    // the server never stores the uploads
+    onSubmit(fd, { images, audio, streak })
   }
 
   const removeImage = (i) => setImages(imgs => imgs.filter((_, idx) => idx !== i))
@@ -146,28 +100,6 @@ export default function AnalysisForm({ onSubmit, loading }) {
         <h2 className={styles.formTitle}>Item Analysis</h2>
         <p className={styles.formSub}>Enter all available details for best accuracy</p>
       </div>
-
-      {/* ── Demo Scenarios ── */}
-      <fieldset className={styles.section}>
-        <legend className={styles.sectionLabel}>
-          <Zap size={13} />
-          Quick Demo Scenarios
-        </legend>
-        <p className={styles.helpText}>Pre-fill all fields for a realistic demo case</p>
-        <div className={styles.scenarioGrid}>
-          {SCENARIOS.map(s => (
-            <button
-              key={s.id}
-              type="button"
-              className={`${styles.scenarioBtn} ${styles[`scenario_${s.color}`]} ${activeScenario === s.id ? styles.scenarioActive : ''}`}
-              onClick={() => applyScenario(s)}
-            >
-              <span className={styles.scenarioBtnLabel}>{s.label}</span>
-              <span className={styles.scenarioBtnHint}>{s.hint}</span>
-            </button>
-          ))}
-        </div>
-      </fieldset>
 
       {/* ── Customer Information ── */}
       <fieldset className={styles.section}>
@@ -189,31 +121,6 @@ export default function AnalysisForm({ onSubmit, loading }) {
             />
           </div>
           <div className={styles.field}>
-            <label htmlFor="customer_account" className={styles.label}>Account Number</label>
-            <input
-              id="customer_account"
-              className={styles.input}
-              type="text"
-              placeholder="CNR00XXXXXXXX"
-              value={form.customer_account}
-              onChange={e => set('customer_account', e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className={styles.row}>
-          <div className={styles.field}>
-            <label htmlFor="loan_app_no" className={styles.label}>Loan Application No.</label>
-            <input
-              id="loan_app_no"
-              className={styles.input}
-              type="text"
-              placeholder="GL/2025/XXX/XXXXX"
-              value={form.loan_app_no}
-              onChange={e => set('loan_app_no', e.target.value)}
-            />
-          </div>
-          <div className={styles.field}>
             <label htmlFor="officer_name" className={styles.label}>Assessment Officer</label>
             <input
               id="officer_name"
@@ -232,7 +139,10 @@ export default function AnalysisForm({ onSubmit, loading }) {
         <legend className={styles.sectionLabel}>Item Details</legend>
 
         <div className={styles.field}>
-          <label htmlFor="item_description" className={styles.label}>Description</label>
+          <label htmlFor="item_description" className={styles.label}>
+            Description
+            <InfoTip text="Describe the item as the customer declares it, including stones (e.g. '22K necklace with rubies'). The photo analysis cross-checks this — declared stones the camera can't find raise a flag." />
+          </label>
           <input
             id="item_description"
             className={styles.input}
@@ -246,7 +156,10 @@ export default function AnalysisForm({ onSubmit, loading }) {
 
         <div className={styles.row}>
           <div className={styles.field}>
-            <label htmlFor="declared_karat" className={styles.label}>Declared Karat</label>
+            <label htmlFor="declared_karat" className={styles.label}>
+              Declared Karat
+              <InfoTip text="The purity the customer claims. The weight-in-water test checks the measured density against this karat's expected range." />
+            </label>
             <div className={styles.selectWrap}>
               <select
                 id="declared_karat"
@@ -283,10 +196,11 @@ export default function AnalysisForm({ onSubmit, loading }) {
           Density Test (Archimedes)
         </legend>
 
-        <div className={styles.row}>
+        <div className={`${styles.row} ${styles.row3}`}>
           <div className={styles.field}>
             <label htmlFor="weight_dry" className={styles.label}>
               Dry Weight <span className={styles.unit}>g</span>
+              <InfoTip text="Weigh the item in air on the branch balance. Note the reading to 0.01 g." />
             </label>
             <input
               id="weight_dry"
@@ -303,6 +217,7 @@ export default function AnalysisForm({ onSubmit, loading }) {
           <div className={styles.field}>
             <label htmlFor="weight_submerged" className={styles.label}>
               Submerged <span className={styles.unit}>g</span>
+              <InfoTip text="Weigh again with the item fully underwater, hanging from a thin thread. It must not touch the sides or bottom of the container, and no air bubbles should cling to it." />
             </label>
             <input
               id="weight_submerged"
@@ -316,23 +231,42 @@ export default function AnalysisForm({ onSubmit, loading }) {
               required
             />
           </div>
+          <div className={styles.field}>
+            <label htmlFor="water_temp_c" className={styles.label}>
+              Water Temp <span className={styles.unit}>°C</span>
+              <InfoTip text="Water density changes with temperature, and the density result is corrected for it. If you don't have a thermometer, leave 25 °C — the error is small but noted." />
+            </label>
+            <input
+              id="water_temp_c"
+              className={styles.input}
+              type="number"
+              step="0.5"
+              min="1"
+              max="44"
+              placeholder="25"
+              value={form.water_temp_c}
+              onChange={e => set('water_temp_c', e.target.value)}
+            />
+          </div>
         </div>
 
-        {form.weight_dry && form.weight_submerged && (
+        {tempError && <p className={styles.fieldError}>{tempError}</p>}
+        {weightError && <p className={styles.fieldError}>{weightError}</p>}
+        {!tempError && !weightError && form.weight_dry && form.weight_submerged &&
+          dryW > subW && subW > 0 && (
           (() => {
-            const d = parseFloat(form.weight_dry)
-            const s = parseFloat(form.weight_submerged)
-            if (d > s && s > 0) {
-              const density = (d / (d - s)).toFixed(2)
-              return (
-                <div className={styles.densityPreview}>
-                  <span>Calculated density:</span>
-                  <strong>{density} g/cm³</strong>
-                </div>
-              )
-            }
-            if (d <= s) return (
-              <p className={styles.fieldError}>Submerged weight must be less than dry weight</p>
+            const t = isNaN(tempC) ? 25 : tempC
+            // Buoyancy-corrected Archimedes: rho = W_dry * rho_water(T) / (W_dry - W_sub)
+            const rhoWater = waterDensity(t)
+            const density  = (dryW * rhoWater / (dryW - subW)).toFixed(2)
+            // sigma_rho ~ sqrt(2) * scale_sigma / displaced * rho  (0.005 g balance)
+            const sigmaVal = Math.SQRT2 * 0.005 / (dryW - subW) * dryW * rhoWater / (dryW - subW)
+            const sigma    = sigmaVal >= 0.01 ? sigmaVal.toFixed(2) : sigmaVal.toPrecision(1)
+            return (
+              <div className={styles.densityPreview}>
+                <span>Calculated density:</span>
+                <strong>{density} ± {sigma} g/cm³</strong>
+              </div>
             )
           })()
         )}
@@ -349,6 +283,7 @@ export default function AnalysisForm({ onSubmit, loading }) {
         <div className={styles.field}>
           <label className={styles.label}>
             Item Photos <span className={styles.optional}>(multiple angles)</span>
+            <InfoTip text="Place the item on a plain, single-colour backdrop, centred in the frame — no fingers, props or other objects. The system separates the item from the backdrop and finds the stones automatically." />
           </label>
           <div
             className={styles.dropzone}
@@ -430,10 +365,12 @@ export default function AnalysisForm({ onSubmit, loading }) {
       <fieldset className={styles.section}>
         <legend className={styles.sectionLabel}>
           <Mic size={13} />
-          Acoustic Test <span className={styles.noveltyBadge}>Novelty 1</span>
+          Sound Test
         </legend>
         <p className={styles.helpText}>
-          Tap the item with a metal stylus. Record the ring sound on a smartphone.
+          Tap the item once with a metal stylus and record the ring on a smartphone,
+          in a quiet room. This test catches filled-core fakes that pass the weight
+          test — record it whenever possible.
         </p>
         <div
           className={`${styles.dropzone} ${styles.dropzoneSmall}`}
@@ -458,25 +395,6 @@ export default function AnalysisForm({ onSubmit, loading }) {
             <button type="button" onClick={() => setAudio(null)}><X size={10} /></button>
           </div>
         )}
-      </fieldset>
-
-      {/* ── LLM Provider ── */}
-      <fieldset className={styles.section}>
-        <legend className={styles.sectionLabel}>AI Verdict Model</legend>
-        <div className={styles.field}>
-          <div className={styles.selectWrap}>
-            <select
-              className={styles.select}
-              value={form.llm_provider}
-              onChange={e => set('llm_provider', e.target.value)}
-            >
-              {LLM_PROVIDERS.map(p => (
-                <option key={p.value} value={p.value}>{p.label}</option>
-              ))}
-            </select>
-            <ChevronDown className={styles.selectIcon} size={15} />
-          </div>
-        </div>
       </fieldset>
 
       {/* ── Submit ── */}

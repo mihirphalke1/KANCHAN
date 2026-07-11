@@ -8,15 +8,17 @@ import styles from './DashboardPage.module.css'
 
 export default function DashboardPage() {
   const [result, setResult]           = useState(null)
+  const [localMedia, setLocalMedia]   = useState(null)
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState(null)
   const [showHistory, setShowHistory] = useState(false)
   const resultsRef                    = useRef(null)
 
-  const handleAnalyze = async (formData) => {
+  const handleAnalyze = async (formData, media) => {
     setLoading(true)
     setError(null)
     setResult(null)
+    setLocalMedia(media || null)
     if (window.innerWidth < 768) {
       resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
@@ -44,7 +46,7 @@ export default function DashboardPage() {
             <AnalysisForm onSubmit={handleAnalyze} loading={loading} />
           </aside>
           <section className={styles.resultsCol} ref={resultsRef}>
-            <ResultsPanel result={result} loading={loading} error={error} />
+            <ResultsPanel result={result} loading={loading} error={error} localMedia={localMedia} />
           </section>
         </div>
       </main>

@@ -115,3 +115,14 @@
 .rowValue.highlight { color: var(--amber); font-weight: 700; }
 .rowValue.ok  { color: var(--green-dark); }
 .rowValue.warn { color: var(--amber); }
+
+.adequacyNote {
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--brand-muted, #EFF6FF);
+  border-left: 3px solid var(--brand, #1E4E9C);
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}

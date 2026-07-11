@@ -163,3 +163,10 @@
 .dot.okDot    { background: var(--green-dark); }
 .dot.alertDot { background: var(--red-alert); }
 .dot.expDot   { background: var(--border-mid); }
+
+.techNote {
+  margin-left: auto;
+  font-size: 9px;
+  color: var(--text-faint);
+  font-style: italic;
+}

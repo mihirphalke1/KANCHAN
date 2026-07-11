@@ -52,8 +52,8 @@ echo ""
 echo "Demo ready at http://localhost:8000"
 echo "Demo files for presentation: data/demo/"
 echo ""
-echo "Scenario 1 — Genuine Gold:      weight_dry=15.2, weight_sub=12.8, karat=22"
-echo "Scenario 2 — Tungsten-Core Fake: weight_dry=18.9, weight_sub=15.9, karat=24"
+echo "Scenario 1 — Genuine Gold:      weight_dry=20.00, weight_sub=18.88, karat=22"
+echo "Scenario 2 — Tungsten-Core Fake: weight_dry=50.00, weight_sub=47.41, karat=24"
 echo ""
 
 wait $SERVER_PID

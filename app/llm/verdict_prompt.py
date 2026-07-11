@@ -25,13 +25,23 @@ def _build_prompt(payload: dict) -> str:
 
     density_note = ""
     if density_risk >= 0.85:
-        measured = density.get("measured_density", "N/A")
-        exp_low  = density.get("expected_low", "N/A")
-        exp_high = density.get("expected_high", "N/A")
+        measured  = density.get("measured_density", "N/A")
+        exp_low   = density.get("expected_low", "N/A")
+        exp_high  = density.get("expected_high", "N/A")
+        direction = density.get("karat_verdict", "")
+        closest   = density.get("closest_fake")
+        dir_text = {
+            "LOW_DENSITY":  "BELOW the gold range (too light for gold)",
+            "HIGH_DENSITY": "ABOVE the gold range (denser than the declared alloy)",
+        }.get(direction, "outside the gold range")
+        closest_text = f" The closest known metal to this reading is {closest}." if closest else ""
         density_note = (
-            f"\n⚠️  DENSITY OVERRIDE ACTIVE: Measured density ({measured} g/cm³) is critically outside "
-            f"the expected range for {karat}K gold ({exp_low}–{exp_high} g/cm³). "
-            "This alone triggered the REJECT decision regardless of other signals."
+            f"\n⚠️  DENSITY OVERRIDE ACTIVE: Measured density ({measured} ± {density.get('sigma', 'N/A')} g/cm³) "
+            f"is critically outside the expected range for {karat}K gold ({exp_low}–{exp_high} g/cm³). "
+            f"The reading is {dir_text}.{closest_text} "
+            "This alone triggered the REJECT decision regardless of other signals. "
+            "When explaining, state the direction correctly — do NOT describe a low reading as a dense core, "
+            "and do NOT describe a high reading as plated base metal."
         )
 
     return f"""You are a senior gold appraiser at a bank helping a junior officer understand an AI analysis result.
@@ -75,12 +85,21 @@ def _heuristic_verdict(
         exp_high = density_details.get("expected_high")
 
         if density_risk >= 0.85 and measured is not None:
+            direction = density_details.get("karat_verdict")
+            closest   = density_details.get("closest_fake")
+            if direction == "LOW_DENSITY":
+                cause = "far BELOW the gold range" + (
+                    f" — consistent with a base metal such as {closest} under a gold-coloured surface"
+                    if closest else ""
+                )
+            elif direction == "HIGH_DENSITY":
+                cause = "ABOVE the gold range — consistent with a dense non-gold filler"
+            else:
+                cause = "outside the achievable range for any gold alloy"
             explanation = (
-                f"The Archimedes density test returned a critically anomalous reading of "
-                f"{measured:.2f} g/cm³ for a declared {declared_karat}K gold item "
-                f"(expected range: {exp_low}–{exp_high} g/cm³). "
-                "This physical measurement cannot be explained by any legitimate gold alloy and "
-                "indicates the item is either not gold or contains a high-density non-gold core."
+                f"The Archimedes density test measured {measured:.2f} g/cm³ against the declared "
+                f"{declared_karat}K expected range of {exp_low}–{exp_high} g/cm³. "
+                f"The reading is {cause}. No legitimate gold alloy can produce this density."
             )
         elif has_flags:
             flag_summary = contradiction_flags[0]

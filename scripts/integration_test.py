@@ -8,11 +8,13 @@ Run after build_and_train.py completes:
     python scripts/integration_test.py
 """
 import json
+import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
 DS1  = ROOT / "data" / "raw" / "counterfeit_gold" / "gold"
+API_BASE = os.getenv("API_BASE", "http://localhost:8000")
 
 RESULTS = []
 
@@ -97,10 +99,14 @@ def test_density_verdicts() -> None:
     check("Copper fake high risk", r_cu["risk_score"] > 0.80,
           f"risk={r_cu['risk_score']:.3f}, density={r_cu['measured_density']:.2f}")
 
-    # Tungsten declared as 24K: ~19.25 g/cm³ (known blind spot)
-    r_tg = analyze_density(18.9, 17.91, 24)
+    # Tungsten declared as 24K: ~19.25 g/cm³ (known blind spot).
+    # 50 g bar: the realistic tungsten-fake form factor, and heavy enough that
+    # the balance can resolve the narrow 24K band (sigma ~0.05 g/cm³).
+    r_tg = analyze_density(50.0, 47.41, 24)
     check("Tungsten passes density (documented blind spot)", r_tg["risk_score"] < 0.20,
           f"risk={r_tg['risk_score']:.3f}, density={r_tg['measured_density']:.2f}")
+    check("Tungsten blind-spot flag fires", r_tg["tungsten_warning"] is True,
+          f"verdict={r_tg['karat_verdict']}")
 
 
 def test_api_analyze() -> None:
@@ -125,7 +131,7 @@ def test_api_analyze() -> None:
             "weight_submerged": "14.35",
             "branch_id":        "test",
         }
-        resp = requests.post("http://localhost:8000/api/analyze", files=files, data=data, timeout=30)
+        resp = requests.post(API_BASE + "/api/analyze", files=files, data=data, timeout=30)
         check("API returns 200",             resp.status_code == 200, str(resp.status_code))
         if resp.status_code == 200:
             body = resp.json()
@@ -137,8 +143,10 @@ def test_api_analyze() -> None:
                   verdict.get("loan_action", "?"))
             check("Acoustic mode is SVM",    body["modality_scores"]["acoustic"]["mode"] == "svm",
                   body["modality_scores"]["acoustic"]["mode"])
-            check("Image mode is efficientnet", body["modality_scores"]["image"]["mode"] == "efficientnet",
-                  body["modality_scores"]["image"]["mode"])
+            check("Photo material scan ran", body["modality_scores"]["xray"]["mode"] == "dsip_xray",
+                  body["modality_scores"]["xray"]["mode"])
+            check("Ring-pitch check ran",    "ring" in body["modality_scores"]["acoustic"],
+                  body["modality_scores"]["acoustic"].get("ring", {}).get("status", "missing"))
     except requests.ConnectionError:
         check("API reachable", False, "Connection refused — is uvicorn running on port 8000?")
 
@@ -161,11 +169,11 @@ def test_api_tungsten() -> None:
         data = {
             "item_description": "Integration test — tungsten-core 24K bar",
             "declared_karat":   "24",
-            "weight_dry":       "18.9",
-            "weight_submerged": "17.91",  # density ≈ 19.09 ≈ 24K (passes density)
+            "weight_dry":       "50.0",
+            "weight_submerged": "47.41",  # buoyancy-corrected density ≈ 19.25 (passes 24K band)
             "branch_id":        "test",
         }
-        resp = requests.post("http://localhost:8000/api/analyze", files=files, data=data, timeout=30)
+        resp = requests.post(API_BASE + "/api/analyze", files=files, data=data, timeout=30)
         check("Tungsten API returns 200", resp.status_code == 200, str(resp.status_code))
         if resp.status_code == 200:
             body = resp.json()

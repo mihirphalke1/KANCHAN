@@ -1,4 +1,5 @@
 import { AlertTriangle } from 'lucide-react'
+import InfoTip from './ui/InfoTip'
 import styles from './DensityDetails.module.css'
 
 export default function DensityDetails({ density }) {
@@ -6,7 +7,8 @@ export default function DensityDetails({ density }) {
 
   const {
     measured_density, expected_nominal, expected_low, expected_high,
-    deviation_pct, karat_verdict, closest_fake, tungsten_warning
+    deviation_pct, karat_verdict, closest_fake, tungsten_warning,
+    sigma, conformity_probability, measurement_adequate, water_temp_c
   } = density
 
   const inRange = karat_verdict === 'IN_RANGE'
@@ -14,7 +16,7 @@ export default function DensityDetails({ density }) {
 
   return (
     <div className={styles.card}>
-      <h3 className={styles.title}>Density Analysis</h3>
+      <h3 className={styles.title}>Weight-in-Water Test (Density)</h3>
 
       {tungsten && (
         <div className={styles.tungstenWarn}>
@@ -49,8 +51,9 @@ export default function DensityDetails({ density }) {
 
       <div className={styles.table}>
         <Row label="Measured Density"
-          value={`${measured_density} g/cm³`}
+          value={sigma != null ? `${measured_density} ± ${sigma} g/cm³` : `${measured_density} g/cm³`}
           mono highlight={!inRange}
+          tip="The ± is the measurement's honest uncertainty, from the balance's precision. Heavier items measure more precisely than light ones."
         />
         <Row label="Expected Range"
           value={`${expected_low} – ${expected_high} g/cm³`}
@@ -60,6 +63,20 @@ export default function DensityDetails({ density }) {
           value={`${expected_nominal} g/cm³`}
           mono
         />
+        {conformity_probability != null && (
+          <Row label="Chance it matches declared karat"
+            value={`${(conformity_probability * 100).toFixed(1)}%`}
+            mono
+            status={conformity_probability > 0.8 ? 'ok' : 'warn'}
+            tip="The probability that the item's true density falls inside the declared karat's range, given the measurement and its uncertainty. Low values mean the metal is unlikely to be what was declared."
+          />
+        )}
+        {water_temp_c != null && (
+          <Row label="Water Temperature"
+            value={`${water_temp_c} °C (buoyancy-corrected)`}
+            mono
+          />
+        )}
         <Row label="Deviation"
           value={`${deviation_pct > 0 ? '+' : ''}${deviation_pct}%`}
           mono highlight={Math.abs(deviation_pct) > 5}
@@ -75,14 +92,22 @@ export default function DensityDetails({ density }) {
           />
         )}
       </div>
+
+      {measurement_adequate === false && (
+        <p className={styles.adequacyNote}>
+          The balance's precision (±{sigma} g/cm³) cannot fully resolve the declared
+          karat band for an item this light — re-weigh with a finer balance or rely
+          on the other modalities.
+        </p>
+      )}
     </div>
   )
 }
 
-function Row({ label, value, mono, highlight, status }) {
+function Row({ label, value, mono, highlight, status, tip }) {
   return (
     <div className={styles.row}>
-      <span className={styles.rowLabel}>{label}</span>
+      <span className={styles.rowLabel}>{label}{tip && <InfoTip text={tip} />}</span>
       <span className={`${styles.rowValue} ${mono ? styles.mono : ''} ${highlight ? styles.highlight : ''} ${status === 'ok' ? styles.ok : ''} ${status === 'warn' ? styles.warn : ''}`}>
         {value}
       </span>

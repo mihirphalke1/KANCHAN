@@ -1,0 +1,25 @@
+{
+  "entropy_baseline": 0.4977,
+  "entropy_span": 0.6035,
+  "edge_baseline": 13.5,
+  "edge_span": 23.988,
+  "n_photos": 104,
+  "skipped": 53,
+  "calibrated_on": "2026-07-11",
+  "sources": [
+    "data/raw/tanishq",
+    "data/raw/counterfeit_gold/gold/bare_gold/images"
+  ],
+  "genuine_stats": {
+    "entropy": {
+      "p50": 0.4125,
+      "p75": 0.4977,
+      "p99": 0.7995
+    },
+    "edge_density": {
+      "p50": 8.25,
+      "p75": 13.5,
+      "p99": 25.494
+    }
+  }
+}

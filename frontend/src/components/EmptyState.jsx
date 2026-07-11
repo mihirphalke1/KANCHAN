@@ -30,9 +30,9 @@ export default function EmptyState() {
         ))}
       </div>
       <div className={styles.novelties}>
-        <span className={styles.noveltyChip}>MFCC-ΔΔ acoustic</span>
-        <span className={styles.noveltyChip}>Benford's Law</span>
-        <span className={styles.noveltyChip}>Cross-modal contradiction</span>
+        <span className={styles.noveltyChip}>Sound ring test</span>
+        <span className={styles.noveltyChip}>Branch records check</span>
+        <span className={styles.noveltyChip}>Tests cross-check each other</span>
       </div>
     </div>
   )

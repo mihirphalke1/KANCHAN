@@ -2,9 +2,30 @@ import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 import styles from './ContradictionAlert.module.css'
 
-export default function ContradictionAlert({ contradiction }) {
+const PLAIN_NAMES = {
+  density: 'weight test', image: 'photo', acoustic: 'sound test',
+  streak: 'streak', xray: 'material scan', photo: 'photo',
+}
+
+function plain(text) {
+  // Replace standalone modality tokens only — never inside hyphenated words
+  // like "low-density core" (which must stay literal English).
+  return String(text).replace(
+    /(?<![-\w])(density|image|acoustic|streak|xray)(?![-\w])/g,
+    m => PLAIN_NAMES[m] || m
+  )
+}
+
+export default function ContradictionAlert({ contradiction, scores }) {
   const [expanded, setExpanded] = useState(true)
   if (!contradiction || !contradiction.flags?.length) return null
+
+  const absent = new Set(
+    Object.entries(scores || {})
+      .filter(([, s]) => (s?.mode || '').startsWith('no_'))
+      .map(([k]) => k)
+  )
+  const pairVisible = ([pair]) => !pair.split('↔').some(m => absent.has(m))
 
   const score = contradiction.contradiction_score
   const level = score > 0.5 ? 'high' : score > 0.3 ? 'medium' : 'low'
@@ -15,12 +36,11 @@ export default function ContradictionAlert({ contradiction }) {
         <div className={styles.titleGroup}>
           <AlertTriangle size={16} strokeWidth={2.5} />
           <span className={styles.title}>
-            Cross-Modal Contradiction Detected
-            <span className={styles.badge}>Novelty 3</span>
+            Tests Disagree — Needs Attention
           </span>
         </div>
         <div className={styles.headerRight}>
-          <span className={styles.score}>{Math.round(score * 100)}% conflict</span>
+          <span className={styles.score}>{Math.round(score * 100)}% disagreement</span>
           {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
         </div>
       </button>
@@ -30,17 +50,18 @@ export default function ContradictionAlert({ contradiction }) {
           {contradiction.flags.map((flag, i) => (
             <div key={i} className={styles.flag}>
               <div className={styles.flagBullet} />
-              <p>{flag}</p>
+              <p>{plain(flag)}</p>
             </div>
           ))}
 
           {contradiction.cross_pairs && (
             <div className={styles.pairs}>
               {Object.entries(contradiction.cross_pairs)
+                .filter(pairVisible)
                 .sort(([, a], [, b]) => b - a)
                 .map(([pair, val]) => (
                   <div key={pair} className={styles.pair}>
-                    <span className={styles.pairName}>{pair}</span>
+                    <span className={styles.pairName}>{plain(pair)}</span>
                     <div className={styles.pairTrack}>
                       <div
                         className={`${styles.pairFill} ${val > 0.35 ? styles.hot : styles.cool}`}

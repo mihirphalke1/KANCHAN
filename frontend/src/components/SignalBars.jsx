@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { Eye, Weight, Mic, Brush } from 'lucide-react'
+import { Eye, Weight, Mic, Brush, Scan } from 'lucide-react'
+import InfoTip from './ui/InfoTip'
 import styles from './SignalBars.module.css'
 
 const SIGNALS = [
-  { key: 'image',    label: 'Visual',   icon: Eye,    description: 'Color & surface analysis' },
-  { key: 'density',  label: 'Density',  icon: Weight, description: 'Archimedes test result' },
-  { key: 'acoustic', label: 'Acoustic', icon: Mic,    description: 'MFCC-ΔΔ tap test' },
-  { key: 'streak',   label: 'Streak',   icon: Brush,  description: 'Touchstone test' },
+  { key: 'image',    label: 'Photo',       icon: Eye,    description: 'Colour & surface from the photos' },
+  { key: 'density',  label: 'Weight test', icon: Weight, description: 'Weight in air vs in water' },
+  { key: 'acoustic', label: 'Sound test',  icon: Mic,    description: 'Ring of the item when tapped' },
+  { key: 'streak',   label: 'Streak',      icon: Brush,  description: 'Touchstone streak colour' },
+  { key: 'xray',     label: 'Material scan', icon: Scan, description: 'Metal vs stones from the photo' },
 ]
 
 function getRiskColor(risk) {
@@ -15,21 +17,27 @@ function getRiskColor(risk) {
   return 'red'
 }
 
+function isNotPerformed(score) {
+  return !score || (score.mode || '').startsWith('no_')
+}
+
 function Bar({ signal, score }) {
   const [width, setWidth] = useState(0)
+  const notPerformed = isNotPerformed(score)
   const pct   = Math.round((score?.risk_score ?? 0.5) * 100)
   const color = getRiskColor(score?.risk_score ?? 0.5)
   const Icon  = signal.icon
 
   useEffect(() => {
+    if (notPerformed) return
     const t = requestAnimationFrame(() => {
       setTimeout(() => setWidth(pct), 50)
     })
     return () => cancelAnimationFrame(t)
-  }, [pct])
+  }, [pct, notPerformed])
 
   return (
-    <div className={styles.barRow}>
+    <div className={`${styles.barRow} ${notPerformed ? styles.notPerformed : ''}`}>
       <div className={styles.barMeta}>
         <div className={styles.barLabelGroup}>
           <span className={styles.barIcon}>
@@ -41,16 +49,23 @@ function Bar({ signal, score }) {
           </div>
         </div>
         <div className={styles.barRight}>
-          <span className={`${styles.statusDot} ${styles[`dot_${color}`]}`} aria-hidden="true" />
-          <span className={`${styles.barPct} ${styles[color]}`}>{pct}%</span>
-          {score?.mode && <span className={styles.barMode}>{score.mode}</span>}
+          {notPerformed ? (
+            <span className={styles.naTag}>Not performed</span>
+          ) : (
+            <>
+              <span className={`${styles.statusDot} ${styles[`dot_${color}`]}`} aria-hidden="true" />
+              <span className={`${styles.barPct} ${styles[color]}`}>{pct}%</span>
+            </>
+          )}
         </div>
       </div>
       <div className={styles.track}>
-        <div
-          className={`${styles.fill} ${styles[color]}`}
-          style={{ '--bar-width': `${width}%`, width: `${width}%` }}
-        />
+        {!notPerformed && (
+          <div
+            className={`${styles.fill} ${styles[color]}`}
+            style={{ '--bar-width': `${width}%`, width: `${width}%` }}
+          />
+        )}
       </div>
     </div>
   )
@@ -61,13 +76,18 @@ export default function SignalBars({ scores }) {
 
   return (
     <div className={styles.card}>
-      <h3 className={styles.title}>Signal Breakdown</h3>
+      <h3 className={styles.title}>
+        Test Results
+        <InfoTip text="Each test's individual risk before combination. 'Not performed' tests carry no evidence either way — run more tests for a stronger verdict." side="right" />
+      </h3>
       <div className={styles.bars}>
-        {SIGNALS.map(sig => (
-          <Bar key={sig.key} signal={sig} score={scores[sig.key]} />
-        ))}
+        {SIGNALS
+          .filter(sig => sig.key !== 'xray' || (scores.xray && scores.xray.mode !== 'no_xray'))
+          .map(sig => (
+            <Bar key={sig.key} signal={sig} score={scores[sig.key]} />
+          ))}
       </div>
-      <p className={styles.footer}>Risk score per modality - lower is better</p>
+      <p className={styles.footer}>Risk per test — lower is better</p>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Image as ImageIcon, Mic, Volume2, Play, Pause } from 'lucide-react'
 import styles from './MediaEvidence.module.css'
 
@@ -157,13 +157,29 @@ function WaveformCanvas({ src }) {
 }
 
 // ── Main component ─────────────────────────────────────────────────────
-export default function MediaEvidence({ caseData }) {
+// Uploads are never stored on the server: for a fresh analysis the photos
+// and audio are shown from the browser's own copies (localMedia). Legacy
+// cases with saved file paths still render via mediaUrl().
+export default function MediaEvidence({ caseData, localMedia }) {
   const media   = caseData?.media || {}
   const caseId  = caseData?.case_id
 
-  const images      = (media.images || []).filter(Boolean).slice(0, 4)
-  const streakPath  = media.streak  || null
-  const audioPath   = media.audio   || null
+  const localUrls = useMemo(() => ({
+    images: (localMedia?.images || []).slice(0, 4).map(f => URL.createObjectURL(f)),
+    streak: localMedia?.streak ? URL.createObjectURL(localMedia.streak) : null,
+    audio:  localMedia?.audio  ? URL.createObjectURL(localMedia.audio)  : null,
+  }), [localMedia])
+  useEffect(() => () => {
+    localUrls.images.forEach(u => URL.revokeObjectURL(u))
+    if (localUrls.streak) URL.revokeObjectURL(localUrls.streak)
+    if (localUrls.audio)  URL.revokeObjectURL(localUrls.audio)
+  }, [localUrls])
+
+  const images = localUrls.images.length > 0
+    ? localUrls.images
+    : (media.images || []).filter(Boolean).slice(0, 4).map(mediaUrl)
+  const streakPath = localUrls.streak || (media.streak ? mediaUrl(media.streak) : null)
+  const audioPath  = localUrls.audio  || (media.audio  ? mediaUrl(media.audio)  : null)
 
   const hasImages = images.length > 0 || streakPath
   const hasAudio  = Boolean(audioPath)
@@ -185,7 +201,7 @@ export default function MediaEvidence({ caseData }) {
             {images.map((p, i) => (
               <div key={i} className={styles.photoCell}>
                 <img
-                  src={mediaUrl(p)}
+                  src={p}
                   alt={`Photo ${i + 1}`}
                   className={styles.photo}
                   loading="lazy"
@@ -197,7 +213,7 @@ export default function MediaEvidence({ caseData }) {
             {streakPath && (
               <div className={`${styles.photoCell} ${styles.photoCellStreak}`}>
                 <img
-                  src={mediaUrl(streakPath)}
+                  src={streakPath}
                   alt="Touchstone streak"
                   className={styles.photo}
                   loading="lazy"
@@ -217,7 +233,7 @@ export default function MediaEvidence({ caseData }) {
             Acoustic ring test
             {hasAudio && <span className={styles.count}>waveform</span>}
           </div>
-          <WaveformCanvas src={hasAudio ? mediaUrl(audioPath) : null} />
+          <WaveformCanvas src={hasAudio ? audioPath : null} />
         </div>
       )}
     </div>

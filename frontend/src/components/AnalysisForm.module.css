@@ -69,6 +69,8 @@
 
 .row > * { min-width: 0; }
 
+.row3 { grid-template-columns: 1fr 1fr 1fr; }
+
 .label {
   font-size: 13px;
   font-weight: 500;
