@@ -6,7 +6,6 @@ import ContradictionAlert from './ContradictionAlert'
 import DensityDetails from './DensityDetails'
 import CompositionCard from './CompositionCard'
 import SHAPBreakdown from './SHAPBreakdown'
-import BenfordStatus from './BenfordStatus'
 import MediaEvidence from './MediaEvidence'
 import XRayView from './XRayView'
 import EmptyState from './EmptyState'
@@ -18,7 +17,7 @@ export default function ResultsPanel({ result, loading, error, localMedia }) {
   if (error)   return <ErrorState message={error} />
   if (!result) return <EmptyState />
 
-  const { modality_scores, contradiction, fusion, benford, verdict, case_id } = result
+  const { modality_scores, contradiction, fusion, verdict, case_id } = result
 
   return (
     <div className={styles.panel}>
@@ -35,7 +34,6 @@ export default function ResultsPanel({ result, loading, error, localMedia }) {
       {fusion?.shap_values && (
         <SHAPBreakdown shap={fusion.shap_values} scores={modality_scores} fusionMode={fusion.mode} />
       )}
-      <BenfordStatus benford={benford} />
     </div>
   )
 }

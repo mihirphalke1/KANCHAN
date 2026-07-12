@@ -40,12 +40,16 @@ export default function SHAPBreakdown({ shap, scores, fusionMode }) {
 
   const absent = new Set(
     Object.entries(scores || {})
-      .filter(([, s]) => (s?.mode || '').startsWith('no_'))
+      .filter(([, s]) => {
+        const m = s?.mode || ''
+        return m.startsWith('no_') || m === 'dsip_unusable'
+      })
       .map(([k]) => k)
   )
   // The visual slot carries the material scan when the CNN probe is off —
-  // it counts as performed whenever the DSIP scan ran.
+  // it counts as performed whenever the DSIP scan ran usably.
   if (scores?.xray?.mode === 'dsip_xray') absent.delete('image')
+  else absent.add('image')
 
   // Plain-language strength of a log-odds contribution
   const strength = (v) => {

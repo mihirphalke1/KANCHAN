@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Image as ImageIcon, Mic, Volume2, Play, Pause } from 'lucide-react'
+import Lightbox from './ui/Lightbox'
 import styles from './MediaEvidence.module.css'
 
 // Build a URL that works in both dev (proxied) and prod (same origin)
@@ -163,6 +164,7 @@ function WaveformCanvas({ src }) {
 export default function MediaEvidence({ caseData, localMedia }) {
   const media   = caseData?.media || {}
   const caseId  = caseData?.case_id
+  const [zoom, setZoom] = useState(null)
 
   const localUrls = useMemo(() => ({
     images: (localMedia?.images || []).slice(0, 4).map(f => URL.createObjectURL(f)),
@@ -205,6 +207,8 @@ export default function MediaEvidence({ caseData, localMedia }) {
                   alt={`Photo ${i + 1}`}
                   className={styles.photo}
                   loading="lazy"
+                  onClick={() => setZoom(p)}
+                  style={{ cursor: 'zoom-in' }}
                   onError={e => { e.target.style.display = 'none' }}
                 />
                 <span className={styles.photoLabel}>Photo {i + 1}</span>
@@ -217,6 +221,8 @@ export default function MediaEvidence({ caseData, localMedia }) {
                   alt="Touchstone streak"
                   className={styles.photo}
                   loading="lazy"
+                  onClick={() => setZoom(streakPath)}
+                  style={{ cursor: 'zoom-in' }}
                   onError={e => { e.target.style.display = 'none' }}
                 />
                 <span className={styles.photoLabel}>Touchstone streak</span>
@@ -236,6 +242,8 @@ export default function MediaEvidence({ caseData, localMedia }) {
           <WaveformCanvas src={hasAudio ? audioPath : null} />
         </div>
       )}
+
+      <Lightbox src={zoom} alt="Item photograph" onClose={() => setZoom(null)} />
     </div>
   )
 }

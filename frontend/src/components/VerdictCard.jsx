@@ -85,6 +85,10 @@ export default function VerdictCard({ verdict, caseId }) {
         </div>
       )}
 
+      {verdict.override_reason && (
+        <p className={styles.overrideNote}>{verdict.override_reason}</p>
+      )}
+
       {verdict.plain_english && (
         <p className={styles.explanation}>{verdict.plain_english}</p>
       )}

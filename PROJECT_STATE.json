@@ -1,40 +1,36 @@
 {
   "project": "KANCHAN-AI",
-  "version": "1.1.0-production",
-  "last_updated": "2026-06-26T06:10:44.600970Z",
-  "phases_complete": [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7
-  ],
-  "phases_in_progress": [],
-  "models_trained": [
-    "acoustic_svm.pkl",
-    "image_probe.pkl",
-    "fusion_xgb.pkl"
-  ],
-  "datasets_downloaded": [
-    "DS-1",
-    "DS-2",
-    "DS-3",
-    "DS-6"
+  "version": "2.0.0-physics-first",
+  "last_updated": "2026-07-12",
+  "summary": "Physics-first spurious-gold detection. Three mandatory core tests (weight-in-water with propagated uncertainty, DSIP photo material scan, ring-pitch acoustic physics), transparent log-odds fusion, declared decision policy, 10-step officer verification trail. No uploaded media persisted.",
+  "decision_stack": {
+    "density": "Archimedes + CRC water table + JCGM 106 conformity; claim-blind best-match identification (karat optional)",
+    "photo": "Deterministic classical CV: backdrop removal, stone detection (coloured + colourless), inclusion cross-check, composition mixture model; baselines calibrated from 104 genuine photos",
+    "sound": "Ring-pitch vs band calibrated from genuine recordings (v=sqrt(E/rho)); 10/10 composites flagged on real data; SVM secondary",
+    "fusion": "Log-odds evidence sum with reliability weights and blind-spot floors; hand-recomputable; XGBoost kept as opt-in baseline (FUSION_MODE=xgboost)",
+    "policy": "data/decision_policy.json — bands, overrides, multi-test approval mandate (weight+photo+sound)",
+    "records": "Benford first-digit monitor on branch logs; shown to officer only when alerting"
+  },
+  "calibration_files": [
+    "data/acoustic_calibration.json (scripts/calibrate_acoustic.py)",
+    "data/dsip_calibration.json (scripts/calibrate_dsip.py)",
+    "data/decision_policy.json"
   ],
   "known_issues": [
-    "Streak model runs in heuristic mode \u2014 no public touchstone dataset; collect DS-7 to train",
-    "DS-4 (Roboflow) skipped \u2014 requires Roboflow API key",
-    "DS-5 (ESC-50) used for pipeline validation only, not training",
-    "Fusion model includes synthetic tungsten-core samples; improves with DS-7 real data",
-    "Tungsten blind-spot in density (19.25 \u2248 24K) \u2014 caught by contradiction module",
-    "LLM verdict falls back to heuristic if no GROQ_API_KEY or GOOGLE_API_KEY in .env"
+    "Streak model abstains (proxy-trained) pending DS-7 real touchstone photos",
+    "CNN image probe off the decision path by default (USE_CNN_PROBE=1 to re-enable)",
+    "Acoustic band calibrated per item class — recalibrate on own genuine items before demo",
+    "Colourless-stone detection is shape/texture-based and imperfect; photo stone fraction is a lower bound",
+    "Decision thresholds are declared policy dials pending pilot data",
+    "Groq API key invalid in .env — verdict text falls back to Gemini/heuristic (both direction-aware)"
+  ],
+  "pilot_backlog": [
+    "SQLite migration for case_history/density_log (concurrent-officer safety)",
+    "Coverage gate: multi-angle photo requirement before ACCEPT",
+    "Reference-panel calibration with real gold pieces (z-threshold empirics)",
+    "In-browser mic/camera capture"
   ],
   "demo_ready": true,
-  "presentation_date": "2nd week of July 2025",
-  "frontend": "React + Vite (run: cd frontend && npm install && npm run dev)",
-  "backend": "FastAPI (run: uvicorn app.main:app --reload)",
-  "quick_start": "bash scripts/run_demo.sh"
+  "presentation": "SuRaksha Cyber Hackathon 2.0 — IISc Bangalore, July 2026",
+  "quick_start": "backend: python3 -m uvicorn app.main:app --reload --port 8001 | frontend: cd frontend && npm run dev | open http://localhost:5173"
 }

@@ -12,11 +12,9 @@ echo "║  Canara Bank / SuRaksha Hackathon 2.0            ║"
 echo "╚══════════════════════════════════════════════════╝"
 echo ""
 
-# Seed demo data if density_log.csv doesn't exist
-if [ ! -f "data/density_log.csv" ]; then
-  echo "Seeding demo data..."
-  python scripts/seed_demo_data.py
-fi
+# data/density_log.csv ships Benford-conformant seeds; if it's missing,
+# the records monitor simply reports "insufficient data" until 30 real
+# readings accumulate — do NOT regenerate synthetic data here.
 
 # Copy .env.example to .env if not present
 if [ ! -f ".env" ]; then

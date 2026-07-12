@@ -110,6 +110,40 @@ def compute_density(
     return density_measurement(weight_dry, weight_submerged, water_temp_c)["density"]
 
 
+def infer_best_match(measured_density: float, sigma: float) -> dict:
+    """
+    The declared karat is a CLAIM under test, never trusted. This inverts the
+    question: given the measurement, what material does the physics actually
+    point to? Evaluates conformity against every karat band and proximity to
+    every known fake metal.
+
+    Returns {kind: 'karat'|'fake'|'unknown', name, probability/z, note}.
+    """
+    sigma = max(sigma, 1e-6)
+
+    best_karat, best_p = None, 0.0
+    for k, ref in KARAT_DENSITY_TABLE.items():
+        p = _phi((ref["high"] - measured_density) / sigma) - _phi((ref["low"] - measured_density) / sigma)
+        if p > best_p:
+            best_karat, best_p = k, p
+
+    best_fake, best_fake_z = None, float("inf")
+    for name, rho in KNOWN_FAKES.items():
+        z = abs(measured_density - rho) / sigma
+        if z < best_fake_z:
+            best_fake, best_fake_z = name, z
+
+    if best_p >= 0.5:
+        return {"kind": "karat", "name": f"{best_karat}K gold",
+                "karat": best_karat, "probability": round(best_p, 4)}
+    # a fake metal counts as "matched" when within ~3 sigma or 0.3 g/cm3
+    if best_fake_z <= max(3.0, 0.3 / sigma):
+        return {"kind": "fake", "name": best_fake,
+                "distance_z": round(best_fake_z, 2)}
+    return {"kind": "unknown", "name": "no known gold alloy or common metal",
+            "karat_candidate": best_karat, "probability": round(best_p, 4)}
+
+
 def density_risk_score(
     measured_density: float, declared_karat: int, sigma: float | None = None
 ) -> dict:
@@ -122,6 +156,39 @@ def density_risk_score(
     measurement-adequacy flag (False when the instrument cannot resolve the
     declared band — e.g. any light item against the narrow 24K band).
     """
+    sigma_in = sigma if sigma and sigma > 0 else 0.05
+
+    # No declaration: fake detection is claim-independent. The physics
+    # identifies the metal itself — matches a gold band -> genuine at that
+    # karat; matches no gold alloy -> fake, no claim needed.
+    if not declared_karat:
+        best = infer_best_match(measured_density, sigma_in)
+        if best["kind"] == "karat":
+            ref = KARAT_DENSITY_TABLE[best["karat"]]
+            risk = round(1.0 - best["probability"], 4)
+            verdict = "IDENTIFIED_FROM_PHYSICS"
+        else:
+            ref = None
+            risk = 1.0
+            verdict = "NOT_GOLD"
+        closest = min(KNOWN_FAKES, key=lambda k: abs(KNOWN_FAKES[k] - measured_density))
+        if abs(KNOWN_FAKES[closest] - measured_density) > 1.0:
+            closest = None
+        return {
+            "risk_score":             risk,
+            "measured_density":       round(measured_density, 4),
+            "sigma":                  round(sigma_in, 4),
+            "conformity_probability": round(1.0 - risk, 4),
+            "measurement_adequate":   True,
+            "expected_nominal":       ref["nominal"] if ref else None,
+            "expected_low":           ref["low"] if ref else None,
+            "expected_high":          ref["high"] if ref else None,
+            "deviation_pct":          round((measured_density - ref["nominal"]) / ref["nominal"] * 100, 2) if ref else None,
+            "karat_verdict":          verdict,
+            "closest_fake":           closest,
+            "tungsten_warning":       abs(measured_density - KNOWN_FAKES["tungsten"]) < max(2 * sigma_in, 0.2),
+        }
+
     ref = KARAT_DENSITY_TABLE.get(declared_karat)
     if ref is None:
         valid = list(KARAT_DENSITY_TABLE.keys())

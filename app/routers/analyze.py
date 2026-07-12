@@ -129,12 +129,19 @@ def _build_trace(
         "LOW_DENSITY":         "Below the expected range — too light for the declared karat",
         "HIGH_DENSITY":        "Above the expected range — denser than the declared alloy",
         "TUNGSTEN_BLIND_SPOT": "Matches both 24K gold and tungsten — density alone cannot tell",
+        "IDENTIFIED_FROM_PHYSICS": "No karat declared — the physics identified the metal",
+        "NOT_GOLD":            "No karat declared — the density matches no gold alloy",
     }.get(density_result["karat_verdict"], density_result["karat_verdict"])
+    best = density_result.get("best_match") or {}
+    physics_says = f" Physics best match: {best.get('name', '—')}"
+    if density_result.get("misdeclared_purity"):
+        physics_says += " — likely purity mis-declaration, not fake metal"
     steps.append({
         "step": "Does the density match the declared karat?",
         "status": "flag" if density_result["risk_score"] > 0.5 else "done",
         "summary": f"{verdict_text}; chance it matches: "
-                   f"{round(density_result['conformity_probability'] * 100, 1)}%",
+                   f"{round(density_result['conformity_probability'] * 100, 1)}%."
+                   + physics_says,
         "formula": "risk = P(true ρ outside karat band | measurement), Gaussian CDF",
         "details": {
             "declared band (g/cm³)": f"{density_result['expected_low']} – {density_result['expected_high']}",
@@ -151,32 +158,37 @@ def _build_trace(
             "status": "done" if xray_result.get("background_removed") else "flag",
             "summary": (f"Item = {xray_result.get('item_area_pct')}% of frame, backdrop removed"
                         if xray_result.get("background_removed")
-                        else "Backdrop NOT separable — stats include background"),
+                        else "Backdrop could not be separated — the photo is set aside "
+                             "(no visual evidence used); retake on a plain background"),
             "formula": "Backdrop colour from frame border → weighted HSV distance; border-touching components discarded",
             "details": {"stage_image": "material"},
             "source": "Classical CV (no ML) — thresholds in app/utils/xray.py",
         })
-        steps.append({
-            "step": "Finding the stones in the photo",
-            "status": "done",
-            "summary": f"{xray_result.get('gem_regions', 0)} coloured "
-                       f"({xray_result.get('gem_area_pct', 0)}%), "
-                       f"{xray_result.get('colourless_regions', 0)} colourless candidates "
-                       f"({xray_result.get('colourless_area_pct', 0)}%)",
-            "formula": "Coloured: saturated non-gold-hue clusters. Colourless: bright low-sat regions, "
-                       "classified round+smooth (pearl-like) vs micro-edge sparkle (faceted)",
-            "details": {"stage_image": "gems"},
-            "source": "Independent CV detection — description text is never trusted",
-        })
-        steps.append({
-            "step": "Checking dark spots against the found stones",
-            "status": "flag" if xray_result.get("inclusions_unexplained", 0) > 0 else "done",
-            "summary": f"{xray_result.get('inclusions_explained', 0)} dark region(s) explained by detected stones, "
-                       f"{xray_result.get('inclusions_unexplained', 0)} unexplained",
-            "formula": "Dark region counts as a stone only if ≥25% of it overlaps an independently detected gem",
-            "details": {},
-            "source": "Two independent CV passes must agree (anti-laundering design)",
-        })
+        # The stone-finding and dark-spot checks are only meaningful once the
+        # item is separated from its background. When it isn't, every count
+        # would be measured on the scene, not the item — so we omit them.
+        if xray_result.get("background_removed"):
+            steps.append({
+                "step": "Finding the stones in the photo",
+                "status": "done",
+                "summary": f"{xray_result.get('gem_regions', 0)} coloured "
+                           f"({xray_result.get('gem_area_pct', 0)}%), "
+                           f"{xray_result.get('colourless_regions', 0)} colourless candidates "
+                           f"({xray_result.get('colourless_area_pct', 0)}%)",
+                "formula": "Coloured: saturated non-gold-hue clusters. Colourless: bright low-sat regions, "
+                           "classified round+smooth (pearl-like) vs micro-edge sparkle (faceted)",
+                "details": {"stage_image": "gems"},
+                "source": "Independent CV detection — description text is never trusted",
+            })
+            steps.append({
+                "step": "Checking dark spots against the found stones",
+                "status": "flag" if xray_result.get("inclusions_unexplained", 0) > 0 else "done",
+                "summary": f"{xray_result.get('inclusions_explained', 0)} dark region(s) explained by detected stones, "
+                           f"{xray_result.get('inclusions_unexplained', 0)} unexplained",
+                "formula": "Dark region counts as a stone only if ≥25% of it overlaps an independently detected gem",
+                "details": {},
+                "source": "Two independent CV passes must agree (anti-laundering design)",
+            })
 
     if composition_result:
         if composition_result.get("model_valid") is False:
@@ -269,7 +281,8 @@ def _build_trace(
         "step": "Final decision",
         "status": "flag" if risk_level == "REJECT" else "done",
         "summary": f"{risk_level} ({confidence}) → {loan_action}",
-        "formula": "density/physics overrides first; else combined risk + contradiction boost, banded per the declared policy",
+        "formula": "overrides first (density, ring-pitch, multi-test mandate); else combined risk + "
+                   "contradiction boost, banded per the declared policy. APPROVE requires weight + photo + sound",
         "details": {"boosted risk": boosted_risk},
         "source": "data/decision_policy.json — bank risk-appetite dials, auditable",
     })
@@ -279,7 +292,7 @@ def _build_trace(
 @router.post("/analyze")
 async def analyze(
     response: Response,
-    item_description: str = Form(...),
+    item_description: str = Form(""),
     declared_karat: int = Form(...),
     weight_dry: float = Form(...),
     weight_submerged: float = Form(...),
@@ -296,8 +309,9 @@ async def analyze(
     case_id = uuid.uuid4().hex[:8]
     response.headers["X-Case-ID"] = case_id
 
-    if declared_karat not in (14, 18, 22, 24):
-        raise HTTPException(status_code=422, detail="declared_karat must be 14, 18, 22, or 24")
+    if declared_karat not in (0, 14, 18, 22, 24):
+        raise HTTPException(status_code=422,
+                            detail="declared_karat must be 14, 18, 22, 24, or 0 (not declared)")
     if weight_dry <= 0 or weight_submerged <= 0:
         raise HTTPException(status_code=422, detail="Weights must be positive")
     if weight_submerged >= weight_dry:
@@ -353,8 +367,15 @@ async def analyze(
     # readings above the gold band are never softened.
     composition_result = None
     density_risk_effective = density_result["risk_score"]
+    # With no declaration, the mixture model runs against the karat the
+    # physics identified; if the physics matched no gold alloy there is no
+    # gold hypothesis to correct for stones.
+    effective_karat = declared_karat or (
+        (density_result.get("best_match") or {}).get("karat") or 0
+    )
     if (
-        xray_result
+        effective_karat
+        and xray_result
         and xray_result.get("background_removed")
         and (xray_result.get("gem_regions", 0) > 0
              or xray_result.get("colourless_regions", 0) > 0)
@@ -371,12 +392,23 @@ async def analyze(
                 measured_density = density_result["measured_density"],
                 sigma_rho        = density_result["sigma"],
                 volume_cm3       = density_result["volume_cm3"],
-                declared_karat   = declared_karat,
+                declared_karat   = effective_karat,
                 gems             = all_stones,
                 gem_area_pct     = xray_result.get("gem_area_pct", 0.0)
                                    + xray_result.get("colourless_area_pct", 0.0),
             )
-            density_risk_effective = composition_result["adjusted_density_risk"]
+            # The stone-mixture correction may only LOWER density risk when
+            # the model is valid (density is explainable by gold + stones).
+            # When invalid (density too low/high for any gold-stone mix) the
+            # correction is meaningless — keep the raw density verdict, and
+            # never let a stone story rescue a non-gold density.
+            if composition_result.get("model_valid"):
+                density_risk_effective = min(
+                    density_result["risk_score"],
+                    composition_result["adjusted_density_risk"],
+                )
+            else:
+                density_risk_effective = density_result["risk_score"]
         except Exception as e:
             logger.warning("Composition analysis failed for case %s: %s", case_id, e)
 
@@ -458,8 +490,28 @@ async def analyze(
         override_reason = ring_check["reason"]
         contra["flags"].append("density↔ring-pitch: " + ring_check["reason"])
 
+    # Multi-test mandate: an APPROVE must rest on the full core battery
+    # (weight + photo + sound). One failing test can reject — a fake needs
+    # only one decisive contradiction — but a pass needs all three. Known
+    # frauds passed precisely because a single factor was trusted alone.
+    core_missing = []
+    if xray_result_score.get("mode") != "dsip_xray":
+        core_missing.append(
+            "usable photo (backdrop not separable — retake on a plain background)"
+            if xray_result_score.get("mode") == "dsip_unusable" else "photo"
+        )
+    if acoustic_result.get("mode") in ("no_audio",):
+        core_missing.append("sound test")
+    if loan_action == "APPROVE" and core_missing:
+        risk_level, confidence, loan_action = "BORDERLINE", "LOW", "HOLD"
+        override_reason = (
+            "Approval requires all three core tests (weight, photo, sound) — "
+            f"missing: {', '.join(core_missing)}. Add the missing test(s) and re-analyse. "
+            "No single test can approve an item on its own."
+        )
+
     llm_payload = {
-        "item_description": item_description,
+        "item_description": item_description or "gold item (no description provided)",
         "declared_karat":   declared_karat,
         "fusion_risk":      fusion["risk_score"],
         "density_risk":     density_risk_effective,

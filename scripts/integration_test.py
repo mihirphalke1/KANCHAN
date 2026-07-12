@@ -113,15 +113,17 @@ def test_api_analyze() -> None:
     print("\n── API /api/analyze (genuine 22K) ──")
     import requests
 
-    genuine_img = list((DS1 / "bare_gold" / "images").glob("*.jpg"))
+    # photo must be separable from its backdrop (DS-1 close-ups fill the
+    # frame and the material scan honestly abstains on them)
+    genuine_img = ROOT / "data/demo/test-kit/photos/gold_ring.jpg"
     genuine_wav = list((DS1 / "plain_sound" / "original").glob("*.wav"))
 
-    if not genuine_img or not genuine_wav:
-        check("DS-1 files available", False, "Missing files"); return
+    if not genuine_img.exists() or not genuine_wav:
+        check("Test files available", False, "Missing files"); return
 
     try:
         files = {
-            "images":    ("img.jpg", genuine_img[0].read_bytes(), "image/jpeg"),
+            "images":    ("img.jpg", genuine_img.read_bytes(), "image/jpeg"),
             "audio":     ("audio.wav", genuine_wav[0].read_bytes(), "audio/wav"),
         }
         data = {
@@ -155,15 +157,15 @@ def test_api_tungsten() -> None:
     print("\n── API /api/analyze (tungsten-core 24K — STAR scenario) ──")
     import requests
 
-    fake_img = list((DS1 / "bare_gold" / "images").glob("*.jpg"))   # visually looks like gold
-    fake_wav = list((DS1 / "plain_sound" / "copper").glob("*.wav"))  # dampened acoustic = copper
+    fake_img = ROOT / "data/demo/test-kit/photos/gold_ring.jpg"      # visually looks like gold
+    fake_wav = list((DS1 / "plain_sound" / "copper").glob("*.wav"))  # stiff-core ring = composite
 
-    if not fake_img or not fake_wav:
-        check("DS-1 files available", False, "Missing files"); return
+    if not fake_img.exists() or not fake_wav:
+        check("Test files available", False, "Missing files"); return
 
     try:
         files = {
-            "images": ("img.jpg", fake_img[0].read_bytes(), "image/jpeg"),
+            "images": ("img.jpg", fake_img.read_bytes(), "image/jpeg"),
             "audio":  ("audio.wav", fake_wav[0].read_bytes(), "audio/wav"),
         }
         data = {

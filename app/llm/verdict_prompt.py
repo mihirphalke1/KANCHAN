@@ -34,7 +34,13 @@ def _build_prompt(payload: dict) -> str:
             "LOW_DENSITY":  "BELOW the gold range (too light for gold)",
             "HIGH_DENSITY": "ABOVE the gold range (denser than the declared alloy)",
         }.get(direction, "outside the gold range")
-        closest_text = f" The closest known metal to this reading is {closest}." if closest else ""
+        best = density.get("best_match") or {}
+        if best.get("kind") == "karat":
+            closest_text = (f" IMPORTANT: the reading IS consistent with genuine {best['name']} "
+                            f"({best.get('probability', 0)*100:.0f}% match) — this is likely a purity "
+                            "mis-declaration, not fake metal; recommend revaluation at the matched karat.")
+        else:
+            closest_text = f" The closest known metal to this reading is {closest}." if closest else ""
         density_note = (
             f"\n⚠️  DENSITY OVERRIDE ACTIVE: Measured density ({measured} ± {density.get('sigma', 'N/A')} g/cm³) "
             f"is critically outside the expected range for {karat}K gold ({exp_low}–{exp_high} g/cm³). "
@@ -87,6 +93,22 @@ def _heuristic_verdict(
         if density_risk >= 0.85 and measured is not None:
             direction = density_details.get("karat_verdict")
             closest   = density_details.get("closest_fake")
+            best      = density_details.get("best_match") or {}
+
+            if best.get("kind") == "karat":
+                # Genuine gold, wrong claim: purity mis-declaration, not fake metal
+                explanation = (
+                    f"The weight-in-water test measured {measured:.2f} g/cm³, which does not match the "
+                    f"declared {declared_karat}K range ({exp_low}–{exp_high} g/cm³) but IS consistent with "
+                    f"genuine {best['name']} ({best['probability']*100:.0f}% match). This looks like a purity "
+                    "mis-declaration rather than fake metal."
+                )
+                action = (
+                    f"Do not approve at the declared {declared_karat}K. If the customer accepts revaluation, "
+                    f"re-run the analysis with the karat declared as {best.get('karat')}K and value accordingly."
+                )
+                return explanation, action
+
             if direction == "LOW_DENSITY":
                 cause = "far BELOW the gold range" + (
                     f" — consistent with a base metal such as {closest} under a gold-coloured surface"

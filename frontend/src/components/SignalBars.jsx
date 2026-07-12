@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { Eye, Weight, Mic, Brush, Scan } from 'lucide-react'
+import { Weight, Mic, Brush, Scan } from 'lucide-react'
 import InfoTip from './ui/InfoTip'
 import styles from './SignalBars.module.css'
 
 const SIGNALS = [
-  { key: 'image',    label: 'Photo',       icon: Eye,    description: 'Colour & surface from the photos' },
   { key: 'density',  label: 'Weight test', icon: Weight, description: 'Weight in air vs in water' },
+  { key: 'xray',     label: 'Photo test',  icon: Scan,   description: 'Metal vs stones from the photos' },
   { key: 'acoustic', label: 'Sound test',  icon: Mic,    description: 'Ring of the item when tapped' },
   { key: 'streak',   label: 'Streak',      icon: Brush,  description: 'Touchstone streak colour' },
-  { key: 'xray',     label: 'Material scan', icon: Scan, description: 'Metal vs stones from the photo' },
 ]
 
 function getRiskColor(risk) {
@@ -18,7 +17,8 @@ function getRiskColor(risk) {
 }
 
 function isNotPerformed(score) {
-  return !score || (score.mode || '').startsWith('no_')
+  const mode = score?.mode || ''
+  return !score || mode.startsWith('no_') || mode === 'dsip_unusable'
 }
 
 function Bar({ signal, score }) {
@@ -82,7 +82,7 @@ export default function SignalBars({ scores }) {
       </h3>
       <div className={styles.bars}>
         {SIGNALS
-          .filter(sig => sig.key !== 'xray' || (scores.xray && scores.xray.mode !== 'no_xray'))
+          .filter(sig => !isNotPerformed(scores[sig.key]))
           .map(sig => (
             <Bar key={sig.key} signal={sig} score={scores[sig.key]} />
           ))}

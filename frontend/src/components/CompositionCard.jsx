@@ -59,8 +59,10 @@ export default function CompositionCard({ composition, weightDry }) {
         </div>
       )}
 
-      {/* Detected gems */}
-      {gems.length > 0 && (
+      {/* Detected gems — only meaningful when the item is actually gold;
+          when the mixture model doesn't apply, a "gold vs stones" breakdown
+          is moot, so we don't list stones. */}
+      {model_valid !== false && gems.length > 0 && (
         <div className={styles.gemList}>
           {gems.map((g, i) => (
             <span key={i} className={styles.gemChip}>
@@ -71,22 +73,24 @@ export default function CompositionCard({ composition, weightDry }) {
         </div>
       )}
 
-      <div className={styles.table}>
-        <Row label="Stone volume (photo)" value={`${(stone_frac_photo * 100).toFixed(0)}%`}
-          tip="How much of the item's visible area the camera detected as stones. This is a lower bound — stones on the reverse side or hidden by the setting aren't counted." />
-        <Row label="Stone volume (physics)" value={`${(stone_frac_implied * 100).toFixed(0)}%`}
-          warn={hidden_volume_flag}
-          tip="How much non-gold volume the measured density implies. If this is much larger than what the camera sees, something non-gold is hidden inside the metal." />
-        <Row label="Predicted bulk density" value={`${rho_predicted} g/cm³`}
-          tip="What the density SHOULD read for the declared karat plus the stones the camera found." />
-        <Row label="Consistency (z)" value={consistency_z} warn={consistency_z > 2}
-          tip="Distance between the measured and predicted density, in units of total uncertainty. Below 2 = consistent; above 3 = something is wrong." />
-        <Row label="Stone-corrected density risk" value={`${Math.round(adjusted_density_risk * 100)}%`}
-          warn={adjusted_density_risk > 0.5}
-          tip="The density risk after accounting for the detected stones — this is what feeds the final decision for stone-set items, so genuine jewellery isn't rejected for its stones." />
-      </div>
+      {model_valid !== false && (
+        <div className={styles.table}>
+          <Row label="Stone volume (photo)" value={`${(stone_frac_photo * 100).toFixed(0)}%`}
+            tip="How much of the item's visible area the camera detected as stones. This is a lower bound — stones on the reverse side or hidden by the setting aren't counted." />
+          <Row label="Stone volume (physics)" value={`${(stone_frac_implied * 100).toFixed(0)}%`}
+            warn={hidden_volume_flag}
+            tip="How much non-gold volume the measured density implies. If this is much larger than what the camera sees, something non-gold is hidden inside the metal." />
+          <Row label="Predicted bulk density" value={`${rho_predicted} g/cm³`}
+            tip="What the density SHOULD read for the declared karat plus the stones the camera found." />
+          <Row label="Consistency (z)" value={consistency_z} warn={consistency_z > 2}
+            tip="Distance between the measured and predicted density, in units of total uncertainty. Below 2 = consistent; above 3 = something is wrong." />
+          <Row label="Stone-corrected density risk" value={`${Math.round(adjusted_density_risk * 100)}%`}
+            warn={adjusted_density_risk > 0.5}
+            tip="The density risk after accounting for the detected stones — this is what feeds the final decision for stone-set items, so genuine jewellery isn't rejected for its stones." />
+        </div>
+      )}
 
-      {!hidden_volume_flag && <p className={styles.note}>{note}</p>}
+      {!hidden_volume_flag && model_valid !== false && <p className={styles.note}>{note}</p>}
     </div>
   )
 }

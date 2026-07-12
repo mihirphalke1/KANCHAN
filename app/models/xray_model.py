@@ -127,10 +127,21 @@ def analyze_xray(xray_stats: dict | None, item_description: str = "") -> dict:
 
     signals = []
     if not bg_removed:
+        # Frame-wide stats are contaminated by the backdrop — a measurement
+        # of the scene, not the item. The scientifically honest move is to
+        # ABSTAIN: neutral risk (contributes exactly zero evidence) and the
+        # photo does not count as a usable core test for approval.
         signals.append(
-            "Background could not be separated — stats include backdrop pixels; "
-            "re-photograph on a plain fixed-colour backdrop"
+            "Background could not be separated — the photo carries no evidence "
+            "either way; re-photograph on a plain fixed-colour backdrop"
         )
+        return {
+            "risk_score": 0.5,
+            "confidence": "low",
+            "mode":       "dsip_unusable",
+            "signals":    signals,
+            "features":   {"background_removed": False},
+        }
 
     # Risk comes only from dark regions with NO corresponding detected gem.
     inclusion_risk = _clip01(0.20 * unexplained + unexpl_pct / 8.0)

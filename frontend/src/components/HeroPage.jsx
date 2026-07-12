@@ -8,39 +8,39 @@ import { Button } from '@/components/ui/button'
 import styles from './HeroPage.module.css'
 
 const STATS = [
-  { num: '0.999', label: 'Acoustic AUC',      sub: 'SVM on MFCC-ΔΔ' },
-  { num: '4',     label: 'AI modalities',      sub: 'Independent signals' },
-  { num: '3',     label: 'Novel contributions', sub: 'Research-grade' },
-  { num: '<10s',  label: 'Time to verdict',    sub: 'Branch-deployable' },
+  { num: '10/10', label: 'Filled cores caught',   sub: 'Ring physics, real recordings' },
+  { num: '3',     label: 'Core tests, mandatory', sub: 'Weight · photo · sound' },
+  { num: '100%',  label: 'Verdicts verifiable',   sub: 'Recomputable by hand' },
+  { num: '<10s',  label: 'Time to verdict',       sub: 'Branch-deployable' },
 ]
 
 const PIPELINE = [
-  { id: 'density',  label: 'Density',  sub: 'Archimedes',    color: 'blue',   Icon: FlaskConical },
-  { id: 'acoustic', label: 'Acoustic', sub: 'MFCC-ΔΔ SVM',  color: 'purple', Icon: Waves },
-  { id: 'visual',   label: 'Visual',   sub: 'EfficientNet',  color: 'teal',   Icon: Eye },
-  { id: 'streak',   label: 'Streak',   sub: 'HSV analysis',  color: 'amber',  Icon: FlaskConical },
+  { id: 'density',  label: 'Weight test', sub: 'Archimedes + uncertainty', color: 'blue',   Icon: FlaskConical },
+  { id: 'acoustic', label: 'Sound test',  sub: 'Ring-pitch physics',       color: 'purple', Icon: Waves },
+  { id: 'visual',   label: 'Photo test',  sub: 'Material & stone scan',    color: 'teal',   Icon: Eye },
+  { id: 'streak',   label: 'Streak',      sub: 'Touchstone colour',        color: 'amber',  Icon: FlaskConical },
 ]
 
 const NOVELTIES = [
   {
     n: '01', tag: 'Novelty 1', Icon: Waves,
-    title: 'MFCC-ΔΔ Acoustic Fingerprinting',
-    desc: 'Genuine gold rings differently. Our SVM hears what the human ear cannot - plated brass and tungsten cores fail the tap test.',
-    pill: 'SVM · RBF kernel · AUC 0.999',
+    title: 'Ring-Pitch Physics for Filled Cores',
+    desc: 'Every filler metal is stiffer than gold, so a filled item rings higher-pitched. Measured against a band calibrated from genuine items — 10/10 fakes flagged on real recordings.',
+    pill: 'v = √(E/ρ) · calibrated genuine band',
     color: 'blue',
   },
   {
     n: '02', tag: 'Novelty 2', Icon: BarChart3,
-    title: "Benford's Law Density Monitor",
-    desc: 'Weight digits follow Benford’s distribution - systematic deviations expose branch-level fraud rings in real time.',
+    title: "Benford's Law Records Monitor",
+    desc: 'Genuinely measured readings follow a known first-digit pattern. When appraisal records are fabricated, the pattern breaks — exposing branch-level fraud rings.',
     pill: 'Chi-squared test · p < 0.05 alert',
     color: 'gold',
   },
   {
     n: '03', tag: 'Novelty 3', Icon: GitMerge,
-    title: 'Cross-Modal Contradiction Detection',
-    desc: 'Density passes but acoustic fails? The contradiction itself is a signal - how we catch tungsten-core fakes.',
-    pill: '0.40× contradiction boost in fusion',
+    title: 'Tests That Cross-Check Each Other',
+    desc: 'Weight passes but sound fails? The disagreement itself is the signal — and no single test can ever approve an item on its own.',
+    pill: 'Approval requires all three core tests',
     color: 'purple',
   },
 ]
@@ -89,8 +89,8 @@ export default function HeroPage() {
         </h1>
 
         <p className={styles.heroSub}>
-          Four AI signals fused into one explainable verdict -
-          no lab, no acid, no damage.
+          Physics, not black-box AI — three mandatory tests fused into one
+          verdict an officer can verify by hand. No lab, no acid, no damage.
         </p>
 
         <div className={styles.heroActions}>
@@ -104,7 +104,7 @@ export default function HeroPage() {
         </div>
 
         <div className={styles.heroBadges}>
-          {['Non-destructive', 'SHAP-explainable', 'Branch-deployable', 'LLM verdict'].map(b => (
+          {['Non-destructive', 'Every step verifiable', 'Branch-deployable', 'No photos stored'].map(b => (
             <span key={b} className={styles.heroBadge}>
               <Check size={10} strokeWidth={3} /> {b}
             </span>
@@ -176,15 +176,15 @@ export default function HeroPage() {
             <div className={styles.pCard}>
               <span className={`${styles.pIcon} ${styles.pIcon_blue}`}><Cpu size={15} strokeWidth={2} /></span>
               <div className={styles.pText}>
-                <div className={styles.pTitle}>XGBoost</div>
-                <div className={styles.pSub}>10 features + SHAP</div>
+                <div className={styles.pTitle}>Evidence sum</div>
+                <div className={styles.pSub}>Log-odds, hand-recomputable</div>
               </div>
             </div>
             <div className={styles.pCard}>
               <span className={`${styles.pIcon} ${styles.pIcon_purple}`}><GitMerge size={15} strokeWidth={2} /></span>
               <div className={styles.pText}>
-                <div className={styles.pTitle}>Contradiction</div>
-                <div className={styles.pSub}>6 cross-modal pairs</div>
+                <div className={styles.pTitle}>Disagreement check</div>
+                <div className={styles.pSub}>Tests cross-check each other</div>
               </div>
             </div>
           </div>
@@ -218,8 +218,8 @@ export default function HeroPage() {
             <div className={`${styles.pCard} ${styles.pCardDashed}`}>
               <span className={`${styles.pIcon} ${styles.pIcon_gray}`}><Brain size={15} strokeWidth={2} /></span>
               <div className={styles.pText}>
-                <div className={styles.pTitle}>Groq Llama-3 70B</div>
-                <div className={styles.pSub}>Plain-English verdict</div>
+                <div className={styles.pTitle}>Plain-English explainer</div>
+                <div className={styles.pSub}>Written after the decision</div>
               </div>
             </div>
           </div>
@@ -266,19 +266,18 @@ export default function HeroPage() {
 
               <div className={styles.previewMeter}>
                 <div className={styles.previewMeterRow}>
-                  <span>Fusion risk score</span><strong>18%</strong>
+                  <span>Overall risk</span><strong>8%</strong>
                 </div>
                 <div className={styles.previewTrack}>
-                  <div className={styles.previewFill} style={{ width: '18%' }} />
+                  <div className={styles.previewFill} style={{ width: '8%' }} />
                 </div>
               </div>
 
               <div className={styles.previewBars}>
                 {[
-                  { label: 'Density',  pct: 12, ok: true  },
-                  { label: 'Acoustic', pct: 8,  ok: true  },
-                  { label: 'Visual',   pct: 21, ok: true  },
-                  { label: 'Streak',   pct: 34, ok: false },
+                  { label: 'Weight test', pct: 3,  ok: true },
+                  { label: 'Sound test',  pct: 11, ok: true },
+                  { label: 'Photo test',  pct: 21, ok: true },
                 ].map(b => (
                   <div key={b.label} className={styles.previewBarRow}>
                     <span className={styles.previewBarLabel}>{b.label}</span>
@@ -294,11 +293,11 @@ export default function HeroPage() {
               </div>
 
               <div className={styles.previewExplanation}>
-                All four analysis signals are consistent with genuine 22K gold at the declared karat. No suspicious patterns were detected. Proceed with loan approval.
+                All three core tests agree with genuine 22K gold at the declared karat — density 17.82 ± 0.11 g/cm³ inside the 22K band, ring pitch inside the calibrated genuine band, stones consistent with the photo. Proceed with loan approval.
               </div>
 
               <div className={styles.previewTags}>
-                {['Ring decay nominal', 'No surface anomaly', 'Density within 22K range', 'via Groq Llama-3'].map(t => (
+                {['Ring pitch in genuine band', 'Density within 22K range', 'Stones match the photo', '10-step verification trail'].map(t => (
                   <span key={t} className={styles.previewTag}>{t}</span>
                 ))}
               </div>
@@ -308,14 +307,15 @@ export default function HeroPage() {
               <div className={styles.ctaIcon}><Shield size={28} strokeWidth={1.75} /></div>
               <h3 className={styles.ctaTitle}>Ready to analyse a gold item?</h3>
               <p className={styles.ctaDesc}>
-                Photos, a tap-test recording, and two weights - get an explainable
-                verdict in under 10 seconds.
+                Photos, a tap recording, and two weight readings — the three
+                mandatory tests — give a verdict you can verify step by step,
+                in under 10 seconds.
               </p>
               <Button size="lg" className={styles.ctaBtn} onClick={() => navigate('/dashboard')}>
                 Open analysis dashboard <ArrowRight size={16} />
               </Button>
               <div className={styles.ctaChecks}>
-                {['No destructive testing', 'Works with any standard scale', 'Full case history & audit trail'].map(f => (
+                {['No destructive testing', 'Works with any 0.01 g scale', 'Numeric audit trail — no photos stored'].map(f => (
                   <div key={f} className={styles.ctaCheck}>
                     <div className={styles.ctaCheckIcon}><Check size={10} strokeWidth={3} /></div>
                     {f}

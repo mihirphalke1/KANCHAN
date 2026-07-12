@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Scan } from 'lucide-react'
+import { Scan, ZoomIn } from 'lucide-react'
 import InfoTip from './ui/InfoTip'
+import Lightbox from './ui/Lightbox'
 import styles from './XRayView.module.css'
 
 // Build a URL that works in both dev (proxied) and prod (same origin)
@@ -13,23 +14,23 @@ function mediaUrl(path) {
 
 const STAGES = [
   { key: 'original',  label: 'Original',
-    desc: 'The uploaded photograph — the source signal for every stage below.' },
+    desc: 'Your photo, exactly as uploaded. Everything below is worked out from this one image.' },
   { key: 'grey',      label: 'Greyscale',
-    desc: 'Brightness only (L = 0.21R + 0.72G + 0.07B, weighted like the human eye). Gold reflects strongly → bright; stones absorb their colour band → darker.' },
-  { key: 'invert',    label: 'Inverted',
-    desc: 'P′ = 255 − P, the radiographic negative: dense metal turns dark, lighter materials turn bright — the way an X-ray film reads.' },
-  { key: 'threshold', label: 'Thresholded',
-    desc: 'Brightness is cut at three points (T1/T2/T3, set automatically from this item) into four material classes — the core segmentation step.' },
-  { key: 'histogram', label: 'Histogram',
-    desc: 'How the item’s pixels distribute by brightness, coloured by material class with the cut points marked. Valleys between peaks are natural material boundaries — check the cuts sit in valleys.' },
-  { key: 'sobel',     label: 'Sobel edges',
-    desc: 'Rate of brightness change. Bright lines = boundaries between materials (metal↔stone, prong edges); dark = uniform surface.' },
+    desc: 'The photo in shades of grey — brightness only, no colour. Polished gold looks bright, stones and shadows look darker. This is what the rest of the analysis measures.' },
+  { key: 'invert',    label: 'Inverted (X-ray look)',
+    desc: 'Brightness flipped: dense metal turns dark and lighter parts turn bright — the way a real X-ray film looks. This is where the “X-ray” name comes from; it is still your ordinary photo, just re-shaded.' },
+  { key: 'threshold', label: 'Sorted into materials',
+    desc: 'Every pixel is sorted into one of four brightness bands — the step that tells metal, joints, stones and bright facets apart.' },
+  { key: 'histogram', label: 'Brightness chart',
+    desc: 'A tally of how bright the item’s pixels are, from dark (left) to bright (right), coloured by material band. The dashed lines mark where the four bands are split. Shown for technical verification — an officer doesn’t need to read it.' },
+  { key: 'sobel',     label: 'Edges',
+    desc: 'Only the outlines — the lines where one material meets another (a stone against its gold setting, the rim of a prong). Flat, even surfaces stay dark.' },
   { key: 'material',  label: 'Material map',
-    desc: 'The four classes in false colour with boundaries overlaid in white — the same presentation as an X-ray fluorescence element map. Backdrop is greyed out.' },
-  { key: 'gems',      label: 'Gem detection',
-    desc: 'Stones found independently of the description: coloured stones outlined and numbered, colourless candidates marked with a “?” for confirmation.' },
-  { key: 'heatmap',   label: 'Heatmap',
-    desc: 'Brightness on the blue→red scientific scale (as in thermal/NDT imaging) — reveals subtle variations invisible in greyscale.' },
+    desc: 'The four material bands shown in colour, with the item lifted off its background. This is the core visual result — metal, stones and joints separated, the same idea as a lab element map but from a normal photo.' },
+  { key: 'gems',      label: 'Stones found',
+    desc: 'Stones the camera picked out on its own, numbered — it never reads the description. Clear or white stones get a “?”: the officer confirms whether each one is really a stone.' },
+  { key: 'heatmap',   label: 'Heat view',
+    desc: 'Brightness shown on a blue-to-red colour scale. It makes faint differences on the surface easier to spot than plain grey.' },
 ]
 
 // Must stay in sync with CLASS_COLOURS_RGB in app/utils/xray.py
@@ -49,14 +50,20 @@ function riskColour(risk) {
 export default function XRayView({ caseData }) {
   const xray = caseData?.media?.xray
   const xrayScore = caseData?.modality_scores?.xray
-  const [active, setActive] = useState('material')
+  // When the item can't be separated from its background, every derived
+  // number (gems, inclusions, composition) is measured on the scene, not
+  // the item — so we show NO findings, and default to the plain photo.
+  const usable = xray?.background_removed === true
+  const [active, setActive] = useState(usable ? 'material' : 'original')
+  const [zoom, setZoom] = useState(null)
 
   if (!xray?.stages) return null
 
   const { stages, composition = {}, thresholds = {}, gem_regions,
-          background_removed, item_area_pct, inclusions_unexplained } = xray
+          item_area_pct, inclusions_unexplained } = xray
   const activeStage = STAGES.find(s => s.key === active) || STAGES[0]
   const hasScore = xrayScore?.mode === 'dsip_xray'
+  const showSignals = hasScore || xrayScore?.mode === 'dsip_unusable'
 
   return (
     <div className={styles.card}>
@@ -75,31 +82,42 @@ export default function XRayView({ caseData }) {
               risk {Math.round(xrayScore.risk_score * 100)}%
             </span>
           )}
-          {Number.isFinite(gem_regions) && (
+          {usable && Number.isFinite(gem_regions) && (
             <span className={styles.badge}>
               {gem_regions} gem{gem_regions === 1 ? '' : 's'} detected
             </span>
           )}
-          {Number.isFinite(inclusions_unexplained) && inclusions_unexplained > 0 && (
+          {usable && Number.isFinite(inclusions_unexplained) && inclusions_unexplained > 0 && (
             <span className={styles.badge} style={{ background: '#B91C1C18', color: '#B91C1C' }}>
               {inclusions_unexplained} unexplained inclusion{inclusions_unexplained === 1 ? '' : 's'}
             </span>
           )}
-          {background_removed != null && (
-            <span className={styles.badge} title="Stats computed on item pixels only">
-              {background_removed ? `item ${item_area_pct}% of frame` : 'backdrop not separable'}
+          {xray.background_removed != null && (
+            <span className={styles.badge}
+              style={usable ? undefined : { background: '#B4530918', color: '#B45309' }}
+              title={usable ? 'Stats computed on item pixels only'
+                            : 'The item could not be told apart from the background'}>
+              {usable ? `item ${item_area_pct}% of frame` : 'Busy background — retake on a plain surface'}
             </span>
           )}
         </div>
       </div>
 
       <div className={styles.viewer}>
-        <img
-          src={mediaUrl(stages[active])}
-          alt={activeStage.label}
-          className={styles.mainImg}
-          onError={e => { e.target.style.visibility = 'hidden' }}
-        />
+        <button
+          type="button"
+          className={styles.zoomBtn}
+          onClick={() => setZoom(mediaUrl(stages[active]))}
+          title="Click to zoom"
+        >
+          <img
+            src={mediaUrl(stages[active])}
+            alt={activeStage.label}
+            className={styles.mainImg}
+            onError={e => { e.target.style.visibility = 'hidden' }}
+          />
+          <span className={styles.zoomHint}><ZoomIn size={13} /> Click to zoom</span>
+        </button>
         <div className={styles.stageCaption}>
           <strong>{activeStage.label}</strong>
           <span>{activeStage.desc}</span>
@@ -121,39 +139,41 @@ export default function XRayView({ caseData }) {
         ))}
       </div>
 
-      <div className={styles.compSection}>
-        <div className={styles.sectionLabel}>
-          Material composition
-          {thresholds.t1 != null && (
-            <span className={styles.thresholdNote}>
-              T1 {thresholds.t1} · T2 {thresholds.t2} · T3 {thresholds.t3}
-            </span>
-          )}
+      {usable && (
+        <div className={styles.compSection}>
+          <div className={styles.sectionLabel}>
+            Material composition
+            {thresholds.t1 != null && (
+              <span className={styles.thresholdNote}>
+                T1 {thresholds.t1} · T2 {thresholds.t2} · T3 {thresholds.t3}
+              </span>
+            )}
+          </div>
+          <div className={styles.compBar}>
+            {MATERIALS.map(m => {
+              const pct = composition[m.key] ?? 0
+              return pct > 0 ? (
+                <div
+                  key={m.key}
+                  className={styles.compSeg}
+                  style={{ width: `${pct}%`, background: m.colour }}
+                  title={`${m.label}: ${pct}%`}
+                />
+              ) : null
+            })}
+          </div>
+          <div className={styles.legend}>
+            {MATERIALS.map(m => (
+              <span key={m.key} className={styles.legendItem}>
+                <i style={{ background: m.colour }} />
+                {m.label} {composition[m.key] ?? 0}%
+              </span>
+            ))}
+          </div>
         </div>
-        <div className={styles.compBar}>
-          {MATERIALS.map(m => {
-            const pct = composition[m.key] ?? 0
-            return pct > 0 ? (
-              <div
-                key={m.key}
-                className={styles.compSeg}
-                style={{ width: `${pct}%`, background: m.colour }}
-                title={`${m.label}: ${pct}%`}
-              />
-            ) : null
-          })}
-        </div>
-        <div className={styles.legend}>
-          {MATERIALS.map(m => (
-            <span key={m.key} className={styles.legendItem}>
-              <i style={{ background: m.colour }} />
-              {m.label} {composition[m.key] ?? 0}%
-            </span>
-          ))}
-        </div>
-      </div>
+      )}
 
-      {hasScore && xrayScore.signals?.length > 0 && (
+      {showSignals && xrayScore.signals?.length > 0 && (
         <div className={styles.compSection}>
           <div className={styles.sectionLabel}>
             Findings
@@ -170,6 +190,8 @@ export default function XRayView({ caseData }) {
           </ul>
         </div>
       )}
+
+      <Lightbox src={zoom} alt={activeStage.label} onClose={() => setZoom(null)} />
     </div>
   )
 }

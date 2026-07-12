@@ -269,12 +269,14 @@ def _histogram_image(
     width: int = 640, height: int = 160,
 ) -> np.ndarray:
     """
-    Luminance histogram of the ITEM pixels, painted in material-class
-    colours with the three threshold cut lines overlaid. Valleys between
-    peaks are the natural material boundaries — this stage shows WHY the
-    thresholds sit where they do, so an officer can verify the segmentation
-    rather than trust it.
+    Luminance histogram of the ITEM pixels (background excluded), painted in
+    material-class colours with the three threshold cut lines overlaid and a
+    baseline axis. A tally of how many item pixels fall at each brightness,
+    dark (left) → bright (right). Kept for technical verification of where the
+    four material bands are split.
     """
+    baseline = height - 16          # y of the x-axis; bars grow upward from here
+    top_pad = 20                    # headroom for the T-labels
     vals = grey[item > 0]
     bins = np.bincount(vals.ravel(), minlength=256).astype(np.float64)
     peak = bins.max() or 1.0
@@ -284,20 +286,23 @@ def _histogram_image(
     for b in range(256):
         cls = 0 if b < t1 else 1 if b < t2 else 2 if b < t3 else 3
         colour = CLASS_COLOURS_RGB[cls][::-1]                 # RGB -> BGR
-        bh = int(round(bins[b] / peak * (height - 18)))
+        bh = int(round(bins[b] / peak * (baseline - top_pad)))
         if bh > 0:
             x0, x1 = int(b * bar_w), max(int(b * bar_w) + 1, int((b + 1) * bar_w))
-            cv2.rectangle(img, (x0, height - 14 - bh), (x1, height - 14), colour, -1)
+            cv2.rectangle(img, (x0, baseline - bh), (x1, baseline), colour, -1)
+
+    # baseline axis line under the bars
+    cv2.line(img, (0, baseline), (width, baseline), (120, 120, 120), 1, cv2.LINE_AA)
 
     for t, label in ((t1, "T1"), (t2, "T2"), (t3, "T3")):
         x = int(t / 255.0 * width)
-        for y in range(4, height - 14, 8):                    # dashed line
-            cv2.line(img, (x, y), (x, min(y + 4, height - 14)), (60, 60, 60), 1)
+        for y in range(2, baseline, 8):                       # dashed cut line
+            cv2.line(img, (x, y), (x, min(y + 4, baseline)), (60, 60, 60), 1)
         cv2.putText(img, f"{label}={t}", (min(x + 3, width - 52), 13),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.35, (60, 60, 60), 1, cv2.LINE_AA)
     cv2.putText(img, "dark", (4, height - 3),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.32, (120, 120, 120), 1, cv2.LINE_AA)
-    cv2.putText(img, "bright", (width - 42, height - 3),
+    cv2.putText(img, "bright", (width - 44, height - 3),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.32, (120, 120, 120), 1, cv2.LINE_AA)
     return img
 

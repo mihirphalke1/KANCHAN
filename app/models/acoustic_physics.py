@@ -53,7 +53,8 @@ def extract_ring_frequency(audio_bytes: bytes, sr: int = 22050) -> dict:
 
     y_t, _ = librosa.effects.trim(y, top_db=20)
     noise = float(np.mean(np.abs(y[: int(0.05 * sr)]))) if len(y) > int(0.05 * sr) else 1e-9
-    snr = 20.0 * np.log10(float(np.max(np.abs(y_t))) / (noise + 1e-9))
+    # cap at 99 dB: digitally-silent lead-ins otherwise report unphysical SNR
+    snr = min(20.0 * np.log10(float(np.max(np.abs(y_t))) / (noise + 1e-9)), 99.0)
 
     if snr < SNR_MIN_DB:
         return {"dominant_freq_hz": None, "snr_db": round(snr, 1), "quality": "low_snr"}
@@ -110,9 +111,14 @@ def ring_frequency_check(
     f_low, f_high = band["f_low"], band["f_high"]
     ratio = round(f0 / f_high, 3)
 
-    # Density context: does the density LOOK like gold? (that is exactly when
-    # the stiff-core check matters — a fake that passes the weight test)
-    density_near_gold = density_result.get("risk_score", 1.0) < 0.5
+    # Density context: does the density LOOK like gold — by PHYSICS, not by
+    # the customer's claim? (Claim-blind: a tungsten bar is flagged whatever
+    # karat was declared, as long as its density sits in some gold band.)
+    best = density_result.get("best_match") or {}
+    if best:
+        density_near_gold = best.get("kind") == "karat"
+    else:
+        density_near_gold = density_result.get("risk_score", 1.0) < 0.5
 
     if f0 > f_high * RATIO_FLAG:
         flag = density_near_gold

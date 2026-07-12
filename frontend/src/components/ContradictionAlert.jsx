@@ -22,7 +22,10 @@ export default function ContradictionAlert({ contradiction, scores }) {
 
   const absent = new Set(
     Object.entries(scores || {})
-      .filter(([, s]) => (s?.mode || '').startsWith('no_'))
+      .filter(([, s]) => {
+        const m = s?.mode || ''
+        return m.startsWith('no_') || m === 'dsip_unusable'
+      })
       .map(([k]) => k)
   )
   const pairVisible = ([pair]) => !pair.split('↔').some(m => absent.has(m))

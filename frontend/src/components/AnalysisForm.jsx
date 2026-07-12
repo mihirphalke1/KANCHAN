@@ -1,16 +1,17 @@
 import { useState, useRef } from 'react'
 import {
-  Upload, Mic, Camera, Weight, ChevronDown,
-  Loader2, Sparkles, X, Image, FileAudio, User
+  Mic, Camera, Weight, ChevronDown, ChevronRight,
+  Loader2, Sparkles, X, Image, FileAudio, User, RefreshCw
 } from 'lucide-react'
 import InfoTip from './ui/InfoTip'
 import styles from './AnalysisForm.module.css'
 
 const KARATS = [
-  { value: 14, label: '14K - 58.3% gold' },
-  { value: 18, label: '18K - 75.0% gold' },
   { value: 22, label: '22K - 91.7% gold' },
   { value: 24, label: '24K - 99.9% gold' },
+  { value: 18, label: '18K - 75.0% gold' },
+  { value: 14, label: '14K - 58.3% gold' },
+  { value: 0,  label: 'Not declared — identify from physics' },
 ]
 
 // CRC Handbook water density (g/cm³), linear interpolation — mirrors app/utils/density.py
@@ -41,11 +42,14 @@ const BLANK_FORM = {
   llm_provider:      'groq',
 }
 
-export default function AnalysisForm({ onSubmit, loading }) {
-  const [form, setForm]     = useState(BLANK_FORM)
-  const [images, setImages] = useState([])
-  const [audio,  setAudio]  = useState(null)
-  const [streak, setStreak] = useState(null)
+// Image-first flow: photos + weights get a verdict; text details are an
+// OPTIONAL refinement that unlocks after the first evaluation.
+export default function AnalysisForm({ onSubmit, loading, hasResult }) {
+  const [form, setForm]       = useState(BLANK_FORM)
+  const [images, setImages]   = useState([])
+  const [audio,  setAudio]    = useState(null)
+  const [streak, setStreak]   = useState(null)
+  const [moreOpen, setMoreOpen] = useState(false)
 
   const imageRef  = useRef()
   const audioRef  = useRef()
@@ -69,13 +73,22 @@ export default function AnalysisForm({ onSubmit, loading }) {
           ? 'Submerged weight must be less than dry weight — check for air bubbles or a touching container'
           : null
 
+  // The three core tests are mandatory: weight + photo + sound. Known frauds
+  // passed because a single factor was trusted alone — approval requires all.
   const isValid = (
-    form.item_description.trim() &&
     form.weight_dry &&
     form.weight_submerged &&
     !weightError &&
-    !tempError
+    !tempError &&
+    images.length > 0 &&
+    audio
   )
+
+  const missingCore = [
+    !form.weight_dry || !form.weight_submerged ? 'weight readings' : null,
+    images.length === 0 ? 'item photo' : null,
+    !audio ? 'tap recording' : null,
+  ].filter(Boolean)
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -98,102 +111,72 @@ export default function AnalysisForm({ onSubmit, loading }) {
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
       <div className={styles.formHeader}>
         <h2 className={styles.formTitle}>Item Analysis</h2>
-        <p className={styles.formSub}>Enter all available details for best accuracy</p>
+        <p className={styles.formSub}>Three core tests — photos, weights, tap sound. Text details can be added after the first result</p>
       </div>
 
-      {/* ── Customer Information ── */}
+      {/* ── 1. Photos first ── */}
       <fieldset className={styles.section}>
         <legend className={styles.sectionLabel}>
-          <User size={13} />
-          Customer Information
+          <Camera size={13} />
+          Item Photos
         </legend>
 
-        <div className={styles.row}>
-          <div className={styles.field}>
-            <label htmlFor="customer_name" className={styles.label}>Customer Name</label>
-            <input
-              id="customer_name"
-              className={styles.input}
-              type="text"
-              placeholder="Full name"
-              value={form.customer_name}
-              onChange={e => set('customer_name', e.target.value)}
-            />
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="officer_name" className={styles.label}>Assessment Officer</label>
-            <input
-              id="officer_name"
-              className={styles.input}
-              type="text"
-              placeholder="Name (EMP-XXXX)"
-              value={form.officer_name}
-              onChange={e => set('officer_name', e.target.value)}
-            />
-          </div>
-        </div>
-      </fieldset>
-
-      {/* ── Item Details ── */}
-      <fieldset className={styles.section}>
-        <legend className={styles.sectionLabel}>Item Details</legend>
-
         <div className={styles.field}>
-          <label htmlFor="item_description" className={styles.label}>
-            Description
-            <InfoTip text="Describe the item as the customer declares it, including stones (e.g. '22K necklace with rubies'). The photo analysis cross-checks this — declared stones the camera can't find raise a flag." />
+          <label className={styles.label}>
+            Multiple angles recommended
+            <InfoTip text="Place the item on a plain, single-colour backdrop, centred in the frame — no fingers, props or other objects. The system separates the item from the backdrop and finds the stones automatically." />
           </label>
+          <div
+            className={styles.dropzone}
+            onClick={() => imageRef.current?.click()}
+            onDragOver={e => e.preventDefault()}
+            onDrop={e => {
+              e.preventDefault()
+              const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
+              setImages(imgs => [...imgs, ...files])
+            }}
+          >
+            <Image size={22} className={styles.dropzoneIcon} />
+            <span className={styles.dropzoneText}>
+              {images.length > 0
+                ? `${images.length} photo${images.length > 1 ? 's' : ''} selected`
+                : 'Tap to upload or drag photos here'}
+            </span>
+            <span className={styles.dropzoneSub}>JPG, PNG, WebP</span>
+          </div>
           <input
-            id="item_description"
-            className={styles.input}
-            type="text"
-            placeholder="e.g. 22K gold necklace, set with rubies"
-            value={form.item_description}
-            onChange={e => set('item_description', e.target.value)}
-            required
+            ref={imageRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className={styles.hiddenInput}
+            onChange={e => setImages(imgs => [...imgs, ...Array.from(e.target.files)])}
           />
-        </div>
-
-        <div className={styles.row}>
-          <div className={styles.field}>
-            <label htmlFor="declared_karat" className={styles.label}>
-              Declared Karat
-              <InfoTip text="The purity the customer claims. The weight-in-water test checks the measured density against this karat's expected range." />
-            </label>
-            <div className={styles.selectWrap}>
-              <select
-                id="declared_karat"
-                className={styles.select}
-                value={form.declared_karat}
-                onChange={e => set('declared_karat', parseInt(e.target.value))}
-              >
-                {KARATS.map(k => (
-                  <option key={k.value} value={k.value}>{k.label}</option>
-                ))}
-              </select>
-              <ChevronDown className={styles.selectIcon} size={15} />
+          {images.length > 0 && (
+            <div className={styles.thumbnails}>
+              {images.map((img, i) => (
+                <div key={i} className={styles.thumb}>
+                  <img src={URL.createObjectURL(img)} alt={`Angle ${i+1}`} />
+                  <button
+                    type="button"
+                    className={styles.thumbRemove}
+                    onClick={() => removeImage(i)}
+                    aria-label={`Remove photo ${i+1}`}
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
             </div>
-          </div>
-
-          <div className={styles.field}>
-            <label htmlFor="branch_id" className={styles.label}>Branch ID</label>
-            <input
-              id="branch_id"
-              className={styles.input}
-              type="text"
-              placeholder="e.g. BLR-001"
-              value={form.branch_id}
-              onChange={e => set('branch_id', e.target.value)}
-            />
-          </div>
+          )}
         </div>
       </fieldset>
 
-      {/* ── Density Inputs ── */}
+      {/* ── 2. Weights + declared karat ── */}
       <fieldset className={styles.section}>
         <legend className={styles.sectionLabel}>
           <Weight size={13} />
-          Density Test (Archimedes)
+          Weight Test (in air & in water)
         </legend>
 
         <div className={`${styles.row} ${styles.row3}`}>
@@ -250,6 +233,26 @@ export default function AnalysisForm({ onSubmit, loading }) {
           </div>
         </div>
 
+        <div className={styles.field}>
+          <label htmlFor="declared_karat" className={styles.label}>
+            Declared Karat
+            <InfoTip text="The purity the customer claims. The weight-in-water test checks the measured density against this karat's expected range." />
+          </label>
+          <div className={styles.selectWrap}>
+            <select
+              id="declared_karat"
+              className={styles.select}
+              value={form.declared_karat}
+              onChange={e => set('declared_karat', parseInt(e.target.value))}
+            >
+              {KARATS.map(k => (
+                <option key={k.value} value={k.value}>{k.label}</option>
+              ))}
+            </select>
+            <ChevronDown className={styles.selectIcon} size={15} />
+          </div>
+        </div>
+
         {tempError && <p className={styles.fieldError}>{tempError}</p>}
         {weightError && <p className={styles.fieldError}>{weightError}</p>}
         {!tempError && !weightError && form.weight_dry && form.weight_submerged &&
@@ -272,105 +275,16 @@ export default function AnalysisForm({ onSubmit, loading }) {
         )}
       </fieldset>
 
-      {/* ── Media Uploads ── */}
-      <fieldset className={styles.section}>
-        <legend className={styles.sectionLabel}>
-          <Camera size={13} />
-          Visual Evidence
-        </legend>
-
-        {/* Multi-angle photos */}
-        <div className={styles.field}>
-          <label className={styles.label}>
-            Item Photos <span className={styles.optional}>(multiple angles)</span>
-            <InfoTip text="Place the item on a plain, single-colour backdrop, centred in the frame — no fingers, props or other objects. The system separates the item from the backdrop and finds the stones automatically." />
-          </label>
-          <div
-            className={styles.dropzone}
-            onClick={() => imageRef.current?.click()}
-            onDragOver={e => e.preventDefault()}
-            onDrop={e => {
-              e.preventDefault()
-              const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
-              setImages(imgs => [...imgs, ...files])
-            }}
-          >
-            <Image size={22} className={styles.dropzoneIcon} />
-            <span className={styles.dropzoneText}>
-              {images.length > 0
-                ? `${images.length} photo${images.length > 1 ? 's' : ''} selected`
-                : 'Tap to upload or drag photos here'}
-            </span>
-            <span className={styles.dropzoneSub}>JPG, PNG, WebP - multiple angles recommended</span>
-          </div>
-          <input
-            ref={imageRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className={styles.hiddenInput}
-            onChange={e => setImages(imgs => [...imgs, ...Array.from(e.target.files)])}
-          />
-          {images.length > 0 && (
-            <div className={styles.thumbnails}>
-              {images.map((img, i) => (
-                <div key={i} className={styles.thumb}>
-                  <img src={URL.createObjectURL(img)} alt={`Angle ${i+1}`} />
-                  <button
-                    type="button"
-                    className={styles.thumbRemove}
-                    onClick={() => removeImage(i)}
-                    aria-label={`Remove photo ${i+1}`}
-                  >
-                    <X size={10} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Streak photo */}
-        <div className={styles.field}>
-          <label className={styles.label}>
-            Touchstone Streak Photo <span className={styles.optional}>(optional)</span>
-          </label>
-          <div
-            className={`${styles.dropzone} ${styles.dropzoneSmall}`}
-            onClick={() => streakRef.current?.click()}
-          >
-            <Camera size={18} className={styles.dropzoneIcon} />
-            <span className={styles.dropzoneText}>
-              {streak ? streak.name : 'Upload streak image'}
-            </span>
-          </div>
-          <input
-            ref={streakRef}
-            type="file"
-            accept="image/*"
-            className={styles.hiddenInput}
-            onChange={e => setStreak(e.target.files[0] || null)}
-          />
-          {streak && (
-            <div className={styles.fileTag}>
-              <Camera size={12} />
-              <span>{streak.name}</span>
-              <button type="button" onClick={() => setStreak(null)}><X size={10} /></button>
-            </div>
-          )}
-        </div>
-      </fieldset>
-
-      {/* ── Audio ── */}
+      {/* ── 3. Sound test — third core test, required ── */}
       <fieldset className={styles.section}>
         <legend className={styles.sectionLabel}>
           <Mic size={13} />
           Sound Test
         </legend>
         <p className={styles.helpText}>
-          Tap the item once with a metal stylus and record the ring on a smartphone,
-          in a quiet room. This test catches filled-core fakes that pass the weight
-          test — record it whenever possible.
+          Tap the item once with a metal stylus and record the ring in a quiet room.
+          This is what catches filled-core fakes that pass the weight test — no
+          approval is possible without it.
         </p>
         <div
           className={`${styles.dropzone} ${styles.dropzoneSmall}`}
@@ -397,7 +311,52 @@ export default function AnalysisForm({ onSubmit, loading }) {
         )}
       </fieldset>
 
-      {/* ── Submit ── */}
+      {/* ── 4. Optional extra test, collapsed ── */}
+      <fieldset className={styles.section}>
+        <button
+          type="button"
+          className={styles.moreToggle}
+          onClick={() => setMoreOpen(o => !o)}
+        >
+          {moreOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          More tests (optional) — touchstone streak
+          {streak && <span className={styles.moreCount}>1 added</span>}
+        </button>
+
+        {moreOpen && (
+          <div className={styles.field}>
+            <label className={styles.label}>
+              <Camera size={12} /> Touchstone Streak Photo
+              <InfoTip text="Rub the item on the touchstone and photograph the streak mark. The rub cuts through thin plating, so this catches surface-level fakes." />
+            </label>
+            <div
+              className={`${styles.dropzone} ${styles.dropzoneSmall}`}
+              onClick={() => streakRef.current?.click()}
+            >
+              <Camera size={18} className={styles.dropzoneIcon} />
+              <span className={styles.dropzoneText}>
+                {streak ? streak.name : 'Upload streak image'}
+              </span>
+            </div>
+            <input
+              ref={streakRef}
+              type="file"
+              accept="image/*"
+              className={styles.hiddenInput}
+              onChange={e => setStreak(e.target.files[0] || null)}
+            />
+            {streak && (
+              <div className={styles.fileTag}>
+                <Camera size={12} />
+                <span>{streak.name}</span>
+                <button type="button" onClick={() => setStreak(null)}><X size={10} /></button>
+              </div>
+            )}
+          </div>
+        )}
+      </fieldset>
+
+      {/* ── Analyse ── */}
       <button
         type="submit"
         className={styles.submitBtn}
@@ -412,13 +371,91 @@ export default function AnalysisForm({ onSubmit, loading }) {
         ) : (
           <>
             <Sparkles size={18} />
-            Analyse Gold Item
+            {hasResult ? 'Analyse Again' : 'Analyse Gold Item'}
           </>
         )}
       </button>
 
-      {!isValid && form.item_description === '' && (
-        <p className={styles.formHint}>Fill in item description and weight measurements to enable analysis</p>
+      {!isValid && missingCore.length > 0 && (
+        <p className={styles.formHint}>
+          All three core tests are required — still missing: {missingCore.join(', ')}
+        </p>
+      )}
+
+      {/* ── 4. Officer inputs — unlocks after the first evaluation ── */}
+      {hasResult && (
+        <fieldset className={`${styles.section} ${styles.refineSection}`}>
+          <legend className={styles.sectionLabel}>
+            <User size={13} />
+            Officer Inputs — refine this result
+          </legend>
+          <p className={styles.helpText}>
+            Add anything the customer declared or details for the record, then re-analyse.
+            Declared stones are cross-checked against the photo — a declaration can raise
+            a flag but never lower the risk.
+          </p>
+
+          <div className={styles.field}>
+            <label htmlFor="item_description" className={styles.label}>
+              Item description
+              <InfoTip text="Describe the item as the customer declares it, including stones (e.g. '22K necklace with rubies'). The photo analysis cross-checks this — declared stones the camera can't find raise a flag." />
+            </label>
+            <input
+              id="item_description"
+              className={styles.input}
+              type="text"
+              placeholder="e.g. 22K gold necklace, set with rubies"
+              value={form.item_description}
+              onChange={e => set('item_description', e.target.value)}
+            />
+          </div>
+
+          <div className={styles.row}>
+            <div className={styles.field}>
+              <label htmlFor="customer_name" className={styles.label}>Customer Name</label>
+              <input
+                id="customer_name"
+                className={styles.input}
+                type="text"
+                placeholder="Full name"
+                value={form.customer_name}
+                onChange={e => set('customer_name', e.target.value)}
+              />
+            </div>
+            <div className={styles.field}>
+              <label htmlFor="officer_name" className={styles.label}>Assessment Officer</label>
+              <input
+                id="officer_name"
+                className={styles.input}
+                type="text"
+                placeholder="Name (EMP-XXXX)"
+                value={form.officer_name}
+                onChange={e => set('officer_name', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="branch_id" className={styles.label}>Branch ID</label>
+            <input
+              id="branch_id"
+              className={styles.input}
+              type="text"
+              placeholder="e.g. BLR-001"
+              value={form.branch_id}
+              onChange={e => set('branch_id', e.target.value)}
+            />
+          </div>
+
+          <button
+            type="submit"
+            className={styles.refineBtn}
+            disabled={!isValid || loading}
+          >
+            <RefreshCw size={14} />
+            Re-analyse with details
+          </button>
+        </fieldset>
       )}
     </form>
   )

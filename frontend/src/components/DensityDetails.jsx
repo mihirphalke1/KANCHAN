@@ -8,10 +8,11 @@ export default function DensityDetails({ density }) {
   const {
     measured_density, expected_nominal, expected_low, expected_high,
     deviation_pct, karat_verdict, closest_fake, tungsten_warning,
-    sigma, conformity_probability, measurement_adequate, water_temp_c
+    sigma, conformity_probability, measurement_adequate, water_temp_c,
+    best_match, misdeclared_purity
   } = density
 
-  const inRange = karat_verdict === 'IN_RANGE'
+  const inRange = karat_verdict === 'IN_RANGE' || karat_verdict === 'IDENTIFIED_FROM_PHYSICS'
   const tungsten = karat_verdict === 'TUNGSTEN_BLIND_SPOT' || tungsten_warning
 
   return (
@@ -55,14 +56,18 @@ export default function DensityDetails({ density }) {
           mono highlight={!inRange}
           tip="The ± is the measurement's honest uncertainty, from the balance's precision. Heavier items measure more precisely than light ones."
         />
-        <Row label="Expected Range"
-          value={`${expected_low} – ${expected_high} g/cm³`}
-          mono
-        />
-        <Row label="Nominal"
-          value={`${expected_nominal} g/cm³`}
-          mono
-        />
+        {expected_low != null && (
+          <Row label={karat_verdict === 'IDENTIFIED_FROM_PHYSICS' ? 'Matched Range (physics)' : 'Expected Range'}
+            value={`${expected_low} – ${expected_high} g/cm³`}
+            mono
+          />
+        )}
+        {expected_nominal != null && (
+          <Row label="Nominal"
+            value={`${expected_nominal} g/cm³`}
+            mono
+          />
+        )}
         {conformity_probability != null && (
           <Row label="Chance it matches declared karat"
             value={`${(conformity_probability * 100).toFixed(1)}%`}
@@ -77,21 +82,42 @@ export default function DensityDetails({ density }) {
             mono
           />
         )}
-        <Row label="Deviation"
-          value={`${deviation_pct > 0 ? '+' : ''}${deviation_pct}%`}
-          mono highlight={Math.abs(deviation_pct) > 5}
-        />
+        {deviation_pct != null && (
+          <Row label="Deviation"
+            value={`${deviation_pct > 0 ? '+' : ''}${deviation_pct}%`}
+            mono highlight={Math.abs(deviation_pct) > 5}
+          />
+        )}
         <Row label="Verdict"
           value={VERDICT_TEXT[karat_verdict] || karat_verdict}
           status={inRange ? 'ok' : 'warn'}
         />
-        {closest_fake && (
+        {best_match?.name && (
+          <Row label="What the physics says it is"
+            value={
+              best_match.kind === 'karat'
+                ? `${best_match.name} (${Math.round((best_match.probability || 0) * 100)}% match)`
+                : best_match.name.charAt(0).toUpperCase() + best_match.name.slice(1)
+            }
+            status={best_match.kind === 'karat' && !misdeclared_purity ? 'ok' : 'warn'}
+            tip="The declared karat is never trusted — it is the claim under test. This row inverts the question: given the measured density, which material does the physics actually point to?"
+          />
+        )}
+        {closest_fake && best_match?.kind !== 'karat' && (
           <Row label="Closest Fake Metal"
             value={closest_fake.charAt(0).toUpperCase() + closest_fake.slice(1)}
             status="warn"
           />
         )}
       </div>
+
+      {misdeclared_purity && (
+        <p className={styles.adequacyNote}>
+          The metal is consistent with genuine {best_match.name} — the declared karat
+          appears to be over-stated. Consider revaluation at {best_match.karat}K and
+          re-run the analysis with the corrected declaration.
+        </p>
+      )}
 
       {measurement_adequate === false && (
         <p className={styles.adequacyNote}>
@@ -116,8 +142,10 @@ function Row({ label, value, mono, highlight, status, tip }) {
 }
 
 const VERDICT_TEXT = {
-  IN_RANGE:            'Within expected range',
-  LOW_DENSITY:         'Below expected - density too low',
-  HIGH_DENSITY:        'Above expected - density too high',
-  TUNGSTEN_BLIND_SPOT: 'Matches tungsten signature',
+  IN_RANGE:                'Within expected range',
+  LOW_DENSITY:             'Below expected - density too low',
+  HIGH_DENSITY:            'Above expected - density too high',
+  TUNGSTEN_BLIND_SPOT:     'Matches tungsten signature',
+  IDENTIFIED_FROM_PHYSICS: 'Identified from physics — no declaration needed',
+  NOT_GOLD:                'Matches no gold alloy',
 }

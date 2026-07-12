@@ -1,0 +1,46 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: rgba(11, 20, 32, 0.88);
+  backdrop-filter: blur(3px);
+  cursor: zoom-out;
+  animation: fade 140ms ease;
+}
+
+.img {
+  max-width: min(1100px, 94vw);
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  cursor: default;
+}
+
+.close {
+  position: fixed;
+  top: 18px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  transition: background 120ms;
+}
+
+.close:hover { background: rgba(255, 255, 255, 0.28); }
+
+@keyframes fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

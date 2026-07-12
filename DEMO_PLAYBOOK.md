@@ -1,105 +1,126 @@
 # KANCHAN-AI Demo Playbook
 ## SuRaksha Cyber Hackathon 2.0 — IISc Bangalore Panel
 
-**Presenter:** Mihir Phalke  
-**Duration:** 5–7 minutes  
-**URL:** http://localhost:8000  
+**Duration:** 5–7 minutes
+**Dev URL:** http://localhost:5173 (backend on 8001) · **Demo build:** `bash scripts/run_demo.sh` → http://localhost:8000
 
 ---
 
 ## Pre-Demo Checklist
 
-- [ ] `bash scripts/run_demo.sh` — server running, browser open
-- [ ] Density log seeded (`data/density_log.csv` exists, 60 rows)
-- [ ] `.env` file has at least one API key (Groq or Google) — or run in heuristic mode
-- [ ] Browser at 100% zoom, open in Chrome
-- [ ] Phone connected to same WiFi for mobile demo (navigate to your machine's IP:8000)
+- [ ] Backend: `python3 -m uvicorn app.main:app --reload --port 8001` (from repo root)
+- [ ] Frontend: `cd frontend && npm run dev` → open http://localhost:5173
+- [ ] Test kit present: `data/demo/test-kit/` (audio + photos)
+- [ ] `data/density_log.csv` present (Benford-conformant seeds + real cases)
+- [ ] Optional but stronger: recalibrate on your own items —
+      5 taps on a known-genuine piece → `python3 scripts/calibrate_acoustic.py <folder>`
+- [ ] Groq/Google key in `.env` for LLM-written explanations (heuristic fallback is fine too)
+- [ ] Chrome, 100% zoom
+
+**The one-line pitch:** *Physics, not black-box AI — three mandatory tests, every verdict
+recomputable by hand, and no single test can ever approve an item.*
 
 ---
 
-## Scenario 1 — Genuine Gold Ring (60 seconds)
+## Scenario 1 — Genuine item, full battery (60s)
 
-**Objective:** Show normal happy-path flow.
+- Photos: `test-kit/photos/gold_ring.jpg`
+- Dry `20.00` · Submerged `18.88` · Water temp `25` · Karat `22K`
+- Audio: `test-kit/audio/genuine_gold_tap_1.wav`
 
-1. Open the app → empty state shows three novelties at the bottom
-2. Fill form:
-   - Description: `22K gold necklace`
-   - Declared Karat: `22K — 91.7% gold`
-   - Dry weight: `15.20`
-   - Submerged weight: `14.35`  ← gives 17.80 g/cm³ (genuine 22K)
-   - (Skip photo/audio if no demo files, or use any image)
-3. Click **Analyse Gold Item**
-4. Watch the animated loading steps
-5. Result: **GREEN GENUINE card**, all signal bars below 35%, Benford OK
+**Expect:** GENUINE / APPROVE, overall risk ~8%.
 
-**Key talking point:**  
-*"All four signals agree. The density is 17.76 g/cm³, squarely in the 22K range of 17.4–18.1. System is confident — loan officer can approve."*
+**Show:** expand "How This Result Was Reached" — ten plain-language steps.
+Open "What Influenced This Decision": the numbers literally add up
+(−1.10 weight, −0.93 sound, −0.42 photo → sum → 8%).
+
+**Say:** *"Density 17.80 ± 0.11 — the ± is real uncertainty propagated from the balance.
+Ring pitch inside the band we calibrated from genuine recordings. An officer can verify
+every line by hand."*
 
 ---
 
-## Scenario 2 — Tungsten-Core Fake (90 seconds) ← STAR SCENARIO
+## Scenario 2 — STAR: filled core the weight test cannot see (90s)
 
-**Objective:** Demonstrate Novelty 3 (cross-modal contradiction).
+- Photos: `test-kit/photos/gold_bar.jpg`
+- Dry `50.00` · Submerged `47.41` · Karat `24K`
+- Audio: `test-kit/audio/fake_composite_tap_1.wav`
 
-1. Fill form:
-   - Description: `24K gold bangle (suspected tungsten)`
-   - Declared Karat: `24K — 99.9% gold`
-   - Dry weight: `18.90`
-   - Submerged weight: `17.91`  ← gives 19.10 g/cm³ — passes 24K density test!
-   - This is the key: density passes, only acoustic catches it
-   - Upload the fake bangle audio (if available) — or skip
-2. Click **Analyse Gold Item**
-3. Result: **AMBER/RED BORDERLINE card**, acoustic bar HIGH, density bar LOW
+**Expect:** weight test PASSES (19.25 g/cm³, inside the 24K band — the tungsten blind
+spot), then **REJECT** with the override reason on the verdict card:
+*"Ring pitch 7681 Hz is 1.10× the calibrated genuine band top… a stiffer-than-gold core."*
 
-**Key talking points:**
-- Point to the Contradiction Alert panel:  
-  *"Look here — density says 19.18 g/cm³, which passes the 24K test. But the acoustic ring is 82% risk."*  
-- *"This is the exact signature of a tungsten-core item. Tungsten has density 19.25 g/cm³ — essentially identical to pure gold. Single-signal density methods miss this completely."*  
-- *"Our cross-modal contradiction module — Novelty 3 — catches this. The density↔acoustic pair disagrees by 76%. That's the flag that saves the bank."*
+**Say:** *"Tungsten matches gold's density to 0.36% — smaller than any branch scale's
+error, and we prove that with the ± on screen. But no filler matches gold's stiffness:
+v = √(E/ρ), tungsten is five times stiffer, so it rings higher. Validated 10 out of 10
+on real composite recordings. The claim is irrelevant — declare any karat, the physics
+identifies the density as gold-like and the pitch betrays the core."*
 
 ---
 
-## Scenario 3 — Benford's Law Dashboard (45 seconds)
+## Scenario 3 — Purity mis-declaration (45s)
 
-**Objective:** Demonstrate Novelty 2 (statistical fraud ring detection).
+- Photos: `gold_ring.jpg` · Audio: `genuine_gold_tap_1.wav`
+- Dry `15.00` · Submerged `14.04` · Karat declared `22K` (metal is actually 18K)
 
-1. Scroll down to the **Benford's Law Monitor** card at the bottom of results
-2. Point to the bar chart:  
-   *"These 60 density readings from this branch follow Benford's Law — the natural distribution of first digits. p-value is 0.34, well above 0.05. No anomaly."*
-3. Explain the detection power:  
-   *"Now imagine a counterfeiting ring. When multiple fake items are submitted — all with fabricated density measurements — the distribution of first digits starts to deviate from Benford's Law. Our monitor would flag this branch automatically with a batch alert."*
-4. *"This is the first application of Benford's Law to physical density measurements at a bank. Standard in financial fraud — we bring it to gold appraisal."*
+**Expect:** REJECT at the declared karat, but the card says:
+*"What the physics says it is: 18K gold (99.8% match)"* and the action is
+*"re-run declared as 18K and revalue."*
 
----
+**Say:** *"The declaration is a hypothesis, never trusted. Over-claiming purity on
+genuine gold is the most common gold-loan fraud — we separate it from counterfeit
+metal, because the bank's action differs: revalue versus refuse."*
 
-## Scenario 4 — Mobile Demo (30 seconds, if judge asks)
-
-1. Ask the judge to scan the QR code / navigate to `http://<your-ip>:8000` on their phone
-2. Show the responsive layout — form stacks vertically, results below
-3. *"The system is designed for branch-office use. A field officer can run a full multi-modal analysis from their phone."*
+Bonus: switch Karat to **"Not declared — identify from physics"** and re-run —
+the system approves it *as 18K* with no claim at all.
 
 ---
 
-## Three Novelties — Slide Reference
+## Scenario 4 — Stone-set jewellery valued correctly (60s)
 
-| Novelty | What | Why Novel |
-|---------|------|-----------|
-| **1** | MFCC-ΔΔ acoustic fingerprinting on irregular jewelry | Published work (Devrim & Kirişoğlu 2025) for lab flat bars only; we apply ΔΔ (acceleration of spectral decay) to irregular shapes via smartphone |
-| **2** | Benford's Law on physical density measurements | Cross-domain transfer from financial fraud; first application to bank branch density logs |
-| **3** | Cross-modal contradiction as explicit XGBoost feature | Standard fusion models aggregate agreement; we model *disagreement* — the tungsten-core blind spot is only catchable this way |
+- Photos: `test-kit/photos/gold_necklace.jpg`
+- Dry `19.70` · Submerged `18.51` · Karat `22K`
+- Audio: `genuine_gold_tap_1.wav`
+
+**Expect:** raw density looks WRONG (16.5 — below the 22K band), but the Composition
+card reconciles it: camera finds ~9% stones, physics implies ~9%, z = 0 →
+GENUINE / APPROVE with **"Gold ≈ 19.36 g of 19.70 g"**.
+
+**Show:** the Gem detection stage (stones outlined & numbered, pearls marked "?"),
+then the Histogram stage (cut points sitting in the valleys).
+
+**Say:** *"Nobody pledges a pure gold block. The mixture model ρ = (1−f)·ρ_gold + f·ρ_stone
+inverts the density into grams of actual gold — the number the loan should be priced on.
+And if physics demands more non-gold volume than the camera can see, that's a hidden
+core and it flags."*
 
 ---
 
-## Q&A Anticipated Questions
+## Scenario 5 — The mandate (15s, do it live)
 
-**Q: How accurate is the acoustic model with 20 samples?**  
-A: "Currently the acoustic module runs in heuristic mode — we extract MFCC-ΔΔ features but the SVM classifier will be trained once we collect our DS-7 self-collected data. The MFCC-ΔΔ feature extraction itself is validated; the architecture is in place."
+Remove the audio file from the form. The Analyse button greys out:
+*"still missing: tap recording."*
 
-**Q: What happens if the officer doesn't have a recording setup?**  
-A: "The system degrades gracefully. If no audio is uploaded, the acoustic score defaults to 0.5 (neutral), and the other three modalities carry the verdict. The density module alone catches brass, lead, and copper fakes with high confidence."
+**Say:** *"Known scams passed because one factor was trusted alone. Here one failing
+test can reject, but no approval exists without all three."*
 
-**Q: What about XRF spectrometers — why not use those?**  
-A: "XRF costs ₹3–8 lakh, requires trained operators, and takes 15 minutes. Our system costs nothing beyond a smartphone and a weighing scale. We're not replacing XRF for high-value contested items — we're providing a first-pass filter that catches 80% of fakes instantly."
+---
 
-**Q: How do you handle the tungsten blind spot in density?**  
-A: "That's Novelty 3 in action. We document tungsten as a known limitation of single-signal density testing — and then we *specifically* design the contradiction module to catch it. The density↔acoustic pair disagreement is a tungsten signature."
+## Q&A Ammunition
+
+- **Sources?** CRC Handbook (elements, water), IS 1417:2016 (BIS fineness), Webster/GIA
+  (gem SG), JCGM 106 (scoring under uncertainty). Karat bands are DERIVED:
+  `python3 -m app.utils.references` prints the mixture-rule derivation vs the table.
+- **"X-ray"?** *"Not literal radiography — a structural-heterogeneity proxy inspired by
+  how X-ray reveals internal structure, built from surface visual cues."*
+- **ML anywhere?** Only two places, both non-deciding by default: the acoustic SVM
+  (secondary to the ring physics) and the LLM explainer (written after the verdict,
+  cannot alter it). Fusion is a hand-recomputable log-odds sum. We found and fixed a
+  label-leakage bug in our own earlier XGBoost training — documented in the README.
+- **Privacy?** No uploaded media is ever stored; the audit record is numeric + the
+  full step-by-step trace.
+- **Why not XRF?** ₹3–8 lakh, trained operators, surface-only (a plated shell passes
+  XRF). We are the zero-hardware first-pass filter; XRF remains the escalation path.
+- **Honest limitations:** colourless-stone detection is shape-based and imperfect;
+  photo stone-fraction is a lower bound; ring check abstains on uncalibrated item
+  classes; decision thresholds are declared policy dials pending pilot data.

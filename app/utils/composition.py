@@ -69,12 +69,18 @@ def analyze_composition(
     ref = KARAT_DENSITY_TABLE[declared_karat]
     rho_gold = ref["nominal"]
 
-    # Area-weighted stone density from the detected gems' colour classes
-    total_area = sum(g["area_pct"] for g in gems) or 1.0
-    rho_stone = sum(
-        STONE_DENSITIES.get(g["hue_class"], STONE_DENSITIES["other"]) * g["area_pct"]
-        for g in gems
-    ) / total_area
+    # Area-weighted stone density from the detected gems' colour classes.
+    # With no detected stones, fall back to a mid-range gem density rather
+    # than 0 — a zero here would inflate the uncertainty term and make any
+    # low density look falsely consistent.
+    total_area = sum(g["area_pct"] for g in gems)
+    if total_area > 0:
+        rho_stone = sum(
+            STONE_DENSITIES.get(g["hue_class"], STONE_DENSITIES["other"]) * g["area_pct"]
+            for g in gems
+        ) / total_area
+    else:
+        rho_stone = STONE_DENSITIES["other"]
 
     f_photo = _clip(gem_area_pct / 100.0, 0.0, MAX_STONE_FRAC)
     sigma_f = PHOTO_FRAC_REL_SIGMA * f_photo + PHOTO_FRAC_ABS_SIGMA

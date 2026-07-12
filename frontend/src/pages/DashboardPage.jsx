@@ -43,7 +43,7 @@ export default function DashboardPage() {
       <main className={styles.main}>
         <div className={styles.layout}>
           <aside className={styles.formCol}>
-            <AnalysisForm onSubmit={handleAnalyze} loading={loading} />
+            <AnalysisForm onSubmit={handleAnalyze} loading={loading} hasResult={!!result} />
           </aside>
           <section className={styles.resultsCol} ref={resultsRef}>
             <ResultsPanel result={result} loading={loading} error={error} localMedia={localMedia} />

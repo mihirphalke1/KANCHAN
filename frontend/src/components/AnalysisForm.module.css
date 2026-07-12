@@ -394,3 +394,57 @@
 .scenarioActive.scenario_green { background: var(--green-light); border-color: var(--ok); }
 .scenarioActive.scenario_red   { background: var(--danger-bg);   border-color: var(--danger); }
 .scenarioActive.scenario_amber { background: var(--warn-bg);     border-color: var(--warn); }
+
+/* ── Collapsible extra tests ── */
+.moreToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-mid, #3D4A63);
+  text-align: left;
+}
+
+.moreCount {
+  margin-left: auto;
+  padding: 1px 8px;
+  background: #E8EFFA;
+  color: #1E4E9C;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* ── Post-result refinement ── */
+.refineSection {
+  border-top: 2px solid #1E4E9C22;
+  padding-top: 14px;
+  margin-top: 4px;
+}
+
+.refineBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 10px 16px;
+  margin-top: 4px;
+  background: #fff;
+  color: #1E4E9C;
+  border: 1.5px solid #1E4E9C;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms;
+}
+
+.refineBtn:hover:not(:disabled) { background: #E8EFFA; }
+.refineBtn:disabled { opacity: 0.5; cursor: not-allowed; }

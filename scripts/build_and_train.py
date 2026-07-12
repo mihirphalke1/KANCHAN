@@ -280,7 +280,10 @@ def train_acoustic_svm() -> None:
 # ---------------------------------------------------------------------------
 # STEP 5: Build fusion training dataset
 # ---------------------------------------------------------------------------
-def build_fusion_dataset(
+def build_fusion_dataset(  # DEPRECATED — do not use
+    # WARNING: this builder injects class-constant streak/acoustic values,
+    # which leaks labels (the bug documented in the README). The fusion model
+    # must be trained with scripts/rebuild_fusion.py instead.
     genuine_paths: list[Path], fake_paths: list[Path]
 ) -> None:
     section("STEP 5 — Building fusion training dataset")
@@ -625,8 +628,8 @@ def main():
     X_gen, X_fake = extract_embeddings(genuine_paths, fake_paths)
     train_image_probe(X_gen, X_fake)
     train_acoustic_svm()
-    build_fusion_dataset(genuine_paths, fake_paths)
-    train_fusion_xgb()
+    print("\nFusion training is handled by scripts/rebuild_fusion.py (leakage-free).")
+    print("The legacy fusion builder in this file is deprecated and not invoked.")
     validate_benford()
     create_demo_fixtures()
     reseed_density_log()

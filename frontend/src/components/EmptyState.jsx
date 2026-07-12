@@ -2,10 +2,10 @@ import { Camera, Mic, Scale, Layers } from 'lucide-react'
 import styles from './EmptyState.module.css'
 
 const TIPS = [
-  { Icon: Camera, text: '4–6 angle photos give the best visual score' },
-  { Icon: Mic,    text: 'Tap the item with a stylus for a clear ring sound' },
-  { Icon: Scale,  text: 'Weigh to 0.01 g precision for accurate density' },
-  { Icon: Layers, text: 'A touchstone streak photo activates the streak module' },
+  { Icon: Camera, text: 'Photos on a plain backdrop — the system finds the stones itself' },
+  { Icon: Scale,  text: 'Weigh in air and in water, to 0.01 g' },
+  { Icon: Mic,    text: 'Tap once with a stylus, record the ring in a quiet room' },
+  { Icon: Layers, text: 'Optional: a touchstone streak photo adds a fourth check' },
 ]
 
 export default function EmptyState() {
@@ -17,8 +17,9 @@ export default function EmptyState() {
       <div className={styles.textGroup}>
         <h2 className={styles.heading}>Ready to Analyse</h2>
         <p className={styles.body}>
-          Enter item details and weight measurements on the left, then upload
-          photos or a tap-test recording for the highest accuracy verdict.
+          Three core tests, all required: photos of the item, the two weight
+          readings, and a tap recording. No single test can approve an item
+          on its own — that is how fakes have slipped through elsewhere.
         </p>
       </div>
       <div className={styles.tips}>
