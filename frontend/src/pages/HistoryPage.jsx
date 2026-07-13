@@ -7,9 +7,14 @@ import {
 } from 'lucide-react'
 import MobileTabBar from '@/components/MobileTabBar'
 import VerdictCard from '@/components/VerdictCard'
+import CustomerInfoCard from '@/components/CustomerInfoCard'
+import ProcessTrace from '@/components/ProcessTrace'
+import MediaEvidence from '@/components/MediaEvidence'
+import XRayView from '@/components/XRayView'
 import SignalBars from '@/components/SignalBars'
 import ContradictionAlert from '@/components/ContradictionAlert'
 import DensityDetails from '@/components/DensityDetails'
+import CompositionCard from '@/components/CompositionCard'
 import BenfordStatus from '@/components/BenfordStatus'
 import SHAPBreakdown from '@/components/SHAPBreakdown'
 import styles from './HistoryPage.module.css'
@@ -226,7 +231,10 @@ export default function HistoryPage() {
           {/* Detail panel */}
           <div className={styles.detailPanel}>
             {selected
-              ? <CaseDetail c={selected} />
+              ? <CaseDetail c={selected} onCaseUpdated={updated => {
+                  setSelected(updated)
+                  setCases(cs => cs.map(c => c.case_id === updated.case_id ? updated : c))
+                }} />
               : (
                 <div className={styles.noDetail}>
                   <BarChart3 size={36} className={styles.noDetailIcon} />
@@ -317,7 +325,7 @@ function CaseRow({ c, active, onClick }) {
   )
 }
 
-function CaseDetail({ c }) {
+function CaseDetail({ c, onCaseUpdated }) {
   const { modality_scores, contradiction, fusion, benford, verdict, case_id } = c
   const rl  = verdict?.risk_level || 'BORDERLINE'
   const cfg = VERDICT_META[rl] || VERDICT_META.BORDERLINE
@@ -349,11 +357,16 @@ function CaseDetail({ c }) {
 
       <div className={styles.detailBody}>
         <VerdictCard verdict={verdict} caseId={case_id} />
+        <CustomerInfoCard caseId={case_id} customer={c.customer} onUpdated={onCaseUpdated} />
+        <ProcessTrace trace={c.verification_trace} caseData={c} />
+        <MediaEvidence caseData={c} />
+        <XRayView caseData={c} />
         <SignalBars scores={modality_scores} />
         {contradiction?.flags?.length > 0 && (
           <ContradictionAlert contradiction={contradiction} />
         )}
         <DensityDetails density={modality_scores?.density} />
+        <CompositionCard composition={c.composition} weightDry={modality_scores?.density?.weight_dry} />
         {fusion?.shap_values && <SHAPBreakdown shap={fusion.shap_values} />}
         {benford && <BenfordStatus benford={benford} />}
       </div>

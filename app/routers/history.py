@@ -1,10 +1,23 @@
 import json
 from pathlib import Path
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 router = APIRouter()
+
+
+class CustomerUpdate(BaseModel):
+    name:         Optional[str] = None
+    account_no:   Optional[str] = None
+    loan_app_no:  Optional[str] = None
+    officer_name: Optional[str] = None
+    phone:        Optional[str] = None
+    email:        Optional[str] = None
+    address:      Optional[str] = None
+    notes:        Optional[str] = None
 
 HISTORY_PATH = Path("data/case_history.json")
 
@@ -40,6 +53,23 @@ async def get_case(case_id: str):
     history = _load()
     for case in history:
         if case.get("case_id") == case_id:
+            return JSONResponse(content=case)
+    raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
+
+
+@router.patch("/history/{case_id}")
+async def update_customer(case_id: str, update: CustomerUpdate):
+    """Merge new/edited customer-info fields into a saved case, so details
+    that weren't captured at intake (phone, email, address, notes, or a
+    correction to the essentials) can be added afterwards from History."""
+    history = _load()
+    for case in history:
+        if case.get("case_id") == case_id:
+            customer = case.setdefault("customer", {})
+            for k, v in update.model_dump(exclude_unset=True).items():
+                if v is not None and v != "":
+                    customer[k] = v
+            _save(history)
             return JSONResponse(content=case)
     raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
 

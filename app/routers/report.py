@@ -6,6 +6,7 @@ import io
 import json
 import math
 from datetime import datetime, timezone, timedelta
+from xml.sax.saxutils import escape as _esc
 from pathlib import Path
 from typing import Optional
 
@@ -491,6 +492,11 @@ def build_report(case: dict) -> bytes:
         if r < 0.75: return _cell('! Marginal',     bold=True, color=AMBER)
         return           _cell('✗ ANOMALOUS',       bold=True, color=RED)
 
+    best_match     = density.get('best_match') or {}
+    closest_fake   = density.get('closest_fake')
+    tungsten_warn  = density.get('tungsten_warning')
+    misdeclared    = density.get('misdeclared_purity')
+
     d_body = [[_cell('PARAMETER'), _cell('VALUE'), _cell('EXPECTED'), _cell('STATUS')]]
     d_body += [
         [_cell('Declared Karat'),   _cell(f"{case.get('declared_karat','—')}K"), _cell('—'), _cell('—')],
@@ -503,6 +509,24 @@ def build_report(case: dict) -> bytes:
          _cell(f'{drisk:.2%}' if isinstance(drisk, float) else '—', bold=True),
          _cell('< 35% = pass'), _cell('')],
     ]
+    if best_match.get('name'):
+        d_body.append([
+            _cell('What the physics says it is'),
+            _cell(best_match['name'].title() +
+                  (f" ({round((best_match.get('probability') or 0) * 100)}% match)"
+                   if best_match.get('kind') == 'karat' else ''), bold=True),
+            _cell('—'),
+            _cell('! Over-stated' if misdeclared else '✓ Consistent',
+                  bold=True, color=AMBER if misdeclared else GREEN),
+        ])
+    if closest_fake and best_match.get('kind') != 'karat':
+        d_body.append([_cell('Closest Fake Metal'), _cell(closest_fake.title(), bold=True, color=RED),
+                        _cell('—'), _cell('✗ Check', bold=True, color=RED)])
+    if tungsten_warn:
+        d_body.append([_cell('Tungsten Blind-Spot'),
+                        _cell('Density matches tungsten — indistinguishable from 24K by density alone',
+                              bold=True, color=AMBER),
+                        _cell('—'), _cell('! Review', bold=True, color=AMBER)])
     dt = Table(d_body, colWidths=[bw*0.30, bw*0.22, bw*0.27, bw*0.21])
     dt.setStyle(TableStyle(_TS_BASE + [
         ('BACKGROUND',   (0,0), (-1,0),  GREY_100),
@@ -527,7 +551,53 @@ def build_report(case: dict) -> bytes:
     story.append(_Drawing(_risk_gauge(drisk, width=int(bw), height=12)))
     story.append(Spacer(1, 6*mm))
 
-    # ── 2. Signal breakdown ──────────────────────────────────────────
+    # ── 2. Composition — gold vs stones ───────────────────────────────
+    comp = case.get('composition')
+    if comp:
+        model_valid = comp.get('model_valid')
+        c_body = [[_cell('PARAMETER'), _cell('VALUE'), _cell('NOTE')]]
+        if model_valid and comp.get('gold_mass_g') is not None:
+            goldpct = round((comp.get('gold_mass_fraction') or 0) * 100)
+            c_body.append([_cell('Gold Mass'), _cell(f"{comp['gold_mass_g']} g ({goldpct}%)", bold=True),
+                            _cell(f"of {density.get('weight_dry','—')} g total")])
+            c_body.append([_cell('Stone/Other Mass'), _cell(f"{comp.get('stone_mass_g','—')} g", bold=True), _cell('')])
+        c_body.append([_cell('Stone Volume (photo)'), _cell(f"{comp.get('stone_frac_photo',0)*100:.0f}%"),
+                        _cell('Camera-detected stone area — a lower bound')])
+        c_body.append([_cell('Stone Volume (physics)'), _cell(f"{comp.get('stone_frac_implied',0)*100:.0f}%"),
+                        _cell('Non-gold volume implied by measured density')])
+        c_body.append([_cell('Predicted Bulk Density'), _cell(f"{comp.get('rho_predicted','—')} g/cm³"), _cell('')])
+        z = comp.get('consistency_z', 0)
+        c_body.append([_cell('Consistency (z)'),
+                        _cell(str(z), bold=True, color=AMBER if z and z > 2 else GREY_900),
+                        _cell('< 2 consistent · > 3 anomalous')])
+        adj = comp.get('adjusted_density_risk')
+        if adj is not None:
+            c_body.append([_cell('Stone-Corrected Density Risk'),
+                            _cell(f"{adj*100:.0f}%", bold=True, color=AMBER if adj > 0.5 else GREEN),
+                            _cell('Feeds the final decision for stone-set items')])
+        ct = Table(c_body, colWidths=[bw*0.32, bw*0.24, bw*0.44])
+        ct.setStyle(TableStyle(_TS_BASE + [
+            ('BACKGROUND',   (0,0), (-1,0),  GREY_100),
+            ('BOX',          (0,0), (-1,-1), 0.5, GREY_200),
+            ('GRID',         (0,0), (-1,-1), 0.3, GREY_200),
+            ('FONTNAME',     (0,0), (-1,0),  'Helvetica-Bold'),
+            ('FONTSIZE',     (0,0), (-1,0),  7),
+            ('TEXTCOLOR',    (0,0), (-1,0),  GREY_500),
+        ]))
+        gems = comp.get('gems') or []
+        gem_txt = ('Detected stones: ' + ', '.join(
+            f"#{i+1} {g.get('hue_class','—')} ({g.get('area_pct',0)}%)" for i, g in enumerate(gems)
+        )) if gems else 'No stones detected — plain-metal density analysis applies.'
+        story.append(KeepTogether([
+            Paragraph('2. Composition — Gold vs Stones', S['h3']),
+            Spacer(1, 2*mm),
+            ct,
+            Spacer(1, 2*mm),
+            Paragraph(_esc(comp.get('note') or gem_txt), S['small']),
+        ]))
+        story.append(Spacer(1, 6*mm))
+
+    # ── 3. Signal breakdown ──────────────────────────────────────────
 
     mode_labels = {
         'computed':          'Archimedes physics',
@@ -572,7 +642,7 @@ def build_report(case: dict) -> bytes:
         ('VALIGN',       (0,0), (-1,-1), 'MIDDLE'),
     ]))
     story.append(KeepTogether([
-        Paragraph('2. Signal Breakdown — All Modalities', S['h3']),
+        Paragraph('3. Signal Breakdown — All Modalities', S['h3']),
         Spacer(1, 2*mm),
         mt,
     ]))
@@ -612,7 +682,7 @@ def build_report(case: dict) -> bytes:
         ('TEXTCOLOR',    (0,0), (-1,0),  GREY_500),
     ]))
     story.append(KeepTogether([
-        Paragraph('3. XGBoost Fusion Analysis', S['h3']),
+        Paragraph('4. XGBoost Fusion Analysis', S['h3']),
         Spacer(1, 2*mm),
         ft,
     ]))
@@ -621,7 +691,7 @@ def build_report(case: dict) -> bytes:
     # ── 4. Contradiction flags ───────────────────────────────────────
     flags = contra.get('flags', [])
     if flags:
-        story.append(Paragraph('4. Cross-Modal Contradiction Flags', S['h3']))
+        story.append(Paragraph('5. Cross-Modal Contradiction Flags', S['h3']))
         story.append(Spacer(1, 2*mm))
         for flag in flags:
             ft2 = Table([[_cell(f'⚠  {flag}', bold=True, color=AMBER)]], colWidths=[bw])
@@ -635,17 +705,28 @@ def build_report(case: dict) -> bytes:
             story.append(ft2)
             story.append(Spacer(1, 2*mm))
 
-    # ── 5. Item photographs ──────────────────────────────────────────
+    # ── 6. Item photographs + material scan ───────────────────────────
     img_paths   = [p for p in (media.get('images') or []) if p and Path(p).exists()]
     streak_path = (media.get('streak') or '')
     streak_path = streak_path if streak_path and Path(streak_path).exists() else None
     audio_path  = (media.get('audio') or '')
     audio_path  = audio_path  if audio_path  and Path(audio_path).exists()  else None
 
-    all_photos = img_paths[:4] + ([streak_path] if streak_path else [])
+    xray_stages    = (media.get('xray') or {}).get('stages') or {}
+    material_path  = xray_stages.get('material')
+    material_path  = material_path if material_path and Path(material_path).exists() else None
+    gems_path      = xray_stages.get('gems')
+    gems_path      = gems_path if gems_path and Path(gems_path).exists() else None
+
+    all_photos = (
+        img_paths[:4]
+        + ([streak_path] if streak_path else [])
+        + ([material_path] if material_path else [])
+        + ([gems_path] if gems_path else [])
+    )
 
     if all_photos:
-        story.append(Paragraph('5. Item Photographs', S['h3']))
+        story.append(Paragraph('6. Item Photographs & Material Scan', S['h3']))
         story.append(Spacer(1, 2*mm))
         # (photos grid is large enough that KeepTogether would force a page break — leave as-is)
 
@@ -655,7 +736,10 @@ def build_report(case: dict) -> bytes:
 
         cells, row_buf = [], []
         for i, path in enumerate(all_photos):
-            lbl = 'Touchstone streak' if path == streak_path else f'Photo {i+1}'
+            lbl = ('Touchstone streak' if path == streak_path else
+                   'Material map' if path == material_path else
+                   'Stones found' if path == gems_path else
+                   f'Photo {i+1}')
             try:
                 img_f = RLImage(path, width=img_w, height=img_h, kind='bound')
                 cell  = Table([[img_f], [_cell(lbl, color=GREY_500, size=7)]],
@@ -692,11 +776,13 @@ def build_report(case: dict) -> bytes:
         story.append(Paragraph(
             f'{len(img_paths)} item photograph(s)' +
             (' + 1 touchstone streak image' if streak_path else '') +
+            (' + material scan' if material_path else '') +
+            (' + stone-detection overlay' if gems_path else '') +
             ' captured at time of assessment.',
             S['small']))
         story.append(Spacer(1, 5*mm))
 
-    # ── 6. Acoustic waveform ─────────────────────────────────────────
+    # ── 7. Acoustic waveform ─────────────────────────────────────────
     if audio_path:
         wf = _waveform(audio_path, width=int(bw), height=72)
         if wf:
@@ -713,7 +799,7 @@ def build_report(case: dict) -> bytes:
                 ('VALIGN',    (0,0),(-1,-1), 'MIDDLE'),
             ]))
             story.append(KeepTogether([
-                Paragraph('6. Acoustic Fingerprint — Ring Test Waveform', S['h3']),
+                Paragraph('7. Acoustic Fingerprint — Ring Test Waveform', S['h3']),
                 Spacer(1, 2*mm),
                 Paragraph(
                     'Amplitude envelope of the recorded ring sound. '
@@ -726,13 +812,13 @@ def build_report(case: dict) -> bytes:
             ]))
         else:
             story.append(KeepTogether([
-                Paragraph('6. Acoustic Fingerprint — Ring Test Waveform', S['h3']),
+                Paragraph('7. Acoustic Fingerprint — Ring Test Waveform', S['h3']),
                 Spacer(1, 2*mm),
                 _Drawing(_no_waveform(int(bw), 72)),
             ]))
     else:
         story.append(KeepTogether([
-            Paragraph('6. Acoustic Fingerprint — Ring Test Waveform', S['h3']),
+            Paragraph('7. Acoustic Fingerprint — Ring Test Waveform', S['h3']),
             Spacer(1, 2*mm),
             _Drawing(_no_waveform(int(bw), 72)),
             Spacer(1, 2*mm),
@@ -743,7 +829,57 @@ def build_report(case: dict) -> bytes:
         ]))
 
     # ════════════════════════════════════════════════════════════════
-    # PAGE 3 — BENFORD + DECLARATION
+    # PAGE 3 — VERIFICATION TRACE
+    # ════════════════════════════════════════════════════════════════
+    trace = case.get('verification_trace') or []
+    if trace:
+        story.append(PageBreak())
+        story.append(Spacer(1, 4*mm))
+        story.append(Paragraph('HOW THIS RESULT WAS REACHED — STEP BY STEP', S['h2']))
+        story.append(HRFlowable(width='100%', thickness=0.5, color=GREY_200, spaceAfter=5*mm))
+        story.append(Paragraph(
+            'Every step of the detection pipeline — inputs, formula, outputs, and data source — '
+            'kept for officer verification and audit.', S['body']))
+        story.append(Spacer(1, 4*mm))
+
+        STATUS_META_PDF = {
+            'done':    ('OK',     GREEN),
+            'flag':    ('FLAG',   AMBER),
+            'skipped': ('SKIPPED', GREY_500),
+        }
+        for i, step in enumerate(trace, 1):
+            tag, tag_c = STATUS_META_PDF.get(step.get('status'), ('OK', GREY_700))
+            head = Table([[
+                _cell(str(i), bold=True, color=GREY_500),
+                _cell(_esc(step.get('step', '')), bold=True, color=GREY_900),
+                _cell(tag, bold=True, color=tag_c),
+            ]], colWidths=[bw*0.05, bw*0.75, bw*0.20])
+            head.setStyle(TableStyle(_TS_BASE + [
+                ('BACKGROUND', (0,0), (-1,-1), AMBER_LIGHT if step.get('status') == 'flag' else GREY_50),
+                ('BOX',        (0,0), (-1,-1), 0.5, GREY_200),
+                ('VALIGN',     (0,0), (-1,-1), 'MIDDLE'),
+                ('ALIGN',      (2,0), (2,0),   'RIGHT'),
+            ]))
+            block = [head]
+            if step.get('summary'):
+                block.append(Spacer(1, 1.5*mm))
+                block.append(Paragraph(_esc(step['summary']), S['body']))
+            if step.get('formula'):
+                block.append(Spacer(1, 1*mm))
+                block.append(Paragraph(_esc(step['formula']), S['mono']))
+            details = {k: v for k, v in (step.get('details') or {}).items() if k != 'stage_image'}
+            if details:
+                dt_txt = '  ·  '.join(f'{_esc(str(k))}: {_esc(str(v))}' for k, v in details.items())
+                block.append(Spacer(1, 1*mm))
+                block.append(Paragraph(dt_txt, S['small']))
+            if step.get('source'):
+                block.append(Spacer(1, 0.5*mm))
+                block.append(Paragraph(f"Source: {_esc(step['source'])}", S['small']))
+            block.append(Spacer(1, 3.5*mm))
+            story.append(KeepTogether(block))
+
+    # ════════════════════════════════════════════════════════════════
+    # PAGE 4 — BENFORD + DECLARATION
     # ════════════════════════════════════════════════════════════════
     story.append(PageBreak())
     story.append(Spacer(1, 4*mm))

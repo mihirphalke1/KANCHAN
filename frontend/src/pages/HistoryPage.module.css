@@ -319,7 +319,7 @@
 .noDetailIcon { color: var(--border-mid); }
 .noDetailText { font-size: 14px; color: var(--text-faint); }
 
-.detail { padding: 24px; max-width: 860px; }
+.detail { padding: 24px; }
 
 .detailHeader {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;

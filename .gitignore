@@ -2,6 +2,8 @@
 data/raw/
 data/processed/
 data/case_history.json
+data/cases/
+data/density_log.csv
 __pycache__/
 *.pyc
 .DS_Store

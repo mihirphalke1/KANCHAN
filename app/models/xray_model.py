@@ -165,13 +165,19 @@ def analyze_xray(xray_stats: dict | None, item_description: str = "") -> dict:
             "Description declares stones but neither detector found any"
         )
 
-    # Colourless candidates always require confirmation — undeclared ones
-    # doubly so (a bright inclusion can wear a stone's clothes).
+    # Colourless candidates that cleared the confidence floor. "confirmed"
+    # cleared the high-confidence threshold on boundary contrast, local
+    # colour contrast, shape and size consistency; "uncertain" cleared the
+    # floor but not the confident bar, so the officer still confirms it by
+    # eye. Candidates that looked like plain metal glare (low confidence on
+    # every signal) were discarded before reaching this list at all.
     if cls_regions > 0:
-        kinds = {}
-        for c in colourless:
-            kinds[c["kind"]] = kinds.get(c["kind"], 0) + 1
-        kind_txt = ", ".join(f"{v}× {k}" for k, v in kinds.items())
+        confirmed_n = sum(1 for c in colourless if c["kind"] == "confirmed")
+        uncertain_n = cls_regions - confirmed_n
+        kind_txt = ", ".join(
+            f"{n}× {label}" for n, label in
+            [(confirmed_n, "confirmed"), (uncertain_n, "needs officer confirmation")] if n > 0
+        )
         if declared_colourless:
             signals.append(
                 f"{cls_regions} colourless stone candidate(s) detected ({kind_txt}) — "

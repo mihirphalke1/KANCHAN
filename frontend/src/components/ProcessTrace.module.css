@@ -68,7 +68,7 @@
 
 .stepHeader {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   width: 100%;
   background: none;
@@ -99,7 +99,7 @@
 .flag .stepNum { border-color: #B45309; color: #B45309; }
 .skip .stepNum { border-color: var(--border); color: var(--text-faint); }
 
-.stepIcon { flex-shrink: 0; align-self: center; }
+.stepIcon { flex-shrink: 0; }
 .ok   .stepIcon { color: #15803D; }
 .flag .stepIcon { color: #B45309; }
 .skip .stepIcon { color: var(--text-faint); }

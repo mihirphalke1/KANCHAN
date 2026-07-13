@@ -38,6 +38,8 @@ const BLANK_FORM = {
   water_temp_c:      '25',
   branch_id:         'BLR-001',
   customer_name:     '',
+  customer_account:  '',
+  loan_app_no:       '',
   officer_name:      '',
   llm_provider:      'groq',
 }
@@ -114,7 +116,39 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
         <p className={styles.formSub}>Three core tests — photos, weights, tap sound. Text details can be added after the first result</p>
       </div>
 
-      {/* ── 1. Photos first ── */}
+      {/* ── 1. Customer details — necessary fields only ── */}
+      <fieldset className={styles.section}>
+        <legend className={styles.sectionLabel}>
+          <User size={13} />
+          Customer Information
+        </legend>
+        <div className={styles.row}>
+          <div className={styles.field}>
+            <label htmlFor="customer_name_top" className={styles.label}>Customer Name</label>
+            <input
+              id="customer_name_top"
+              className={styles.input}
+              type="text"
+              placeholder="Full name"
+              value={form.customer_name}
+              onChange={e => set('customer_name', e.target.value)}
+            />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="customer_account" className={styles.label}>Account Number</label>
+            <input
+              id="customer_account"
+              className={styles.input}
+              type="text"
+              placeholder="e.g. 04581234567"
+              value={form.customer_account}
+              onChange={e => set('customer_account', e.target.value)}
+            />
+          </div>
+        </div>
+      </fieldset>
+
+      {/* ── 2. Photos ── */}
       <fieldset className={styles.section}>
         <legend className={styles.sectionLabel}>
           <Camera size={13} />
@@ -412,14 +446,14 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
 
           <div className={styles.row}>
             <div className={styles.field}>
-              <label htmlFor="customer_name" className={styles.label}>Customer Name</label>
+              <label htmlFor="loan_app_no" className={styles.label}>Loan Application No.</label>
               <input
-                id="customer_name"
+                id="loan_app_no"
                 className={styles.input}
                 type="text"
-                placeholder="Full name"
-                value={form.customer_name}
-                onChange={e => set('customer_name', e.target.value)}
+                placeholder="e.g. LA-2026-00123"
+                value={form.loan_app_no}
+                onChange={e => set('loan_app_no', e.target.value)}
               />
             </div>
             <div className={styles.field}>

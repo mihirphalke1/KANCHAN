@@ -1,6 +1,7 @@
 """
 POST /api/analyze — main analysis endpoint.
 """
+import base64
 import json
 import os
 import uuid
@@ -29,6 +30,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 HISTORY_PATH = Path("data/case_history.json")
+CASES_DIR    = Path("data/cases")
 
 
 def _load_history() -> list:
@@ -324,9 +326,10 @@ async def analyze(
     streak_bytes     = await streak_image.read() if streak_image else None
 
     # ── Material scan on the primary photograph ──
-    # No media is written to disk: the processed stages travel inside the
-    # response as embedded images; the browser shows the uploaded photos
-    # from its own copies. The PDF report degrades gracefully without files.
+    # Uploaded photos/audio/streak and the processed X-ray stages are saved
+    # under data/cases/<case_id>/ further down (once case_id-scoped data is
+    # ready) so the PDF report and the History page can show real evidence,
+    # not just the live response the browser already has.
     xray_result = None
     if image_bytes_list:
         try:
@@ -537,6 +540,46 @@ async def analyze(
         water_temp_c,
     )
 
+    # ── Persist the evidence itself under data/cases/<case_id>/ ──
+    # Photos, the tap-test audio, the streak photo, and every X-ray stage
+    # image are written to disk so a saved case can still show real evidence
+    # later — from the History page or the PDF report — not just the
+    # in-memory response the browser already has for a live analysis.
+    case_dir = CASES_DIR / case_id
+    case_dir.mkdir(parents=True, exist_ok=True)
+
+    saved_images = []
+    for i, img_bytes in enumerate(image_bytes_list):
+        p = case_dir / f"img_{i}.jpg"
+        p.write_bytes(img_bytes)
+        saved_images.append(str(p))
+
+    saved_audio = None
+    if audio_bytes:
+        p = case_dir / "audio.wav"
+        p.write_bytes(audio_bytes)
+        saved_audio = str(p)
+
+    saved_streak = None
+    if streak_bytes:
+        p = case_dir / "streak.jpg"
+        p.write_bytes(streak_bytes)
+        saved_streak = str(p)
+
+    saved_xray_stages = {}
+    if xray_result and xray_result.get("stages"):
+        xray_dir = case_dir / "xray"
+        xray_dir.mkdir(exist_ok=True)
+        for stage_name, data_uri in xray_result["stages"].items():
+            try:
+                header, b64data = data_uri.split(",", 1)
+                ext = "png" if "image/png" in header else "jpg"
+                p = xray_dir / f"{stage_name}.{ext}"
+                p.write_bytes(base64.b64decode(b64data))
+                saved_xray_stages[stage_name] = str(p)
+            except Exception as e:
+                logger.warning("Could not save xray stage '%s' for case %s: %s", stage_name, case_id, e)
+
     case = {
         "case_id":          case_id,
         "timestamp":        datetime.utcnow().isoformat() + "Z",
@@ -553,6 +596,9 @@ async def analyze(
             "images_provided": len(image_bytes_list),
             "audio_provided":  audio_bytes is not None,
             "streak_provided": streak_bytes is not None,
+            "images":          saved_images,
+            "audio":           saved_audio,
+            "streak":          saved_streak,
             "xray":            xray_result,
         },
         "modality_scores": {
@@ -583,12 +629,12 @@ async def analyze(
     from app.main import _numpy_safe
     safe_case = _numpy_safe(case)
 
-    # History keeps numbers only — the embedded stage images stay in the
-    # response and are never persisted (no local media storage).
+    # The live response embeds X-ray stages as base64 so the just-completed
+    # analysis renders instantly with no extra round trip. The persisted copy
+    # swaps that for the on-disk paths saved above, so case_history.json
+    # stays small while a saved case still points at real image files.
     persist_case = json.loads(json.dumps(safe_case))
-    if persist_case.get("media", {}).get("xray"):
-        persist_case["media"]["xray"] = {
-            k: v for k, v in persist_case["media"]["xray"].items() if k != "stages"
-        }
+    if persist_case.get("media", {}).get("xray", {}).get("stages") is not None:
+        persist_case["media"]["xray"]["stages"] = saved_xray_stages
     _save_case(persist_case)
     return JSONResponse(content=safe_case)

@@ -57,8 +57,11 @@ async def health():
     return {"status": "ok", "service": "kanchan-ai"}
 
 
-# Case media is never persisted (privacy by design) — processed stages are
-# embedded in the analysis response; the browser displays its own uploads.
+# Saved case evidence (photos, tap-test audio, X-ray stage images) lives
+# under data/cases/<case_id>/ — served at /cases so History/PDF can show it.
+CASES_DIR = Path("data/cases")
+CASES_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/cases", StaticFiles(directory=str(CASES_DIR)), name="case_media")
 
 FRONTEND_DIST = Path("frontend/dist")
 if FRONTEND_DIST.exists():
