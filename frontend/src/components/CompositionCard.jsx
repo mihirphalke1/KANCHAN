@@ -64,12 +64,18 @@ export default function CompositionCard({ composition, weightDry }) {
           is moot, so we don't list stones. */}
       {model_valid !== false && gems.length > 0 && (
         <div className={styles.gemList}>
-          {gems.map((g, i) => (
-            <span key={i} className={styles.gemChip}>
-              <i style={{ background: HUE_COLOURS[g.hue_class] || HUE_COLOURS.other }} />
-              #{i + 1} {HUE_LABELS[g.hue_class] || g.hue_class} · {g.area_pct}%
-            </span>
-          ))}
+          {gems.map((g, i) => {
+            const named = g.stone_name && g.stone_name !== 'unidentified'
+            const label = named
+              ? g.stone_name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+              : (HUE_LABELS[g.hue_class] || g.hue_class)
+            return (
+              <span key={i} className={styles.gemChip} title={named ? `Nearest colour match: ${Math.round((g.match_confidence || 0) * 100)}%` : undefined}>
+                <i style={{ background: HUE_COLOURS[g.hue_class] || HUE_COLOURS.other }} />
+                #{i + 1} {label} · {g.area_pct}%
+              </span>
+            )
+          })}
         </div>
       )}
 

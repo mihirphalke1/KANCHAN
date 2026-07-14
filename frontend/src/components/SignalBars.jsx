@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { Weight, Mic, Brush, Scan } from 'lucide-react'
+import { Weight, Mic, Brush, Scan, Radar, Droplets } from 'lucide-react'
 import InfoTip from './ui/InfoTip'
 import styles from './SignalBars.module.css'
 
 const SIGNALS = [
-  { key: 'density',  label: 'Weight test', icon: Weight, description: 'Weight in air vs in water' },
-  { key: 'xray',     label: 'Photo test',  icon: Scan,   description: 'Metal vs stones from the photos' },
-  { key: 'acoustic', label: 'Sound test',  icon: Mic,    description: 'Ring of the item when tapped' },
-  { key: 'streak',   label: 'Streak',      icon: Brush,  description: 'Touchstone streak colour' },
+  { key: 'density',          label: 'Weight test',      icon: Weight, description: 'Weight in air vs in water' },
+  { key: 'xray',              label: 'Photo test',       icon: Scan,   description: 'Metal vs stones from the photos' },
+  { key: 'acoustic',          label: 'Sound test',       icon: Mic,    description: 'Ring of the item when tapped' },
+  { key: 'spatial_acoustic',  label: 'Spatial mapping',  icon: Radar,  description: 'Ring pitch across multiple tap points' },
+  { key: 'streak',            label: 'Streak',           icon: Brush,  description: 'Touchstone streak colour' },
+  { key: 'tarnish',           label: 'Tarnish/rust',     icon: Droplets, description: 'Localized discoloration in the photo' },
 ]
 
 function getRiskColor(risk) {
@@ -16,9 +18,11 @@ function getRiskColor(risk) {
   return 'red'
 }
 
+const NOT_PERFORMED_MODES = new Set(['dsip_unusable', 'insufficient_taps', 'insufficient_usable_taps'])
+
 function isNotPerformed(score) {
   const mode = score?.mode || ''
-  return !score || mode.startsWith('no_') || mode === 'dsip_unusable'
+  return !score || mode.startsWith('no_') || NOT_PERFORMED_MODES.has(mode)
 }
 
 function Bar({ signal, score }) {

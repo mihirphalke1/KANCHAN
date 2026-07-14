@@ -8,7 +8,6 @@ spectral decay, distinguishing composite-core items from solid gold.
 Model: SVM with RBF kernel trained on DS-1 (20 samples, LOOCV).
 Fallback: heuristic on RMS energy ratio + zero-crossing rate.
 """
-import io
 import pickle
 import logging
 from pathlib import Path
@@ -29,10 +28,9 @@ def extract_mfcc_features(audio_bytes: bytes) -> np.ndarray:
     Vector layout: [20 MFCC means | 20 MFCC stds | 20 Δ means | 20 Δ stds | 1 ZCR | 1 RMS]
     """
     import librosa
-    import soundfile as sf
+    from app.utils.audio_io import load_audio_bytes
 
-    audio_io = io.BytesIO(audio_bytes)
-    y, sr = librosa.load(audio_io, sr=22050, mono=True)
+    y, sr = load_audio_bytes(audio_bytes, sr=22050, mono=True)
 
     if len(y) == 0:
         raise ValueError("Empty audio signal")
@@ -57,8 +55,8 @@ def _heuristic_risk(audio_bytes: bytes) -> tuple[float, str]:
     Returns (risk_score, explanation).
     """
     import librosa
-    audio_io = io.BytesIO(audio_bytes)
-    y, sr = librosa.load(audio_io, sr=22050, mono=True)
+    from app.utils.audio_io import load_audio_bytes
+    y, sr = load_audio_bytes(audio_bytes, sr=22050, mono=True)
 
     if len(y) == 0:
         return 0.5, "empty_audio"

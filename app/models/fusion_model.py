@@ -37,12 +37,14 @@ FUSION_MODE = os.getenv("FUSION_MODE", "logodds")
 #   density  1.0  — calibrated physics with propagated uncertainty
 #   acoustic 0.6  — real tap recordings, but small training sample
 #   image    0.5  — DSIP structural features, hand-calibrated
-#   streak   0.2  — proxy-trained heuristic pending DS-7
+#   streak   0.3  — HSV hue-band physics (calibrated: false by default, see
+#                   data/streak_calibration.json) — no longer a black-box
+#                   model, but still a coarse single-photo colour signal
 RELIABILITY = {
     "image":    float(os.getenv("W_VISUAL",   "0.5")),
     "density":  float(os.getenv("W_DENSITY",  "1.0")),
     "acoustic": float(os.getenv("W_ACOUSTIC", "0.6")),
-    "streak":   float(os.getenv("W_STREAK",   "0.2")),
+    "streak":   float(os.getenv("W_STREAK",   "0.3")),
 }
 
 # Blind-spot floors: minimum risk a PASSING test can assert, because known

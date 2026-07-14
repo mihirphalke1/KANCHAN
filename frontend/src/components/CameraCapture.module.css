@@ -1,0 +1,70 @@
+.wrap { display: flex; flex-direction: column; gap: 8px; }
+
+.startBtn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 14px 16px;
+  border: 1.5px dashed var(--border-mid); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--text-mid);
+  font-size: 13px; font-weight: 600;
+  transition: border-color 120ms, background 120ms, color 120ms;
+}
+.startBtn:hover { border-color: var(--brand-light); background: var(--brand-muted); color: var(--brand); }
+
+.videoFrame {
+  position: relative; width: 100%; border-radius: var(--radius-sm);
+  overflow: hidden; background: #000; aspect-ratio: 4 / 3;
+}
+.video { width: 100%; height: 100%; object-fit: cover; }
+
+.shutterBtn {
+  position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
+  width: 44px; height: 44px; border-radius: 50%;
+  background: #fff; border: 3px solid rgba(255,255,255,0.5);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--brand); box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+}
+.shutterBtn:hover { background: var(--brand-muted); }
+
+.previewFrame {
+  position: relative; width: 100%; border-radius: var(--radius-sm);
+  overflow: hidden; aspect-ratio: 4 / 3; border: 1px solid var(--border);
+}
+.preview { width: 100%; height: 100%; object-fit: cover; }
+
+.capturedBadge {
+  position: absolute; top: 8px; left: 8px;
+  display: flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 999px;
+  background: rgba(33,122,84,0.92); color: #fff;
+  font-size: 10px; font-weight: 700;
+}
+.uploadBadge { background: rgba(217,119,6,0.92); }
+
+.retakeBtn {
+  display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+  padding: 6px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border-mid); background: #fff; color: var(--text-mid);
+  font-size: 12px; font-weight: 600;
+}
+.retakeBtn:hover { background: var(--bg); }
+
+.error {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 8px 10px; border-radius: var(--radius-sm);
+  background: var(--danger-bg); color: var(--danger);
+  font-size: 12px; line-height: 1.4;
+}
+.retryBtn {
+  margin-left: auto; padding: 3px 9px; border-radius: 999px;
+  background: #fff; border: 1px solid var(--danger); color: var(--danger);
+  font-size: 11px; font-weight: 700;
+}
+
+.uploadLink {
+  display: inline-flex; align-items: center; gap: 5px; align-self: center;
+  background: none; border: none; padding: 2px 4px;
+  font-size: 11px; font-weight: 600; color: var(--text-faint);
+}
+.uploadLink:hover { color: var(--warn); }
+
+.hiddenFileInput { display: none; }

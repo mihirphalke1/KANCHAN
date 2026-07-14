@@ -1,0 +1,50 @@
+.page {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: var(--bg); padding: 24px;
+}
+
+.card {
+  width: 100%; max-width: 380px; background: #fff;
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg); padding: 28px 26px;
+}
+
+.brand {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display); font-size: 20px; font-weight: 800;
+  color: var(--brand-darker);
+}
+.brandAi { color: var(--yellow-dark); }
+
+.sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; margin-bottom: 20px; }
+
+.form { display: flex; flex-direction: column; gap: 14px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.label { font-size: 13px; font-weight: 500; color: var(--text-mid); }
+.input {
+  height: 40px; padding: 0 12px; border: 1px solid var(--border-mid);
+  border-radius: var(--radius-sm); font-size: 14px; color: var(--text);
+}
+.input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(0,48,135,0.12); }
+
+.error {
+  font-size: 12px; color: var(--danger); padding: 8px 10px;
+  background: var(--danger-bg); border-radius: var(--radius-sm);
+}
+
+.submitBtn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 16px; background: var(--btn); color: #fff; border: none;
+  border-radius: 999px; font-size: 14px; font-weight: 700;
+  box-shadow: 0 4px 12px rgba(11,44,95,0.25);
+}
+.submitBtn:hover:not(:disabled) { background: var(--btn-dark); }
+.submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.spin { animation: spin 800ms linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.demoHint { font-size: 11px; color: var(--text-faint); text-align: center; }
+
+.selfieIntro { font-size: 13px; color: var(--text-mid); line-height: 1.5; }

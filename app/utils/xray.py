@@ -1,7 +1,8 @@
 """
 DSIP pseudo X-ray pipeline — material segmentation of jewellery photographs.
 
-Classical image-processing stages (no ML):
+Stages 1-7 are classical image processing (no ML), stage 8 is a
+classical/ML hybrid:
   1. Illumination normalisation (white-balance + local contrast correction)
   2. BT.709 luminance greyscale
   3. Intensity inversion (radiographic negative)
@@ -9,9 +10,22 @@ Classical image-processing stages (no ML):
   5. Sobel gradient magnitude (material boundaries)
   6. False-colour material map (threshold classes + edge overlay)
   7. Jet heatmap of raw luminance
-  8. Stone detection — one unified candidate pool scored on four independent
-     confidence signals (boundary contrast, local colour contrast, shape
-     regularity, size consistency) instead of a hard colour/texture bucket.
+  8. Stone detection — the human-eye rule: measure the item's OWN gold
+     colour (median CIE Lab over the item pixels), then flag whatever
+     differs clearly from it (lightness-deemphasised Lab distance, so
+     shadows/highlights on the SAME gold don't trigger it but a genuinely
+     different-coloured stone does, however muted or dimly lit). Those
+     colour-threshold candidates seed a pretrained MobileSAM segmentation
+     pass (app/models/ml_stone_detection.py) that supplies the actual region
+     boundaries (fixes touching-stone undercounting and facet-reflection
+     overcounting a colour threshold alone produces), falling back to the
+     classical candidate pool if the model is unavailable. Each region is
+     then scored on four independent confidence signals (boundary contrast,
+     local colour contrast, shape regularity, size consistency) for
+     detection confidence, and separately identified by nearest-match
+     against a reference stone-colour table (ruby, emerald, sapphire,
+     diamond, ...) — two different questions, two different, both
+     inspectable, non-black-box answers.
 """
 import base64
 import logging
@@ -23,17 +37,28 @@ from typing import Optional
 import cv2
 import numpy as np
 
+from app.models import ml_stone_detection
+from app.utils.fiducial import card_bbox
+
 logger = logging.getLogger(__name__)
 
 MAX_SIDE = 640
 EDGE_THRESHOLD = 70          # on the 0-255 normalised Sobel magnitude
 MIN_GEM_AREA_FRAC = 0.002    # ≥0.2% of item area — beadwork stones are small
-MAX_STONE_AREA_FRAC = 0.35   # ≥35% of item area is almost never a single stone
+# A single large centre/statement stone (common in cocktail rings and
+# pendants) can legitimately dominate the item's visible area — the old
+# 0.35 ceiling was excluding exactly this case, not just glare sheets.
+MAX_STONE_AREA_FRAC = 0.60
 # Colourless (desaturated) candidates are the hardest class — a specular
 # highlight, a polished white-gold/rhodium bead, and a real diamond/pearl
 # all look the same in hue. A single colourless region this large is far
-# more likely a glare sheet or a metal segment than one stone.
+# more likely a glare sheet or a metal segment than one stone — UNLESS it
+# also contrasts strongly against the surrounding metal (MAX_COLOURLESS_
+# AREA_FRAC_HIGH_CONTRAST), which a glare bleed on a metal facet does not:
+# glare fades gradually into its own metal, a real large stone doesn't.
 MAX_COLOURLESS_AREA_FRAC = 0.08
+MAX_COLOURLESS_AREA_FRAC_HIGH_CONTRAST = 0.45
+HIGH_CONTRAST_FLOOR = 0.5
 
 # Background subtraction: the backdrop colour is estimated from the frame
 # border (SOP: photograph on a plain fixed-colour backdrop — the light box
@@ -45,13 +70,31 @@ BACKDROP_DIST_THRESHOLD = float(os.getenv("BACKDROP_DIST_THRESHOLD", "60"))
 # off the edge of a tightly-cropped phone photo, and are kept.
 BORDER_INTRUSION_MAX_FRAC = 0.08
 
-# Candidate generation is deliberately generous (recall-oriented) — the
-# actual precision comes from the confidence score below, not these gates.
-GEM_SAT_MIN = 45     # pale/pastel stones (e.g. mint emerald beads) sit near S~60
-GEM_VAL_MIN = 60     # shadow guard: hue is noise in near-black pixels
-CLS_SAT_MAX = 55
-CLS_VAL_MIN = 165
-HUE_DELTA_MIN = 12   # OpenCV H units a candidate must differ from the metal itself
+# ── Stone detection: the human-eye rule ─────────────────────────────────
+# "A gem looks like a gem because its colour is clearly different from the
+# gold around it." No hard-coded hue bands: measure the item's OWN gold
+# colour from the photo (metal_lab, below), then flag any region whose
+# colour clearly differs from THAT — in CIE Lab space, which separates true
+# colour (a*/b*) from lighting (L*). A shadow or a specular highlight on the
+# SAME gold moves L* a lot but barely touches a*/b*; a genuinely different-
+# coloured stone (including a muted, dimly-lit one) moves a*/b* regardless
+# of how it's lit. De-emphasising L* is what lets a pale stone still
+# register while a lighting gradient across curved polished metal — which
+# fooled a plain HSV-distance threshold — does not.
+LAB_LIGHTNESS_WEIGHT = float(os.getenv("STONE_LAB_L_WEIGHT", "0.25"))
+# Delta-E (weighted) above this = candidate. Calibrated so ordinary shading/
+# specular variation on a SINGLE gold surface (dominated by L*, discounted
+# above) stays under it, while a genuinely different-coloured stone —
+# including muted/opaque cabochons — clears it comfortably.
+STONE_DELTA_E_MIN = float(os.getenv("STONE_DELTA_E_MIN", "28"))
+# A real stone is uniformly coloured; a residual lighting/compression
+# artefact that still clears the distance threshold isn't — connected
+# components whose own delta-E values are this spread out (coefficient of
+# variation) are rejected as noise, not a stone.
+STONE_CV_MAX = float(os.getenv("STONE_CV_MAX", "0.10"))
+# Only regions at least this fraction of the item's area are checked for
+# colour consistency at all — see the comment in _candidate_mask.
+STONE_CV_GATE_FRAC = float(os.getenv("STONE_CV_GATE_FRAC", "0.08"))
 
 # A cut stone has an "identity signature" a specular highlight never has:
 # either dense internal facet sparkle (micro-edge texture) or a genuinely
@@ -266,15 +309,66 @@ def _item_mask(bgr: np.ndarray) -> tuple[np.ndarray, bool, np.ndarray]:
     return keep, True, eligible
 
 
-# Hue-class boundaries in OpenCV H units (0-179 = degrees/2)
-def _classify_hue(h: float) -> str:
-    if h < 10 or h >= 160:
-        return "red"
-    if 35 <= h < 85:
-        return "green"
-    if 85 <= h < 130:
-        return "blue"
-    return "other"
+# ── Reference stone colours ──────────────────────────────────────────────
+# Approximate sRGB, illustrative — the same "documented fallback, calibrate
+# against a real labelled panel later" status as BACKDROP_DIST_THRESHOLD and
+# every other constant in this module. `bucket` is the legacy 4-way class
+# (red/green/blue/other/colourless) that composition.py's stone-density
+# lookup and the report/UI colour-coding already key off; `name` is the
+# richer identification this rewrite adds on top.
+STONE_COLOR_REFERENCES = [
+    # name              bucket        sRGB (R, G, B)
+    ("diamond",         "colourless", (245, 245, 250)),
+    ("pearl",           "colourless", (245, 240, 225)),
+    ("white_sapphire",  "colourless", (235, 238, 236)),
+    ("ruby",            "red",        (155, 17,  30)),
+    ("garnet",          "red",        (120, 20,  25)),
+    ("coral",           "red",        (230, 110, 80)),
+    ("emerald",         "green",      (0,   130, 90)),
+    ("jade",            "green",      (80,  150, 110)),
+    ("peridot",         "green",      (150, 190, 60)),
+    ("sapphire",        "blue",       (15,  60,  120)),
+    ("aquamarine",      "blue",       (140, 210, 210)),
+    ("turquoise",       "blue",       (60,  180, 175)),
+    ("amethyst",        "other",      (110, 60,  140)),
+    ("topaz",           "other",      (230, 180, 60)),
+    ("citrine",         "other",      (220, 150, 40)),
+    ("onyx",            "other",      (25,  25,  28)),
+]
+# Nearest-match distance beyond which a stone is "unidentified" rather than
+# forced into the closest reference regardless of fit.
+STONE_MATCH_MAX_DIST = float(os.getenv("STONE_MATCH_MAX_DIST", "45"))
+
+
+def _lab_of_rgb(rgb: tuple[int, int, int]) -> np.ndarray:
+    bgr = np.array([[rgb[::-1]]], dtype=np.uint8)
+    return cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB)[0, 0].astype(np.float32)
+
+
+_STONE_REF_LAB = [(name, bucket, _lab_of_rgb(rgb)) for name, bucket, rgb in STONE_COLOR_REFERENCES]
+
+
+def _classify_stone_color(bgr_pixels: np.ndarray) -> tuple[str, str, float]:
+    """
+    bgr_pixels: Nx3 BGR uint8 array of a detected region's own pixels.
+    Nearest-neighbour match (Euclidean distance in Lab) against the
+    reference table, using the MEDIAN Lab colour of the region — robust to
+    a minority of outlier pixels (e.g. a faceted colourless stone flashing
+    spectral colour off a few facets under certain lighting doesn't drag a
+    median the way it would a mean).
+    Returns (stone_name, legacy_bucket, match_confidence 0-1).
+    """
+    lab_pixels = cv2.cvtColor(bgr_pixels.reshape(1, -1, 3), cv2.COLOR_BGR2LAB)[0].astype(np.float32)
+    median_lab = np.median(lab_pixels, axis=0)
+    best_name, best_bucket, best_dist = "unidentified", "other", float("inf")
+    for name, bucket, ref_lab in _STONE_REF_LAB:
+        d = float(np.linalg.norm(median_lab - ref_lab))
+        if d < best_dist:
+            best_dist, best_name, best_bucket = d, name, bucket
+    confidence = max(0.0, 1.0 - best_dist / STONE_MATCH_MAX_DIST)
+    if confidence <= 0.05:
+        best_name = "unidentified"
+    return best_name, best_bucket, round(confidence, 3)
 
 
 GEM_OUTLINE_BGR = {
@@ -287,22 +381,45 @@ CONFIRMED_COLOURLESS_BGR = (170, 140, 20)   # teal — confirmed, not a hue-colo
 UNCERTAIN_OUTLINE_BGR    = (0, 165, 255)    # amber — officer confirmation needed
 
 
-def _candidate_mask(hsv: np.ndarray, item: np.ndarray, metal_ref: np.ndarray) -> np.ndarray:
+def _candidate_mask(bgr: np.ndarray, item: np.ndarray, metal_lab: np.ndarray) -> np.ndarray:
     """
-    One merged, recall-oriented candidate pool: pixels whose hue differs
-    meaningfully from the item's OWN metal hue (estimated per-photo, not a
-    hard-coded gold band — adapts to rose/white/yellow gold and to this
-    shot's white balance), OR bright/low-saturation pixels (covers pearls,
-    diamonds, CZ, and — deliberately, since it's filtered by confidence
-    afterwards, not here — plain metal specular highlights).
+    The human-eye rule, in code: a stone is whatever differs clearly in
+    COLOUR from the item's own measured gold — see the module-level comment
+    by STONE_DELTA_E_MIN for why this uses lightness-deemphasised CIE Lab
+    distance rather than a hard-coded hue/brightness band. One threshold,
+    one candidate pool — no separate "coloured" vs "pale" buckets to fall
+    between.
     """
-    hch = hsv[..., 0].astype(np.int16)
-    sch, vch = hsv[..., 1], hsv[..., 2]
-    dh = np.abs(hch - int(metal_ref[0]))
-    dh = np.minimum(dh, 180 - dh)
-    coloured    = (dh > HUE_DELTA_MIN) & (sch > GEM_SAT_MIN) & (vch > GEM_VAL_MIN)
-    bright_pale = (sch < CLS_SAT_MAX) & (vch > CLS_VAL_MIN)
-    cand = ((coloured | bright_pale) & (item > 0)).astype(np.uint8) * 255
+    item_area = max(1, int((item > 0).sum()))
+    lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
+    dL = lab[..., 0] - metal_lab[0]
+    da = lab[..., 1] - metal_lab[1]
+    db = lab[..., 2] - metal_lab[2]
+    delta_e = np.sqrt(LAB_LIGHTNESS_WEIGHT * dL ** 2 + da ** 2 + db ** 2)
+    cand = ((delta_e > STONE_DELTA_E_MIN) & (item > 0)).astype(np.uint8) * 255
+
+    # A real stone is uniformly coloured; a residual lighting/compression
+    # artefact that still clears the distance threshold isn't. Reject
+    # connected components whose own delta-E values are too spread out
+    # (coefficient of variation) to be one solid colour — but only above a
+    # minimum size: on a small region the CV statistic is itself unreliable
+    # (few pixels -> high sampling variance in std/mean), and a small region
+    # isn't a room-filling lighting gradient to begin with. Verified: a real
+    # small melee stone can read a HIGHER raw CV than a large illumination
+    # artefact purely from this small-sample noise — gating by size, not
+    # just tightening the threshold, is what avoids that false rejection.
+    n_m, labels_m, stats_m, _ = cv2.connectedComponentsWithStats(cand, connectivity=8)
+    for i in range(1, n_m):
+        area = stats_m[i, cv2.CC_STAT_AREA]
+        if area < STONE_CV_GATE_FRAC * item_area:
+            continue
+        region = labels_m == i
+        vals = delta_e[region]
+        mean = float(vals.mean())
+        cv_ratio = float(vals.std()) / mean if mean > 0 else 0.0
+        if cv_ratio > STONE_CV_MAX:
+            cand[region] = 0
+
     cand = cv2.morphologyEx(cand, cv2.MORPH_OPEN, ELLIPSE_3)
     cand = cv2.morphologyEx(cand, cv2.MORPH_CLOSE, ELLIPSE_7)
     return cand
@@ -379,7 +496,6 @@ def _region_confidence(
         + W_SHAPE * shape_score + W_IDENTITY * identity_score + W_SIZE * size_score
     )
     return confidence, {
-        "hue": float(cand_hsv[0]), "sat": float(cand_hsv[1]),
         "edge_score": round(edge_score, 3), "local_contrast_score": round(local_contrast_score, 3),
         "shape_score": round(shape_score, 3), "identity_score": round(identity_score, 3),
         "size_score": round(size_score, 3),
@@ -387,9 +503,9 @@ def _region_confidence(
 
 
 def _detect_stones(
-    hsv: np.ndarray, edge_mag: np.ndarray, lap_mag: np.ndarray,
+    bgr: np.ndarray, hsv: np.ndarray, edge_mag: np.ndarray, lap_mag: np.ndarray,
     item: np.ndarray, eligible: np.ndarray,
-) -> tuple[list[dict], np.ndarray]:
+) -> tuple[list[dict], np.ndarray, str]:
     """
     One unified candidate pool, scored by _region_confidence. Candidates
     below UNCERTAIN_THRESHOLD are discarded entirely — not counted, not
@@ -398,16 +514,31 @@ def _detect_stones(
     `eligible` (⊆ item) excludes large backdrop-coloured interior regions
     (e.g. a ring's own opening) from candidate generation; area_pct and the
     metal-colour reference still use the full item so they read correctly.
-    Returns (stones, labels) where labels is the connected-component map the
-    caller uses to redraw each stone's contour for the overlay.
+
+    The classical colour-threshold pass (`_candidate_mask` +
+    connectedComponents) always runs first — cheap, and its blobs double as
+    seed points for app/models/ml_stone_detection.py's MobileSAM refinement,
+    which then REPLACES these as the actual region boundaries when available
+    (fixes touching-stone undercounting and facet-reflection overcounting
+    that a colour threshold alone can't). Falls back to the classical blobs
+    directly if the model is unavailable.
+
+    Returns (stones, labels, detection_mode) where labels is the region map
+    the caller uses to redraw each stone's contour for the overlay, and
+    detection_mode is "ml_sam" or "classical" — surfaced to the report/UI so
+    which pass produced a given case's stone count is never hidden.
     """
     item_bool = item > 0
     item_area = max(1, int(item_bool.sum()))
     metal_ref = (np.median(hsv[item_bool], axis=0) if item_bool.any()
                  else np.array([20.0, 80.0, 150.0]))
+    lab_full = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
+    metal_lab = (np.median(lab_full[item_bool], axis=0) if item_bool.any()
+                 else np.array([180.0, 128.0, 128.0], dtype=np.float32))
 
-    cand = _candidate_mask(hsv, eligible, metal_ref)
+    cand = _candidate_mask(bgr, eligible, metal_lab)
     n, labels, cc_stats, cents = cv2.connectedComponentsWithStats(cand, connectivity=8)
+    detection_mode = "classical"
 
     sized = []
     for i in range(1, n):
@@ -416,30 +547,79 @@ def _detect_stones(
             sized.append((i, area))
     med_area = float(np.median([a for _, a in sized])) if sized else 1.0
 
+    try:
+        ml_result = ml_stone_detection.ml_connected_components(
+            bgr, cand, item_bool, min_area=MIN_GEM_AREA_FRAC * item_area, ref_area=med_area,
+        )
+    except Exception as e:
+        logger.warning("ML stone detection errored (%s) — using classical detection", e)
+        ml_result = None
+    if ml_result is not None and len(ml_result) == 4:
+        n, labels, cc_stats, cents = ml_result
+        detection_mode = "ml_sam"
+        sized = []
+        for i in range(1, n):
+            area = int(cc_stats[i, cv2.CC_STAT_AREA])
+            if MIN_GEM_AREA_FRAC * item_area <= area <= MAX_STONE_AREA_FRAC * item_area:
+                sized.append((i, area))
+        med_area = float(np.median([a for _, a in sized])) if sized else 1.0
+
     stones = []
     for i, area in sized:
         region = labels == i
         confidence, feats = _region_confidence(region, hsv, edge_mag, lap_mag, item, metal_ref, area, med_area)
         if confidence < UNCERTAIN_THRESHOLD:
             continue
-        hue_class = _classify_hue(feats["hue"]) if feats["sat"] > GEM_SAT_MIN else "colourless"
-        if hue_class == "colourless" and area > MAX_COLOURLESS_AREA_FRAC * item_area:
-            continue   # too large to be one stone — a glare sheet or a metal segment
+        # Identify the stone by nearest-reference colour match, not a hard-
+        # coded hue band — see _classify_stone_color.
+        stone_name, hue_class, match_conf = _classify_stone_color(bgr[region])
+        colourless_ceiling = (
+            MAX_COLOURLESS_AREA_FRAC_HIGH_CONTRAST
+            if feats["local_contrast_score"] >= HIGH_CONTRAST_FLOOR
+            else MAX_COLOURLESS_AREA_FRAC
+        )
+        if hue_class == "colourless" and area > colourless_ceiling * item_area:
+            continue   # too large, AND blends into its own setting — glare, not a stone
         status = "confirmed" if confidence >= CONFIDENT_THRESHOLD else "uncertain"
         x  = int(cc_stats[i, cv2.CC_STAT_LEFT]); y  = int(cc_stats[i, cv2.CC_STAT_TOP])
         bw = int(cc_stats[i, cv2.CC_STAT_WIDTH]); bh = int(cc_stats[i, cv2.CC_STAT_HEIGHT])
         stones.append({
-            "area_pct":   round(area / item_area * 100, 2),
-            "hue_class":  hue_class,
-            "confidence": round(confidence, 3),
-            "status":     status,
-            "bbox":       [x, y, bw, bh],
-            "centroid":   [round(float(cents[i][0]), 1), round(float(cents[i][1]), 1)],
-            "_label":     i,
+            "area_pct":     round(area / item_area * 100, 2),
+            "hue_class":    hue_class,
+            "stone_name":   stone_name,
+            "match_confidence": match_conf,
+            "confidence":   round(confidence, 3),
+            "status":       status,
+            "bbox":         [x, y, bw, bh],
+            "centroid":     [round(float(cents[i][0]), 1), round(float(cents[i][1]), 1)],
+            "_label":       i,
         })
 
     stones.sort(key=lambda s: -s["area_pct"])
-    return stones, labels
+    return stones, labels, detection_mode
+
+
+def _item_bbox(item_bool: np.ndarray) -> Optional[list[int]]:
+    ys, xs = np.where(item_bool)
+    if len(xs) == 0:
+        return None
+    return [int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())]
+
+
+def _draw_grid(bgr: np.ndarray, item_bbox: list[int], grid_n: int = 4) -> np.ndarray:
+    """N×N grid over the item's bounding box — a forensic-exhibit style
+    overlay used to count/locate detected stones per cell (app/utils/gem_grid.py
+    turns this same geometry into stats)."""
+    overlay = bgr.copy()
+    x0, y0, x1, y1 = item_bbox
+    colour = (150, 150, 150)
+    for i in range(1, grid_n):
+        x = int(x0 + (x1 - x0) * i / grid_n)
+        cv2.line(overlay, (x, y0), (x, y1), colour, 1, cv2.LINE_AA)
+        y = int(y0 + (y1 - y0) * i / grid_n)
+        cv2.line(overlay, (x0, y), (x1, y), colour, 1, cv2.LINE_AA)
+    cv2.rectangle(overlay, (x0, y0), (x1, y1), colour, 1, cv2.LINE_AA)
+    return overlay
 
 
 def _stones_overlay(bgr: np.ndarray, item: np.ndarray, labels: np.ndarray, stones: list[dict]) -> np.ndarray:
@@ -526,6 +706,22 @@ def _sobel_magnitude(grey: np.ndarray) -> np.ndarray:
     return cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
 
 
+def _hue_map(hsv: np.ndarray, item_bool: np.ndarray) -> np.ndarray:
+    """The literal 'convert to HSV to see the colour' view: every item pixel
+    redrawn at its OWN hue but full saturation and brightness, background
+    dimmed. This is what makes a stone's true colour difference from the
+    gold obvious on sight, independent of how brightly/evenly the photo was
+    lit — the same signal the detection pipeline itself measures (see
+    STONE_DELTA_E_MIN), made visible rather than left as internal numbers."""
+    pure = np.empty_like(hsv)
+    pure[..., 0] = hsv[..., 0]
+    pure[..., 1] = 255
+    pure[..., 2] = 255
+    bgr_pure = cv2.cvtColor(pure, cv2.COLOR_HSV2BGR)
+    bgr_pure[~item_bool] //= 4
+    return bgr_pure
+
+
 def _run_pipeline(
     bgr: np.ndarray,
     t1: Optional[int] = None,
@@ -542,6 +738,23 @@ def _run_pipeline(
     inverted = 255 - grey
 
     item, background_removed, stone_eligible = _item_mask(norm)
+
+    # Exclude the fiducial calibration card (if present in-frame) from the
+    # item entirely — its high-contrast black/white finder squares and
+    # checksum strip would otherwise be swept into the item mask as "item"
+    # pixels (they differ sharply from the backdrop, same as the jewellery
+    # does), corrupting material composition, edge density, and stone
+    # detection with a printed card instead of the jewellery itself.
+    try:
+        cbbox = card_bbox(norm)
+    except Exception as e:
+        cbbox = None
+        logger.warning("Fiducial card detection (for exclusion) failed: %s", e)
+    if cbbox:
+        cx0, cy0, cx1, cy1 = cbbox
+        item[cy0:cy1, cx0:cx1] = 0
+        stone_eligible[cy0:cy1, cx0:cx1] = 0
+
     item_bool = item > 0
     item_area = max(1, int(item_bool.sum()))
 
@@ -549,11 +762,14 @@ def _run_pipeline(
     sobel = _sobel_magnitude(grey)
     laplacian = np.abs(cv2.Laplacian(grey, cv2.CV_64F))
 
-    stones, stone_labels = _detect_stones(hsv, sobel.astype(np.float32), laplacian, item, stone_eligible)
-    gems = [{"area_pct": s["area_pct"], "hue_class": s["hue_class"], "confidence": s["confidence"]}
+    stones, stone_labels, stone_detection_mode = _detect_stones(
+        norm, hsv, sobel.astype(np.float32), laplacian, item, stone_eligible)
+    gems = [{"area_pct": s["area_pct"], "hue_class": s["hue_class"], "confidence": s["confidence"],
+             "stone_name": s["stone_name"], "match_confidence": s["match_confidence"]}
             for s in stones if s["hue_class"] != "colourless"]
     colourless = [{"area_pct": s["area_pct"], "confidence": s["confidence"],
-                   "kind": s["status"]}  # "confirmed" | "uncertain"
+                   "kind": s["status"],  # "confirmed" | "uncertain"
+                   "stone_name": s["stone_name"], "match_confidence": s["match_confidence"]}
                   for s in stones if s["hue_class"] == "colourless"]
     gem_area_pct = round(sum(g["area_pct"] for g in gems), 2)
     colourless_area_pct = round(sum(c["area_pct"] for c in colourless), 2)
@@ -610,14 +826,18 @@ def _run_pipeline(
         for cls in CLASS_NAMES
     }
 
+    gems_overlay = _stones_overlay(norm, item, stone_labels, stones)
+    item_bbox = _item_bbox(item_bool)
     stages = {
         "original":  bgr,
         "grey":      cv2.cvtColor(grey, cv2.COLOR_GRAY2BGR),
         "invert":    cv2.cvtColor(inverted, cv2.COLOR_GRAY2BGR),
         "threshold": cv2.cvtColor(quantised, cv2.COLOR_GRAY2BGR),
         "sobel":     cv2.cvtColor(sobel, cv2.COLOR_GRAY2BGR),
+        "hsv":       _hue_map(hsv, item_bool),
         "material":  material,
-        "gems":      _stones_overlay(norm, item, stone_labels, stones),
+        "gems":      gems_overlay,
+        "stones_grid": _draw_grid(gems_overlay, item_bbox, grid_n=4) if item_bbox else gems_overlay,
         "heatmap":   heatmap,
         "histogram": _histogram_image(grey, item, t1, t2, t3),
     }
@@ -629,6 +849,7 @@ def _run_pipeline(
         "composition":            composition,
         "background_removed":     background_removed,
         "item_area_pct":          round(item_area / classes.size * 100, 1),
+        "item_bbox":              item_bbox,
         "gem_regions":            len(gems),
         "gems":                   gems,
         "gem_area_pct":           gem_area_pct,
@@ -636,6 +857,7 @@ def _run_pipeline(
         "colourless":             colourless,
         "colourless_area_pct":    colourless_area_pct,
         "stones":                 stones_public,
+        "stone_detection_mode":   stone_detection_mode,
         "stones_confirmed":       sum(1 for s in stones if s["status"] == "confirmed"),
         "stones_uncertain":       sum(1 for s in stones if s["status"] == "uncertain"),
         "inclusions_explained":   explained,
@@ -686,7 +908,7 @@ def xray_preview(
 
     # Photographic stages compress far better as JPEG; synthetic flat-colour
     # stages (threshold classes, material map, histogram) stay PNG.
-    PNG_STAGES = {"threshold", "material", "histogram"}
+    PNG_STAGES = {"threshold", "material", "histogram", "hsv"}
     encoded = {}
     for name, img in stages.items():
         if name in PNG_STAGES:

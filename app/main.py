@@ -3,6 +3,7 @@ KANCHAN-AI - Spurious Gold Intelligence System
 FastAPI application entry point.
 """
 import logging
+import mimetypes
 import os
 from pathlib import Path
 
@@ -13,6 +14,13 @@ from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(name)s  %(message)s")
+
+# Python's mimetypes module maps .webm -> video/webm by default, even for an
+# audio-only recording (what the browser's MediaRecorder produces for the
+# tap test) — some browsers refuse to play an <audio> element served with a
+# video/* Content-Type. Registered before the /cases StaticFiles mount below
+# picks it up.
+mimetypes.add_type("audio/webm", ".webm")
 
 import json
 import numpy as np
@@ -29,7 +37,7 @@ def _numpy_safe(data):
     """Round-trip through JSON to convert all numpy scalars to Python primitives."""
     return json.loads(json.dumps(data, cls=_NumpyEncoder))
 
-from app.routers import analyze, benford, history, report, xray
+from app.routers import analyze, auth, benford, fiducial, hallmark, history, kyc, report, xray
 
 app = FastAPI(
     title="KANCHAN-AI",
@@ -45,11 +53,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(analyze.router,  prefix="/api")
-app.include_router(benford.router,  prefix="/api")
-app.include_router(history.router,  prefix="/api")
-app.include_router(report.router,   prefix="/api")
-app.include_router(xray.router,     prefix="/api")
+app.include_router(analyze.router,   prefix="/api")
+app.include_router(auth.router,      prefix="/api")
+app.include_router(benford.router,   prefix="/api")
+app.include_router(fiducial.router,  prefix="/api")
+app.include_router(hallmark.router,  prefix="/api")
+app.include_router(history.router,   prefix="/api")
+app.include_router(kyc.router,       prefix="/api")
+app.include_router(report.router,    prefix="/api")
+app.include_router(xray.router,      prefix="/api")
 
 
 @app.get("/api/health")

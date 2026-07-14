@@ -1,9 +1,14 @@
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Mic, Camera, Weight, ChevronDown, ChevronRight,
-  Loader2, Sparkles, X, Image, FileAudio, User, RefreshCw
+  Loader2, Sparkles, X, User, RefreshCw, Plus, MapPin,
+  UsbIcon, Search, ShieldCheck, Flashlight, ScanLine,
 } from 'lucide-react'
 import InfoTip from './ui/InfoTip'
+import CameraCapture from './CameraCapture'
+import AudioCapture from './AudioCapture'
+import { apiFetch } from '@/lib/auth'
+import { connectScale, isWebHIDSupported } from '@/lib/usbScale'
 import styles from './AnalysisForm.module.css'
 
 const KARATS = [
@@ -13,6 +18,8 @@ const KARATS = [
   { value: 14, label: '14K - 58.3% gold' },
   { value: 0,  label: 'Not declared — identify from physics' },
 ]
+
+const TAP_POSITIONS = ['Point B (3 o’clock)', 'Point C (6 o’clock)', 'Point D (9 o’clock)']
 
 // CRC Handbook water density (g/cm³), linear interpolation — mirrors app/utils/density.py
 const WATER_DENSITY_TABLE = [
@@ -40,22 +47,59 @@ const BLANK_FORM = {
   customer_name:     '',
   customer_account:  '',
   loan_app_no:       '',
-  officer_name:      '',
-  llm_provider:      'groq',
+  huid:              '',
 }
 
 // Image-first flow: photos + weights get a verdict; text details are an
-// OPTIONAL refinement that unlocks after the first evaluation.
+// OPTIONAL refinement that unlocks after the first evaluation. Every photo
+// and tap recording is LIVE-CAPTURED (camera/mic APIs), never a file
+// picker — see CameraCapture / AudioCapture for why.
 export default function AnalysisForm({ onSubmit, loading, hasResult }) {
   const [form, setForm]       = useState(BLANK_FORM)
-  const [images, setImages]   = useState([])
-  const [audio,  setAudio]    = useState(null)
+  const [photos, setPhotos]   = useState([null])          // up to 4 live-captured angles
+  const [primaryTap, setPrimaryTap] = useState(null)
+  const [extraTaps, setExtraTaps]   = useState([])         // spatial acoustic grid points
   const [streak, setStreak]   = useState(null)
+  const [uv, setUv]           = useState(null)
+  const [hallmarkPhoto, setHallmarkPhoto] = useState(null)
   const [moreOpen, setMoreOpen] = useState(false)
 
-  const imageRef  = useRef()
-  const audioRef  = useRef()
-  const streakRef = useRef()
+  const [weightSource, setWeightSource] = useState('manual')
+  const [scaleBusy, setScaleBusy]       = useState(null)   // 'dry' | 'submerged' | null
+  const [scaleError, setScaleError]     = useState(null)
+
+  const [geo, setGeo] = useState(null)
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      pos => setGeo({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => setGeo(null),
+      { timeout: 6000 },
+    )
+  }, [])
+
+  const [cardLoading, setCardLoading] = useState(false)
+  const printCalibrationCard = async () => {
+    setCardLoading(true)
+    try {
+      const res = await apiFetch(`/api/fiducial/today?branch_id=${encodeURIComponent(form.branch_id || 'BLR-001')}`)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank', 'noopener')
+    } catch {
+      // best-effort — printing the card is a convenience, never a blocker
+    } finally {
+      setCardLoading(false)
+    }
+  }
+
+  const [kycRecord, setKycRecord]   = useState(null)
+  const [kycLoading, setKycLoading] = useState(false)
+  const [kycError, setKycError]     = useState(null)
+
+  const [hallmarkResult, setHallmarkResult] = useState(null)
+  const [hallmarkLoading, setHallmarkLoading] = useState(false)
+  const [hallmarkError, setHallmarkError] = useState(null)
 
   // Live validation — errors show as you type, and block the submit button.
   const dryW  = parseFloat(form.weight_dry)
@@ -75,6 +119,8 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
           ? 'Submerged weight must be less than dry weight — check for air bubbles or a touching container'
           : null
 
+  const capturedPhotos = photos.filter(Boolean)
+
   // The three core tests are mandatory: weight + photo + sound. Known frauds
   // passed because a single factor was trusted alone — approval requires all.
   const isValid = (
@@ -82,41 +128,113 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
     form.weight_submerged &&
     !weightError &&
     !tempError &&
-    images.length > 0 &&
-    audio
+    capturedPhotos.length > 0 &&
+    primaryTap
   )
 
   const missingCore = [
     !form.weight_dry || !form.weight_submerged ? 'weight readings' : null,
-    images.length === 0 ? 'item photo' : null,
-    !audio ? 'tap recording' : null,
+    capturedPhotos.length === 0 ? 'item photo' : null,
+    !primaryTap ? 'tap recording' : null,
   ].filter(Boolean)
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const useScale = async (which) => {
+    setScaleError(null)
+    setScaleBusy(which)
+    try {
+      const { grams } = await connectScale()
+      if (grams === null) {
+        setScaleError('No weight reading received — check the scale is on and stable, or enter manually.')
+      } else {
+        set(which === 'dry' ? 'weight_dry' : 'weight_submerged', grams.toFixed(2))
+        setWeightSource('usb_device')
+      }
+    } catch (e) {
+      setScaleError(e.message)
+    } finally {
+      setScaleBusy(null)
+    }
+  }
+
+  const runKycLookup = async () => {
+    if (!form.customer_account) return
+    setKycLoading(true)
+    setKycError(null)
+    setKycRecord(null)
+    try {
+      const res = await apiFetch(`/api/kyc/lookup?account_no=${encodeURIComponent(form.customer_account)}`)
+      const data = await res.json()
+      if (!res.ok || !data.found) {
+        setKycError(data.note || 'No matching record found')
+      } else {
+        setKycRecord(data)
+        if (data.record?.name) set('customer_name', data.record.name)
+      }
+    } catch {
+      setKycError('Lookup failed — check the connection and try again')
+    } finally {
+      setKycLoading(false)
+    }
+  }
+
+  const runHallmarkVerify = async () => {
+    if (!hallmarkPhoto) return
+    setHallmarkLoading(true)
+    setHallmarkError(null)
+    try {
+      const fd = new FormData()
+      fd.append('huid', form.huid)
+      fd.append('declared_karat', form.declared_karat)
+      fd.append('hallmark_image', hallmarkPhoto)
+      const res = await apiFetch('/api/hallmark/verify', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error('Hallmark verification failed')
+      setHallmarkResult(data)
+    } catch (e) {
+      setHallmarkError(e.message)
+    } finally {
+      setHallmarkLoading(false)
+    }
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!isValid || loading) return
     const fd = new FormData()
     Object.entries(form).forEach(([k, v]) => fd.append(k, v))
-    images.forEach(img => fd.append('images', img))
-    if (audio)  fd.append('audio', audio)
+    fd.append('weight_capture_source', weightSource)
+    if (geo) { fd.append('geo_lat', geo.lat); fd.append('geo_lon', geo.lon) }
+    if (hallmarkResult) fd.append('hallmark_result', JSON.stringify(hallmarkResult))
+    if (kycRecord)      fd.append('kyc_record', JSON.stringify(kycRecord))
+
+    capturedPhotos.forEach(img => fd.append('images', img))
+    fd.append('audio', primaryTap)
+    extraTaps.forEach(t => { if (t.file) { fd.append('tap_audio', t.file); fd.append('tap_positions', t.position) } })
     if (streak) fd.append('streak_image', streak)
-    // the browser's own copies are what the results screen displays —
-    // the server never stores the uploads
-    onSubmit(fd, { images, audio, streak })
+    if (uv)     fd.append('uv_image', uv)
+
+    onSubmit(fd, { images: capturedPhotos, audio: primaryTap, streak })
   }
 
-  const removeImage = (i) => setImages(imgs => imgs.filter((_, idx) => idx !== i))
+  const addPhotoSlot = () => photos.length < 4 && setPhotos(p => [...p, null])
+  const setPhotoAt = (i, file) => setPhotos(p => p.map((x, idx) => idx === i ? file : x))
+  const removePhotoSlot = (i) => setPhotos(p => p.length > 1 ? p.filter((_, idx) => idx !== i) : [null])
+
+  const addTapPoint = () => extraTaps.length < 3 &&
+    setExtraTaps(t => [...t, { position: TAP_POSITIONS[t.length] || `Point ${t.length + 2}`, file: null }])
+  const setTapFile = (i, file) => setExtraTaps(t => t.map((x, idx) => idx === i ? { ...x, file } : x))
+  const removeTapPoint = (i) => setExtraTaps(t => t.filter((_, idx) => idx !== i))
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
       <div className={styles.formHeader}>
         <h2 className={styles.formTitle}>Item Analysis</h2>
-        <p className={styles.formSub}>Three core tests — photos, weights, tap sound. Text details can be added after the first result</p>
+        <p className={styles.formSub}>Three core tests — live photos, weights, tap sound. Text details can be added after the first result</p>
       </div>
 
-      {/* ── 1. Customer details — necessary fields only ── */}
+      {/* ── 1. Customer details ── */}
       <fieldset className={styles.section}>
         <legend className={styles.sectionLabel}>
           <User size={13} />
@@ -126,146 +244,135 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
           <div className={styles.field}>
             <label htmlFor="customer_name_top" className={styles.label}>Customer Name</label>
             <input
-              id="customer_name_top"
-              className={styles.input}
-              type="text"
-              placeholder="Full name"
-              value={form.customer_name}
+              id="customer_name_top" className={styles.input} type="text"
+              placeholder="Full name" value={form.customer_name}
               onChange={e => set('customer_name', e.target.value)}
             />
           </div>
           <div className={styles.field}>
-            <label htmlFor="customer_account" className={styles.label}>Account Number</label>
-            <input
-              id="customer_account"
-              className={styles.input}
-              type="text"
-              placeholder="e.g. 04581234567"
-              value={form.customer_account}
-              onChange={e => set('customer_account', e.target.value)}
-            />
+            <label htmlFor="customer_account" className={styles.label}>
+              Account Number
+              <InfoTip text="Looks up an already-KYC'd customer record from Canara's core banking system. SIMULATED — no live core-banking integration is wired; this reproduces the lookup contract against a local demo dataset (try 04581234567)." />
+            </label>
+            <div className={styles.inlineRow}>
+              <input
+                id="customer_account" className={styles.input} type="text"
+                placeholder="e.g. 04581234567" value={form.customer_account}
+                onChange={e => set('customer_account', e.target.value)}
+              />
+              <button type="button" className={styles.smallActionBtn} onClick={runKycLookup} disabled={!form.customer_account || kycLoading}>
+                {kycLoading ? <Loader2 size={13} className={styles.spinner} /> : <Search size={13} />}
+              </button>
+            </div>
           </div>
         </div>
+        {kycRecord && (
+          <div className={styles.kycResult}>
+            <span className={styles.simBadge}>SIMULATED</span>
+            <span>{kycRecord.record.name} · KYC {kycRecord.record.kyc_status} · {kycRecord.record.existing_gold_loans} existing gold loan(s)</span>
+          </div>
+        )}
+        {kycError && <p className={styles.fieldError}>{kycError}</p>}
       </fieldset>
 
-      {/* ── 2. Photos ── */}
+      {/* ── 2. Photos — live capture only ── */}
       <fieldset className={styles.section}>
         <legend className={styles.sectionLabel}>
           <Camera size={13} />
-          Item Photos
+          Item Photos — live capture
         </legend>
-
-        <div className={styles.field}>
-          <label className={styles.label}>
-            Multiple angles recommended
-            <InfoTip text="Place the item on a plain, single-colour backdrop, centred in the frame — no fingers, props or other objects. The system separates the item from the backdrop and finds the stones automatically." />
-          </label>
-          <div
-            className={styles.dropzone}
-            onClick={() => imageRef.current?.click()}
-            onDragOver={e => e.preventDefault()}
-            onDrop={e => {
-              e.preventDefault()
-              const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
-              setImages(imgs => [...imgs, ...files])
-            }}
-          >
-            <Image size={22} className={styles.dropzoneIcon} />
-            <span className={styles.dropzoneText}>
-              {images.length > 0
-                ? `${images.length} photo${images.length > 1 ? 's' : ''} selected`
-                : 'Tap to upload or drag photos here'}
-            </span>
-            <span className={styles.dropzoneSub}>JPG, PNG, WebP</span>
-          </div>
-          <input
-            ref={imageRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className={styles.hiddenInput}
-            onChange={e => setImages(imgs => [...imgs, ...Array.from(e.target.files)])}
-          />
-          {images.length > 0 && (
-            <div className={styles.thumbnails}>
-              {images.map((img, i) => (
-                <div key={i} className={styles.thumb}>
-                  <img src={URL.createObjectURL(img)} alt={`Angle ${i+1}`} />
-                  <button
-                    type="button"
-                    className={styles.thumbRemove}
-                    onClick={() => removeImage(i)}
-                    aria-label={`Remove photo ${i+1}`}
-                  >
-                    <X size={10} />
-                  </button>
-                </div>
-              ))}
+        <p className={styles.helpText}>
+          Place the item on a plain backdrop with today's calibration card visible in-frame
+          (<InfoTip text="Print today's card from Dashboard → Calibration Card. It gives a real-world scale reference for stone sizing and proves the photo was taken today, not reused." />).
+          Live camera capture is the default — an upload fallback stays available underneath for demos.
+        </p>
+        <button type="button" className={styles.addBtn} onClick={printCalibrationCard} disabled={cardLoading} style={{ marginTop: 0, marginBottom: 12 }}>
+          {cardLoading ? <Loader2 size={13} className={styles.spinner} /> : <ScanLine size={13} />}
+          Print today's calibration card
+        </button>
+        <div className={styles.photoGrid}>
+          {photos.map((file, i) => (
+            <div key={i} className={styles.photoSlot}>
+              <CameraCapture facingMode="environment" label={`angle ${i + 1}`} onCapture={f => setPhotoAt(i, f)} />
+              {photos.length > 1 && (
+                <button type="button" className={styles.slotRemove} onClick={() => removePhotoSlot(i)}>
+                  <X size={11} /> Remove slot
+                </button>
+              )}
             </div>
-          )}
+          ))}
         </div>
+        {photos.length < 4 && (
+          <button type="button" className={styles.addBtn} onClick={addPhotoSlot}>
+            <Plus size={13} /> Add another angle
+          </button>
+        )}
       </fieldset>
 
-      {/* ── 2. Weights + declared karat ── */}
+      {/* ── 3. Weights + declared karat ── */}
       <fieldset className={styles.section}>
         <legend className={styles.sectionLabel}>
           <Weight size={13} />
           Weight Test (in air & in water)
         </legend>
 
+        {isWebHIDSupported() && (
+          <p className={styles.helpText}>
+            <UsbIcon size={11} style={{ display: 'inline', verticalAlign: -2 }} /> USB scale supported on this device — connect once per weighing, or enter manually below.
+          </p>
+        )}
+
         <div className={`${styles.row} ${styles.row3}`}>
           <div className={styles.field}>
             <label htmlFor="weight_dry" className={styles.label}>
               Dry Weight <span className={styles.unit}>g</span>
-              <InfoTip text="Weigh the item in air on the branch balance. Note the reading to 0.01 g." />
+              <InfoTip text="Weigh the item in air. Connect a USB/HID scale for a tamper-resistant reading, or note the reading to 0.01 g manually." />
             </label>
-            <input
-              id="weight_dry"
-              className={styles.input}
-              type="number"
-              step="0.01"
-              min="0.5"
-              placeholder="0.00"
-              value={form.weight_dry}
-              onChange={e => set('weight_dry', e.target.value)}
-              required
-            />
+            <div className={styles.inlineRow}>
+              <input
+                id="weight_dry" className={styles.input} type="number" step="0.01" min="0.5"
+                placeholder="0.00" value={form.weight_dry}
+                onChange={e => { set('weight_dry', e.target.value); setWeightSource('manual') }} required
+              />
+              {isWebHIDSupported() && (
+                <button type="button" className={styles.smallActionBtn} onClick={() => useScale('dry')} disabled={scaleBusy !== null}>
+                  {scaleBusy === 'dry' ? <Loader2 size={13} className={styles.spinner} /> : <UsbIcon size={13} />}
+                </button>
+              )}
+            </div>
           </div>
           <div className={styles.field}>
             <label htmlFor="weight_submerged" className={styles.label}>
               Submerged <span className={styles.unit}>g</span>
-              <InfoTip text="Weigh again with the item fully underwater, hanging from a thin thread. It must not touch the sides or bottom of the container, and no air bubbles should cling to it." />
+              <InfoTip text="Weigh again with the item fully underwater, hanging from a thin thread — no contact with the container, no air bubbles." />
             </label>
-            <input
-              id="weight_submerged"
-              className={styles.input}
-              type="number"
-              step="0.01"
-              min="0.1"
-              placeholder="0.00"
-              value={form.weight_submerged}
-              onChange={e => set('weight_submerged', e.target.value)}
-              required
-            />
+            <div className={styles.inlineRow}>
+              <input
+                id="weight_submerged" className={styles.input} type="number" step="0.01" min="0.1"
+                placeholder="0.00" value={form.weight_submerged}
+                onChange={e => { set('weight_submerged', e.target.value); setWeightSource('manual') }} required
+              />
+              {isWebHIDSupported() && (
+                <button type="button" className={styles.smallActionBtn} onClick={() => useScale('submerged')} disabled={scaleBusy !== null}>
+                  {scaleBusy === 'submerged' ? <Loader2 size={13} className={styles.spinner} /> : <UsbIcon size={13} />}
+                </button>
+              )}
+            </div>
           </div>
           <div className={styles.field}>
             <label htmlFor="water_temp_c" className={styles.label}>
               Water Temp <span className={styles.unit}>°C</span>
-              <InfoTip text="Water density changes with temperature, and the density result is corrected for it. If you don't have a thermometer, leave 25 °C — the error is small but noted." />
+              <InfoTip text="Water density changes with temperature, and the density result is corrected for it. Leave 25 °C if you don't have a thermometer." />
             </label>
             <input
-              id="water_temp_c"
-              className={styles.input}
-              type="number"
-              step="0.5"
-              min="1"
-              max="44"
-              placeholder="25"
-              value={form.water_temp_c}
+              id="water_temp_c" className={styles.input} type="number" step="0.5" min="1" max="44"
+              placeholder="25" value={form.water_temp_c}
               onChange={e => set('water_temp_c', e.target.value)}
             />
           </div>
         </div>
+        {scaleError && <p className={styles.fieldError}>{scaleError}</p>}
+        {weightSource === 'usb_device' && <p className={styles.usbConfirm}><UsbIcon size={11} /> Weight captured from USB scale</p>}
 
         <div className={styles.field}>
           <label htmlFor="declared_karat" className={styles.label}>
@@ -274,14 +381,10 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
           </label>
           <div className={styles.selectWrap}>
             <select
-              id="declared_karat"
-              className={styles.select}
-              value={form.declared_karat}
+              id="declared_karat" className={styles.select} value={form.declared_karat}
               onChange={e => set('declared_karat', parseInt(e.target.value))}
             >
-              {KARATS.map(k => (
-                <option key={k.value} value={k.value}>{k.label}</option>
-              ))}
+              {KARATS.map(k => <option key={k.value} value={k.value}>{k.label}</option>)}
             </select>
             <ChevronDown className={styles.selectIcon} size={15} />
           </div>
@@ -293,10 +396,8 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
           dryW > subW && subW > 0 && (
           (() => {
             const t = isNaN(tempC) ? 25 : tempC
-            // Buoyancy-corrected Archimedes: rho = W_dry * rho_water(T) / (W_dry - W_sub)
             const rhoWater = waterDensity(t)
             const density  = (dryW * rhoWater / (dryW - subW)).toFixed(2)
-            // sigma_rho ~ sqrt(2) * scale_sigma / displaced * rho  (0.005 g balance)
             const sigmaVal = Math.SQRT2 * 0.005 / (dryW - subW) * dryW * rhoWater / (dryW - subW)
             const sigma    = sigmaVal >= 0.01 ? sigmaVal.toFixed(2) : sigmaVal.toPrecision(1)
             return (
@@ -309,104 +410,109 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
         )}
       </fieldset>
 
-      {/* ── 3. Sound test — third core test, required ── */}
+      {/* ── 4. Sound test — third core test + spatial acoustic mapping ── */}
       <fieldset className={styles.section}>
         <legend className={styles.sectionLabel}>
           <Mic size={13} />
           Sound Test
         </legend>
         <p className={styles.helpText}>
-          Tap the item once with a metal stylus and record the ring in a quiet room.
-          This is what catches filled-core fakes that pass the weight test — no
-          approval is possible without it.
+          Tap the item once with a metal stylus and record the ring. This is what catches
+          filled-core fakes that pass the weight test — no approval is possible without it.
         </p>
-        <div
-          className={`${styles.dropzone} ${styles.dropzoneSmall}`}
-          onClick={() => audioRef.current?.click()}
-        >
-          <FileAudio size={18} className={styles.dropzoneIcon} />
-          <span className={styles.dropzoneText}>
-            {audio ? audio.name : 'Upload WAV or M4A recording'}
-          </span>
-        </div>
-        <input
-          ref={audioRef}
-          type="file"
-          accept="audio/*"
-          className={styles.hiddenInput}
-          onChange={e => setAudio(e.target.files[0] || null)}
-        />
-        {audio && (
-          <div className={styles.fileTag}>
-            <FileAudio size={12} />
-            <span>{audio.name}</span>
-            <button type="button" onClick={() => setAudio(null)}><X size={10} /></button>
+        <AudioCapture label="Primary tap point" onCapture={setPrimaryTap} />
+
+        <div className={styles.spatialBlock}>
+          <div className={styles.spatialHead}>
+            <span className={styles.spatialTitle}>
+              Spatial acoustic mapping
+              <InfoTip text="Tap 2-4 distinct points on the item. A genuine solid piece rings at a consistent pitch everywhere; a hidden partial core (tungsten/lead under a gold shell) rings differently depending on where you tap — this catches what a single tap and the average density number both miss." />
+            </span>
+            <span className={styles.noveltyBadge}>Novel</span>
           </div>
-        )}
+          {extraTaps.map((t, i) => (
+            <div key={i} className={styles.tapRow}>
+              <AudioCapture label={t.position} onCapture={f => setTapFile(i, f)} />
+              <button type="button" className={styles.slotRemove} onClick={() => removeTapPoint(i)}>
+                <X size={11} /> Remove point
+              </button>
+            </div>
+          ))}
+          {extraTaps.length < 3 && (
+            <button type="button" className={styles.addBtn} onClick={addTapPoint}>
+              <Plus size={13} /> Add another tap point ({extraTaps.length}/3)
+            </button>
+          )}
+        </div>
       </fieldset>
 
-      {/* ── 4. Optional extra test, collapsed ── */}
+      {/* ── 5. Optional extra tests, collapsed ── */}
       <fieldset className={styles.section}>
-        <button
-          type="button"
-          className={styles.moreToggle}
-          onClick={() => setMoreOpen(o => !o)}
-        >
+        <button type="button" className={styles.moreToggle} onClick={() => setMoreOpen(o => !o)}>
           {moreOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          More tests (optional) — touchstone streak
-          {streak && <span className={styles.moreCount}>1 added</span>}
+          More tests (optional) — streak, UV, hallmark
+          {(streak || uv || hallmarkPhoto) && <span className={styles.moreCount}>
+            {[streak, uv, hallmarkPhoto].filter(Boolean).length} added
+          </span>}
         </button>
 
         {moreOpen && (
-          <div className={styles.field}>
-            <label className={styles.label}>
-              <Camera size={12} /> Touchstone Streak Photo
-              <InfoTip text="Rub the item on the touchstone and photograph the streak mark. The rub cuts through thin plating, so this catches surface-level fakes." />
-            </label>
-            <div
-              className={`${styles.dropzone} ${styles.dropzoneSmall}`}
-              onClick={() => streakRef.current?.click()}
-            >
-              <Camera size={18} className={styles.dropzoneIcon} />
-              <span className={styles.dropzoneText}>
-                {streak ? streak.name : 'Upload streak image'}
-              </span>
+          <div className={styles.moreBody}>
+            <div className={styles.field}>
+              <label className={styles.label}>
+                <Camera size={12} /> Touchstone Streak Photo
+                <InfoTip text="Rub the item on the touchstone and photograph the streak mark. HSV hue analysed against per-karat reference bands — catches surface-level plating a rub cuts through." />
+              </label>
+              <CameraCapture facingMode="environment" label="streak photo" onCapture={setStreak} />
             </div>
-            <input
-              ref={streakRef}
-              type="file"
-              accept="image/*"
-              className={styles.hiddenInput}
-              onChange={e => setStreak(e.target.files[0] || null)}
-            />
-            {streak && (
-              <div className={styles.fileTag}>
-                <Camera size={12} />
-                <span>{streak.name}</span>
-                <button type="button" onClick={() => setStreak(null)}><X size={10} /></button>
-              </div>
-            )}
+
+            <div className={styles.field}>
+              <label className={styles.label}>
+                <Flashlight size={12} /> UV-Pass ("Blacklight") Photo
+                <InfoTip text="Photograph the item under a UV-A torch. Solid genuine gold should not fluoresce; rhodium plating and many synthetic stones do — an assistive signal, not conclusive on its own." />
+              </label>
+              <CameraCapture facingMode="environment" label="UV-pass photo" onCapture={setUv} />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label}>
+                <ScanLine size={12} /> Hallmark / HUID
+                <InfoTip text="BIS has no public developer API — HUID lookup here is against a SIMULATED local registry. A HUID is trivial to copy, so this also checks the engraving itself (stroke width/spacing) for a laser-engraving signature, and cross-checks the registry's purity against the physics-measured karat." />
+              </label>
+              <input
+                className={styles.input} type="text" placeholder="6-character HUID (e.g. AZ4E58C2)"
+                value={form.huid} onChange={e => set('huid', e.target.value.toUpperCase())}
+                style={{ marginBottom: 8 }}
+              />
+              <CameraCapture facingMode="environment" label="hallmark macro photo" onCapture={setHallmarkPhoto} />
+              {hallmarkPhoto && (
+                <button type="button" className={styles.addBtn} onClick={runHallmarkVerify} disabled={hallmarkLoading} style={{ marginTop: 8 }}>
+                  {hallmarkLoading ? <Loader2 size={13} className={styles.spinner} /> : <ShieldCheck size={13} />}
+                  Verify hallmark
+                </button>
+              )}
+              {hallmarkError && <p className={styles.fieldError}>{hallmarkError}</p>}
+              {hallmarkResult && (
+                <div className={styles.kycResult}>
+                  <span className={styles.simBadge}>SIMULATED</span>
+                  <span>
+                    {hallmarkResult.registry_found
+                      ? `Registry: ${hallmarkResult.registry_record.purity_karat}K, ${hallmarkResult.registry_record.status}`
+                      : 'No registry match'} · Engraving risk {Math.round(hallmarkResult.engraving.risk_score * 100)}%
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </fieldset>
 
       {/* ── Analyse ── */}
-      <button
-        type="submit"
-        className={styles.submitBtn}
-        disabled={!isValid || loading}
-        aria-busy={loading}
-      >
+      <button type="submit" className={styles.submitBtn} disabled={!isValid || loading} aria-busy={loading}>
         {loading ? (
-          <>
-            <Loader2 size={18} className={styles.spinner} />
-            Analysing item…
-          </>
+          <><Loader2 size={18} className={styles.spinner} /> Analysing item…</>
         ) : (
-          <>
-            <Sparkles size={18} />
-            {hasResult ? 'Analyse Again' : 'Analyse Gold Item'}
-          </>
+          <><Sparkles size={18} /> {hasResult ? 'Analyse Again' : 'Analyse Gold Item'}</>
         )}
       </button>
 
@@ -415,8 +521,11 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
           All three core tests are required — still missing: {missingCore.join(', ')}
         </p>
       )}
+      {geo && (
+        <p className={styles.geoHint}><MapPin size={11} /> Location captured for evidence stamping</p>
+      )}
 
-      {/* ── 4. Officer inputs — unlocks after the first evaluation ── */}
+      {/* ── 6. Officer inputs — unlocks after the first evaluation ── */}
       {hasResult && (
         <fieldset className={`${styles.section} ${styles.refineSection}`}>
           <legend className={styles.sectionLabel}>
@@ -435,12 +544,9 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
               <InfoTip text="Describe the item as the customer declares it, including stones (e.g. '22K necklace with rubies'). The photo analysis cross-checks this — declared stones the camera can't find raise a flag." />
             </label>
             <input
-              id="item_description"
-              className={styles.input}
-              type="text"
+              id="item_description" className={styles.input} type="text"
               placeholder="e.g. 22K gold necklace, set with rubies"
-              value={form.item_description}
-              onChange={e => set('item_description', e.target.value)}
+              value={form.item_description} onChange={e => set('item_description', e.target.value)}
             />
           </div>
 
@@ -448,44 +554,22 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
             <div className={styles.field}>
               <label htmlFor="loan_app_no" className={styles.label}>Loan Application No.</label>
               <input
-                id="loan_app_no"
-                className={styles.input}
-                type="text"
-                placeholder="e.g. LA-2026-00123"
-                value={form.loan_app_no}
+                id="loan_app_no" className={styles.input} type="text"
+                placeholder="e.g. LA-2026-00123" value={form.loan_app_no}
                 onChange={e => set('loan_app_no', e.target.value)}
               />
             </div>
             <div className={styles.field}>
-              <label htmlFor="officer_name" className={styles.label}>Assessment Officer</label>
+              <label htmlFor="branch_id" className={styles.label}>Branch ID</label>
               <input
-                id="officer_name"
-                className={styles.input}
-                type="text"
-                placeholder="Name (EMP-XXXX)"
-                value={form.officer_name}
-                onChange={e => set('officer_name', e.target.value)}
+                id="branch_id" className={styles.input} type="text"
+                placeholder="e.g. BLR-001" value={form.branch_id}
+                onChange={e => set('branch_id', e.target.value)}
               />
             </div>
           </div>
 
-          <div className={styles.field}>
-            <label htmlFor="branch_id" className={styles.label}>Branch ID</label>
-            <input
-              id="branch_id"
-              className={styles.input}
-              type="text"
-              placeholder="e.g. BLR-001"
-              value={form.branch_id}
-              onChange={e => set('branch_id', e.target.value)}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className={styles.refineBtn}
-            disabled={!isValid || loading}
-          >
+          <button type="submit" className={styles.refineBtn} disabled={!isValid || loading}>
             <RefreshCw size={14} />
             Re-analyse with details
           </button>

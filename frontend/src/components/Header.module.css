@@ -140,3 +140,37 @@
 .historyBtn span { display: none; }
 
 @media (min-width: 480px) { .historyBtn span { display: inline; } }
+
+.evaluatorBadge {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand-darker);
+  padding: 7px 12px;
+  border: 1px solid var(--brand-border);
+  border-radius: 999px;
+  background: var(--brand-muted);
+  white-space: nowrap;
+}
+
+@media (min-width: 860px) { .evaluatorBadge { display: flex; } }
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: #F5F7FA;
+  border: 1px solid rgba(16,24,40,0.08);
+  border-radius: 50%;
+  color: var(--text-muted);
+  transition: background var(--transition), color var(--transition);
+}
+
+.logoutBtn:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+}

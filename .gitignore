@@ -15,6 +15,8 @@ frontend/node_modules/
 frontend/dist/
 *.pth
 *.h5
+models/*.pt
+runs/
 INSTRUCTIONS.md
 AGENT_LOG.md
 .claude/

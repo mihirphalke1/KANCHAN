@@ -1,0 +1,20 @@
+{
+  "04581234567": {
+    "account_no": "04581234567",
+    "name": "Anitha Suresh",
+    "pan_masked": "AXXXXX23F",
+    "kyc_status": "VERIFIED",
+    "existing_gold_loans": 1,
+    "branch_id": "BLR-001",
+    "customer_since": "2019-03-11"
+  },
+  "04589876543": {
+    "account_no": "04589876543",
+    "name": "Vikram Nair",
+    "pan_masked": "BXXXXX88H",
+    "kyc_status": "VERIFIED",
+    "existing_gold_loans": 0,
+    "branch_id": "BLR-001",
+    "customer_since": "2022-07-04"
+  }
+}

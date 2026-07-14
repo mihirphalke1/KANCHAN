@@ -1,78 +1,111 @@
 """
-Touchstone streak modality.
-Genuine gold leaves a golden-yellow streak (hue 20-55°, high sat, mid-high val).
-Plated base metals often show reddish or dull streaks.
+Touchstone streak modality — HSV hue-band physics (no ML).
 
-Model: LogReg trained on DS-7 self-collected streak images.
-Fallback: HSV hue check on the streak region.
+Genuine gold leaves a warm yellow streak on the touchstone; the exact hue,
+saturation and brightness shift with karat — higher purity reads warmer and
+more saturated, because the alloy has less silver/copper diluting the colour.
+Bands are calibrated per karat in data/streak_calibration.json (same pattern
+as data/acoustic_calibration.json), with documented fallback bands below when
+no calibration file exists.
+
+This replaces a previously orphaned LogisticRegression model: no training
+script for it existed anywhere in the repository or git history, so it could
+not be retrained, recalibrated, or audited for what data it ever saw. An
+unauditable black box is a worse fit for a bank decision system than a
+calibrated, hand-checkable physics rule — the same trade-off already made for
+density and the acoustic ring-frequency cross-check.
 """
+import json
 import logging
-import pickle
 from pathlib import Path
-
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
-STREAK_MODEL_PATH = Path("models/streak_logreg.pkl")
+CALIBRATION_PATH = Path("data/streak_calibration.json")
 
-STREAK_HUE_LOW  = 18.0
-STREAK_HUE_HIGH = 55.0
-STREAK_SAT_MIN  = 70.0
-STREAK_VAL_MIN  = 80.0
+# Fallback bands in standard 0-360° hue (converted from OpenCV's 0-179 at
+# extraction time). Higher karat -> narrower, warmer, more saturated band;
+# the alloy is more silver/copper at lower karats, which cools and desaturates
+# the streak. "0" (karat not declared) uses the widest union band, purely as
+# a sanity check that the streak looks like SOME gold karat at all.
+DEFAULT_BANDS = {
+    "24": {"hue_low": 32, "hue_high": 50, "sat_min": 0.55, "val_min": 0.55},
+    "22": {"hue_low": 28, "hue_high": 50, "sat_min": 0.48, "val_min": 0.50},
+    "18": {"hue_low": 22, "hue_high": 52, "sat_min": 0.40, "val_min": 0.45},
+    "14": {"hue_low": 16, "hue_high": 55, "sat_min": 0.32, "val_min": 0.40},
+    "0":  {"hue_low": 16, "hue_high": 55, "sat_min": 0.32, "val_min": 0.40},
+}
 
 
-def _heuristic_risk(streak_bytes: bytes) -> float:
+def load_bands() -> dict:
+    """Calibrated bands when available; documented fallbacks otherwise."""
+    if CALIBRATION_PATH.exists():
+        try:
+            cal = json.loads(CALIBRATION_PATH.read_text())
+            return {**DEFAULT_BANDS, **cal}
+        except Exception as e:
+            logger.warning("Could not read streak calibration: %s", e)
+    return DEFAULT_BANDS
+
+
+def _hsv_stats(streak_bytes: bytes) -> dict:
     from app.utils.preprocess import load_image_bytes, extract_hsv_stats
-    rgb   = load_image_bytes(streak_bytes)
+    rgb = load_image_bytes(streak_bytes)
     stats = extract_hsv_stats(rgb)
-
-    hue = stats["hue_mean"]
-    sat = stats["sat_mean"]
-    val = stats["val_mean"]
-
-    risk = 0.0
-    if not (STREAK_HUE_LOW <= hue <= STREAK_HUE_HIGH):
-        risk += 0.40
-    if sat < STREAK_SAT_MIN:
-        risk += 0.30
-    if val < STREAK_VAL_MIN:
-        risk += 0.20
-
-    return min(risk, 1.0)
+    # OpenCV hue is 0-179 (degrees/2) -> standard 0-360 degrees.
+    return {
+        "hue_deg": stats["hue_mean"] * 2.0,
+        "sat":     stats["sat_mean"] / 255.0,
+        "val":     stats["val_mean"] / 255.0,
+    }
 
 
-def analyze_streak(streak_bytes: bytes | None) -> dict:
+def analyze_streak(streak_bytes: bytes | None, declared_karat: int = 0) -> dict:
     if streak_bytes is None:
         return {"risk_score": 0.5, "confidence": "low", "mode": "no_streak"}
 
-    if STREAK_MODEL_PATH.exists():
-        try:
-            import colorsys
-            from PIL import Image as PILImage
-            with open(STREAK_MODEL_PATH, "rb") as f:
-                model = pickle.load(f)
-            img = PILImage.open(__import__("io").BytesIO(streak_bytes)).convert("RGB").resize((128, 128))
-            arr = np.array(img) / 255.0
-            hsv = np.array([colorsys.rgb_to_hsv(r, g, b) for r, g, b in arr.reshape(-1, 3)])
-            h, s, v = hsv[:, 0], hsv[:, 1], hsv[:, 2]
-            gold_hue = ((h >= 0.05) & (h <= 0.17))
-            feats = np.array([
-                h.mean(), h.std(), s.mean(), s.std(), v.mean(), v.std(),
-                gold_hue.mean(), (s > 0.4).mean(), (v > 0.5).mean(),
-                np.percentile(h, 25), np.percentile(h, 75),
-                np.percentile(s, 25), np.percentile(s, 75),
-            ], dtype=np.float32).reshape(1, -1)
-            prob = model.predict_proba(feats)[0][1]
-            confidence = "high" if abs(prob - 0.5) > 0.2 else "medium"
-            return {"risk_score": round(float(prob), 4), "confidence": confidence, "mode": "logreg"}
-        except Exception as e:
-            logger.warning("Streak model failed (%s), using heuristic", e)
-
     try:
-        risk = _heuristic_risk(streak_bytes)
+        stats = _hsv_stats(streak_bytes)
     except Exception as e:
-        logger.warning("Streak heuristic failed (%s)", e)
-        risk = 0.5
+        logger.warning("Streak HSV extraction failed (%s)", e)
+        return {"risk_score": 0.5, "confidence": "low", "mode": "hsv_error"}
 
-    return {"risk_score": round(risk, 4), "confidence": "low", "mode": "heuristic"}
+    bands = load_bands()
+    band = bands.get(str(declared_karat)) or bands["0"]
+    hue, sat, val = stats["hue_deg"], stats["sat"], stats["val"]
+
+    risk = 0.0
+    signals = []
+
+    if hue < band["hue_low"] or hue > band["hue_high"]:
+        dist = (band["hue_low"] - hue) if hue < band["hue_low"] else (hue - band["hue_high"])
+        risk += min(0.45, 0.20 + 0.0125 * dist)   # saturates ~20° past the band
+        signals.append(
+            f"Streak hue {hue:.0f}° is outside the "
+            f"{declared_karat or 'reference'}K genuine band "
+            f"({band['hue_low']:.0f}–{band['hue_high']:.0f}°)"
+        )
+    if sat < band["sat_min"]:
+        risk += 0.30 * min(1.0, (band["sat_min"] - sat) / band["sat_min"])
+        signals.append(f"Streak saturation {sat:.2f} is below the expected {band['sat_min']:.2f} — pale/washed streak")
+    if val < band["val_min"]:
+        risk += 0.20 * min(1.0, (band["val_min"] - val) / band["val_min"])
+        signals.append(f"Streak brightness {val:.2f} is below the expected {band['val_min']:.2f} — dull streak")
+
+    risk = min(risk, 1.0)
+    if not signals:
+        signals.append(
+            f"Streak colour (hue {hue:.0f}°, sat {sat:.2f}, val {val:.2f}) matches the "
+            f"{declared_karat or 'reference'}K genuine band"
+        )
+
+    return {
+        "risk_score": round(risk, 4),
+        "confidence": "medium" if abs(risk - 0.5) > 0.25 else "low",
+        "mode":       "hsv_bands",
+        "signals":    signals,
+        "features": {
+            "hue_deg": round(hue, 1), "sat": round(sat, 3), "val": round(val, 3),
+            "band":    band,
+        },
+    }

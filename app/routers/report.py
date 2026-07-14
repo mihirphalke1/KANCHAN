@@ -310,6 +310,22 @@ def build_report(case: dict) -> bytes:
     acoustic = ms.get('acoustic', {})
     image_m  = ms.get('image', {})
     streak   = ms.get('streak', {})
+    xray_m   = ms.get('xray', {}) or {}
+
+    # The live decision path blends the classical-CV material scan (DSIP)
+    # into the visual channel — the CNN probe (image_m) is off by default and
+    # stuck at a neutral 50%. Show the score that actually drove the verdict.
+    if xray_m.get('fusion_contribution'):
+        visual_display = {
+            'risk_score': xray_m['fusion_contribution']['blended_visual_risk'],
+            'mode':       'blended_visual',
+        }
+    elif xray_m.get('mode') == 'dsip_xray':
+        visual_display = {'risk_score': xray_m.get('risk_score', 0.5), 'mode': 'dsip_xray'}
+    elif xray_m.get('mode') == 'dsip_unusable':
+        visual_display = {'risk_score': 0.5, 'mode': 'dsip_unusable'}
+    else:
+        visual_display = image_m
     contra   = case.get('contradiction', {})
     fusion   = case.get('fusion', {})
     benford  = case.get('benford', {})
@@ -585,8 +601,13 @@ def build_report(case: dict) -> bytes:
             ('TEXTCOLOR',    (0,0), (-1,0),  GREY_500),
         ]))
         gems = comp.get('gems') or []
+        def _gem_label(g):
+            name = g.get('stone_name')
+            if name and name != 'unidentified':
+                return f"{name} ({round((g.get('match_confidence') or 0) * 100)}% colour match)"
+            return g.get('hue_class', '—')
         gem_txt = ('Detected stones: ' + ', '.join(
-            f"#{i+1} {g.get('hue_class','—')} ({g.get('area_pct',0)}%)" for i, g in enumerate(gems)
+            f"#{i+1} {_gem_label(g)} ({g.get('area_pct',0)}%)" for i, g in enumerate(gems)
         )) if gems else 'No stones detected — plain-metal density analysis applies.'
         story.append(KeepTogether([
             Paragraph('2. Composition — Gold vs Stones', S['h3']),
@@ -609,9 +630,14 @@ def build_report(case: dict) -> bytes:
         'heuristic:empty_audio':  'Empty audio (50% default)',
         'heuristic:error':   'Audio error (50% default)',
         'logreg':            'Logistic Regression',
+        'hsv_bands':         'HSV hue-band physics',
         'no_audio':          'No audio (50% default)',
         'no_images':         'No images (50% default)',
         'no_streak':         'No streak (50% default)',
+        'dsip_xray':         'Classical CV material scan (DSIP)',
+        'dsip_unusable':     'Photo unusable — background not separable (50% default)',
+        'blended_visual':    'Material scan (DSIP), blended',
+        'no_cnn':            'CNN probe disabled (50% default)',
     }
     def _rl(r):
         if r < 0.35: return ('LOW',      GREEN)
@@ -621,7 +647,7 @@ def build_report(case: dict) -> bytes:
     bar_w = int(bw * 0.28)
     mod_rows = [[_cell('MODALITY'), _cell('RISK'), _cell('RISK BAR'),
                  _cell('LEVEL'), _cell('METHOD')]]
-    for name, m in [('Density',density), ('Visual',image_m), ('Acoustic',acoustic), ('Streak',streak)]:
+    for name, m in [('Density',density), ('Visual',visual_display), ('Acoustic',acoustic), ('Streak',streak)]:
         r      = m.get('risk_score', 0.5)
         lvl, lc = _rl(r)
         mod_rows.append([
@@ -952,9 +978,10 @@ def build_report(case: dict) -> bytes:
         Paragraph(
             'This Gold Purity Assessment has been conducted using the KANCHAN-AI system (Version 1.0), '
             'a multi-modal AI platform developed for Canara Bank\'s Gold Loan Division. '
-            'The system employs four independent analysis modalities — Archimedes density, '
-            'acoustic MFCC-ΔΔ fingerprinting, EfficientNet-B3 visual analysis, and touchstone streak '
-            'analysis — fused via an XGBoost ensemble model with SHAP explainability. '
+            'The system employs independent analysis modalities — Archimedes density physics, '
+            'acoustic MFCC-ΔΔ fingerprinting with ring-frequency cross-check, a classical computer-vision '
+            'material scan (DSIP) for surface/stone analysis, and HSV touchstone streak physics — '
+            'combined via a transparent, hand-recomputable evidence-fusion model. '
             'Population-level fraud detection is provided by a Benford\'s Law monitor on submerged '
             'weight measurements. AI-generated verdicts are advisory in nature; the final lending '
             'decision remains the sole responsibility of the authorised branch officer.',

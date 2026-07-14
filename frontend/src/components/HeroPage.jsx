@@ -104,7 +104,7 @@ export default function HeroPage() {
         </div>
 
         <div className={styles.heroBadges}>
-          {['Non-destructive', 'Every step verifiable', 'Branch-deployable', 'No photos stored'].map(b => (
+          {['Non-destructive', 'Every step verifiable', 'Branch-deployable', 'Evidence stamped & audited'].map(b => (
             <span key={b} className={styles.heroBadge}>
               <Check size={10} strokeWidth={3} /> {b}
             </span>

@@ -19,7 +19,6 @@ Empirical validation on DS-1 real recordings: genuine gold taps median
 6153 Hz (range 5704-6793), plated-composite taps 7689 Hz (7681-7703) —
 non-overlapping, direction as predicted.
 """
-import io
 import json
 import logging
 from pathlib import Path
@@ -46,8 +45,9 @@ def extract_ring_frequency(audio_bytes: bytes, sr: int = 22050) -> dict:
     """Dominant ring frequency from a tap recording — a measured quantity,
     reported with its SNR and a usability gate."""
     import librosa
+    from app.utils.audio_io import load_audio_bytes
 
-    y, sr = librosa.load(io.BytesIO(audio_bytes), sr=sr, mono=True)
+    y, sr = load_audio_bytes(audio_bytes, sr=sr, mono=True)
     if len(y) == 0:
         return {"dominant_freq_hz": None, "snr_db": None, "quality": "empty"}
 

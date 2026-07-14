@@ -449,3 +449,73 @@
 
 .refineBtn:hover:not(:disabled) { background: #E8EFFA; }
 .refineBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Live capture + integrity additions ── */
+.inlineRow { display: flex; gap: 6px; align-items: center; }
+.inlineRow .input { flex: 1; }
+
+.smallActionBtn {
+  display: flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; flex-shrink: 0;
+  border: 1px solid var(--border-mid); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--brand);
+}
+.smallActionBtn:hover:not(:disabled) { background: var(--brand-muted); border-color: var(--brand-light); }
+.smallActionBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.kycResult {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 8px; padding: 8px 10px;
+  background: var(--ok-bg); border: 1px solid var(--ok-border);
+  border-radius: var(--radius-sm); font-size: 12px; color: var(--text-mid);
+}
+
+.simBadge {
+  font-size: 9px; font-weight: 800; letter-spacing: 0.04em;
+  padding: 2px 6px; border-radius: 4px;
+  background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-border);
+  flex-shrink: 0;
+}
+
+.photoGrid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 480px) { .photoGrid { grid-template-columns: 1fr 1fr; } }
+
+.photoSlot { display: flex; flex-direction: column; gap: 6px; }
+
+.slotRemove {
+  display: inline-flex; align-items: center; gap: 4px; align-self: flex-start;
+  font-size: 11px; color: var(--text-faint); background: none; border: none; padding: 2px 0;
+}
+.slotRemove:hover { color: var(--danger); }
+
+.addBtn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; margin-top: 10px;
+  border: 1px solid var(--brand); border-radius: 999px;
+  background: #fff; color: var(--brand); font-size: 12px; font-weight: 700;
+}
+.addBtn:hover:not(:disabled) { background: var(--brand-muted); }
+.addBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.usbConfirm {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--ok); margin-top: -4px; margin-bottom: 4px;
+}
+
+.spatialBlock {
+  margin-top: 14px; padding: 12px; border-radius: var(--radius-sm);
+  background: var(--bg); border: 1px dashed var(--border-mid);
+}
+.spatialHead { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.spatialTitle {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 700; color: var(--text-mid);
+}
+.tapRow { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+
+.moreBody { display: flex; flex-direction: column; gap: 16px; margin-top: 14px; }
+
+.geoHint {
+  display: flex; align-items: center; gap: 4px; justify-content: center;
+  font-size: 11px; color: var(--text-faint); margin: -8px 0 8px;
+}

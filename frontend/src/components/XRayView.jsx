@@ -25,6 +25,8 @@ const STAGES = [
     desc: 'A tally of how bright the item’s pixels are, from dark (left) to bright (right), coloured by material band. The dashed lines mark where the four bands are split. Shown for technical verification — an officer doesn’t need to read it.' },
   { key: 'sobel',     label: 'Edges',
     desc: 'Only the outlines — the lines where one material meets another (a stone against its gold setting, the rim of a prong). Flat, even surfaces stay dark.' },
+  { key: 'hsv',       label: 'Colour (HSV)',
+    desc: 'The photo converted to HSV and redrawn at full strength — every pixel keeps its own hue but is shown at maximum saturation and brightness. This is what "a stone looks different by colour" means made visible: the gold reads as one steady colour, and a stone stands out clearly even if it looked dull or shadowed in the original photo.' },
   { key: 'material',  label: 'Material map',
     desc: 'The four material bands shown in colour, with the item lifted off its background. This is the core visual result — metal, stones and joints separated, the same idea as a lab element map but from a normal photo.' },
   { key: 'gems',      label: 'Stones found',
@@ -60,7 +62,7 @@ export default function XRayView({ caseData }) {
   if (!xray?.stages) return null
 
   const { stages, composition = {}, thresholds = {}, gem_regions,
-          item_area_pct, inclusions_unexplained } = xray
+          item_area_pct, inclusions_unexplained, stone_detection_mode } = xray
   const activeStage = STAGES.find(s => s.key === active) || STAGES[0]
   const hasScore = xrayScore?.mode === 'dsip_xray'
   const showSignals = hasScore || xrayScore?.mode === 'dsip_unusable'
@@ -71,7 +73,7 @@ export default function XRayView({ caseData }) {
         <h3 className={styles.title}>
           <Scan size={14} />
           Photo Material Scan
-          <InfoTip text="Classical image processing on the photo — no AI guesswork. It separates the item from the backdrop, splits the surface into material classes, and finds each stone. Click the small images to see every processing stage." side="right" />
+          <InfoTip text="Classical image processing separates the item from the backdrop and splits the surface into material classes. Stone boundaries are refined by a pretrained MobileSAM segmentation pass when available (falls back to classical colour-threshold detection otherwise) — stone TYPE is still decided by the calibrated, auditable colour/saturation rule, never a black box. Click the small images to see every processing stage." side="right" />
         </h3>
         <div className={styles.badgeRow}>
           {hasScore && (
@@ -85,6 +87,17 @@ export default function XRayView({ caseData }) {
           {usable && Number.isFinite(gem_regions) && (
             <span className={styles.badge}>
               {gem_regions} gem{gem_regions === 1 ? '' : 's'} detected
+            </span>
+          )}
+          {usable && stone_detection_mode && (
+            <span
+              className={styles.badge}
+              title={stone_detection_mode === 'ml_sam'
+                ? 'Stone boundaries refined by a pretrained MobileSAM segmentation pass'
+                : 'MobileSAM unavailable this run — classical colour-threshold detection used'}
+              style={stone_detection_mode === 'ml_sam' ? { background: '#6D28D918', color: '#6D28D9' } : undefined}
+            >
+              {stone_detection_mode === 'ml_sam' ? 'ML-refined (MobileSAM)' : 'Classical detection'}
             </span>
           )}
           {usable && Number.isFinite(inclusions_unexplained) && inclusions_unexplained > 0 && (

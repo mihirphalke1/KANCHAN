@@ -1,0 +1,26 @@
+[
+  {
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "salt": "c50d7b5f8ba6c740",
+    "pin_hash": "87706176f5ca2da874e48bca848eeb0591c29561cd59423372c5f9cde1427721"
+  },
+  {
+    "evaluator_id": "EMP-1002",
+    "name": "Ananya Rao",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "salt": "f6ea4fc693adfbeb",
+    "pin_hash": "514ba27e1694f2011e569ede3e1945bde792a267c1acf280a4a19b2f4631c444"
+  },
+  {
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "salt": "16d6f3b6c75b6511",
+    "pin_hash": "3d76a3bf80e9d20d5fc61d0d4457bb17e5d8eaff87f5183f0a18c031b9217b34"
+  }
+]

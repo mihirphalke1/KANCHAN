@@ -4,6 +4,7 @@ import AnalysisForm from '@/components/AnalysisForm'
 import ResultsPanel from '@/components/ResultsPanel'
 import HistoryDrawer from '@/components/HistoryDrawer'
 import MobileTabBar from '@/components/MobileTabBar'
+import { apiFetch } from '@/lib/auth'
 import styles from './DashboardPage.module.css'
 
 export default function DashboardPage() {
@@ -23,7 +24,7 @@ export default function DashboardPage() {
       resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
     try {
-      const res = await fetch('/api/analyze', { method: 'POST', body: formData })
+      const res = await apiFetch('/api/analyze', { method: 'POST', body: formData })
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: res.statusText }))
         throw new Error(err.detail || 'Analysis failed')

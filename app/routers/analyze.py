@@ -10,19 +10,31 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
+import cv2
+import numpy as np
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from fastapi.responses import JSONResponse
 
+from app.auth import require_session
 from app.models.acoustic_model import analyze_acoustic
 from app.models.acoustic_physics import extract_ring_frequency, ring_frequency_check
 from app.models.contradiction import contradiction_summary
 from app.models.density_model import analyze_density
 from app.models.fusion_model import analyze_fusion
+from app.models.hallmark_model import analyze_hallmark_engraving
 from app.models.image_model import analyze_image
+from app.models.spatial_acoustic import analyze_spatial_taps
 from app.models.streak_model import analyze_streak
+from app.models.tarnish_model import analyze_tarnish, analyze_uv_pass
 from app.models.xray_model import analyze_xray, VISUAL_BLEND_IMAGE, VISUAL_BLEND_XRAY
+from app.utils.bis_registry import lookup_huid
 from app.utils.composition import analyze_composition
 from app.benford.monitor import append_density_reading, run_benford_test
+from app.utils.fiducial import detect_marker
+from app.utils.gem_grid import build_grid_stats
+from app.utils.ltv import assess_value
+from app.utils.phash import check_duplicate, register_photo
+from app.utils.stamp import stamp_image
 from app.utils.xray import xray_preview
 from app.llm.verdict_prompt import generate_verdict
 
@@ -49,6 +61,31 @@ def _save_case(case: dict) -> None:
     HISTORY_PATH.write_text(json.dumps(history, indent=2))
 
 
+_AUDIO_CONTENT_TYPE_EXT = {
+    "audio/webm": "webm", "video/webm": "webm",
+    "audio/wav": "wav", "audio/x-wav": "wav", "audio/wave": "wav",
+    "audio/mpeg": "mp3", "audio/mp3": "mp3",
+    "audio/mp4": "m4a", "audio/x-m4a": "m4a",
+    "audio/ogg": "ogg", "audio/opus": "opus",
+}
+_AUDIO_KNOWN_EXTS = {"webm", "wav", "mp3", "m4a", "ogg", "opus"}
+
+
+def _audio_extension(upload) -> str:
+    """The saved file's extension must match its actual container, or
+    neither a browser nor a media player can play it back later — see the
+    call site for the bug this fixes. Prefers the uploaded filename's own
+    extension, falls back to content-type, then to webm (what the browser's
+    live capture path — MediaRecorder — always produces)."""
+    filename = (upload.filename or "").lower()
+    if "." in filename:
+        ext = filename.rsplit(".", 1)[-1]
+        if ext in _AUDIO_KNOWN_EXTS:
+            return ext
+    content_type = (upload.content_type or "").split(";")[0].strip().lower()
+    return _AUDIO_CONTENT_TYPE_EXT.get(content_type, "webm")
+
+
 POLICY_PATH = Path("data/decision_policy.json")
 _DEFAULT_POLICY = {
     "genuine_high_below":      0.25,
@@ -73,18 +110,22 @@ def load_policy() -> dict:
 
 def _determine_verdict(
     fusion_risk: float, contra_score: float, density_risk: float = 0.0,
-    policy: dict | None = None,
+    policy: dict | None = None, extra_boost: float = 0.0,
 ) -> tuple[str, str, str]:
     """
     Return (risk_level, confidence, loan_action) per the declared policy.
     - Density risk ≥ override threshold → REJECT (physics override)
     - Contradiction boost catches mixed-signal composites
+    - extra_boost folds in advisory signals that aren't part of core fusion
+      (spatial-acoustic spread, hallmark engraving, tarnish/UV anomalies) —
+      same additive-boost mechanism as the contradiction score, so a new
+      signal can move the verdict without having to retrain the fusion model
     """
     p = policy or load_policy()
     if density_risk >= p["density_override_at"]:
         return "REJECT", "HIGH", "DECLINE"
 
-    boosted = min(1.0, fusion_risk + contra_score * p["contradiction_boost"])
+    boosted = min(1.0, fusion_risk + contra_score * p["contradiction_boost"] + extra_boost)
 
     if boosted < p["genuine_high_below"]:
         return "GENUINE", "HIGH", "APPROVE"
@@ -170,17 +211,22 @@ def _build_trace(
         # item is separated from its background. When it isn't, every count
         # would be measured on the scene, not the item — so we omit them.
         if xray_result.get("background_removed"):
+            stone_mode = xray_result.get("stone_detection_mode", "classical")
             steps.append({
                 "step": "Finding the stones in the photo",
                 "status": "done",
                 "summary": f"{xray_result.get('gem_regions', 0)} coloured "
                            f"({xray_result.get('gem_area_pct', 0)}%), "
                            f"{xray_result.get('colourless_regions', 0)} colourless candidates "
-                           f"({xray_result.get('colourless_area_pct', 0)}%)",
-                "formula": "Coloured: saturated non-gold-hue clusters. Colourless: bright low-sat regions, "
-                           "classified round+smooth (pearl-like) vs micro-edge sparkle (faceted)",
-                "details": {"stage_image": "gems"},
-                "source": "Independent CV detection — description text is never trusted",
+                           f"({xray_result.get('colourless_area_pct', 0)}%) — "
+                           + ("boundaries refined by MobileSAM (ML)" if stone_mode == "ml_sam"
+                              else "classical colour-threshold detection (ML unavailable this run)"),
+                "formula": "Region boundaries: MobileSAM-refined when available, else colour-threshold "
+                           "connected-components. Classification: saturated non-gold-hue clusters vs "
+                           "bright low-saturation regions, using calibrated saturation-purity to tell a "
+                           "genuinely coloured stone from a colourless one flashing colour off its facets",
+                "details": {"stage_image": "gems", "detection_mode": stone_mode},
+                "source": "Independent CV/ML detection — description text is never trusted",
             })
             steps.append({
                 "step": "Checking dark spots against the found stones",
@@ -304,12 +350,28 @@ async def analyze(
     customer_account: str = Form(""),
     loan_app_no: str = Form(""),
     officer_name: str = Form(""),
+    weight_capture_source: str = Form("manual"),
+    geo_lat: Optional[float] = Form(None),
+    geo_lon: Optional[float] = Form(None),
+    huid: str = Form(""),
+    hallmark_result: str = Form(""),
+    kyc_record: str = Form(""),
     images: list[UploadFile] = File(default=[]),
     audio: Optional[UploadFile] = File(default=None),
     streak_image: Optional[UploadFile] = File(default=None),
+    tap_audio: list[UploadFile] = File(default=[]),
+    tap_positions: list[str] = Form(default=[]),
+    uv_image: Optional[UploadFile] = File(default=None),
+    session: dict = Depends(require_session),
 ):
     case_id = uuid.uuid4().hex[:8]
     response.headers["X-Case-ID"] = case_id
+    # officer_name is now resolved from the authenticated evaluator session,
+    # not trusted as free text — the Evaluator Integrity Layer's whole point
+    # is that every case is traceable to a person who was physically present
+    # at login (session selfie captured), not a typed name anyone could enter.
+    officer_name = session["name"]
+    evaluator_id = session["evaluator_id"]
 
     if declared_karat not in (0, 14, 18, 22, 24):
         raise HTTPException(status_code=422,
@@ -324,6 +386,39 @@ async def analyze(
     image_bytes_list = [await img.read() for img in images] if images else []
     audio_bytes      = await audio.read() if audio else None
     streak_bytes     = await streak_image.read() if streak_image else None
+    uv_bytes         = await uv_image.read() if uv_image else None
+    tap_audio_bytes  = [await t.read() for t in tap_audio] if tap_audio else []
+
+    try:
+        hallmark_parsed = json.loads(hallmark_result) if hallmark_result else None
+    except Exception:
+        hallmark_parsed = None
+    try:
+        kyc_parsed = json.loads(kyc_record) if kyc_record else None
+    except Exception:
+        kyc_parsed = None
+
+    # ── Duplicate-photo check (Evaluator Integrity Layer) ──
+    # Compared against every photo ever recorded system-wide, BEFORE this
+    # case's own photos are registered — a reused image from another case
+    # (or an earlier attempt) surfaces here, not after the fact.
+    duplicate_flags = []
+    for i, img_bytes in enumerate(image_bytes_list):
+        match = check_duplicate(img_bytes)
+        if match:
+            duplicate_flags.append({
+                "image_role": f"item_photo_{i}", "matches_case_id": match["case_id"],
+                "matched_role": match.get("image_role"), "matched_at": match.get("timestamp"),
+                "distance": match["distance"],
+            })
+    if streak_bytes:
+        match = check_duplicate(streak_bytes)
+        if match:
+            duplicate_flags.append({
+                "image_role": "streak_photo", "matches_case_id": match["case_id"],
+                "matched_role": match.get("image_role"), "matched_at": match.get("timestamp"),
+                "distance": match["distance"],
+            })
 
     # ── Material scan on the primary photograph ──
     # Uploaded photos/audio/streak and the processed X-ray stages are saved
@@ -337,6 +432,43 @@ async def analyze(
         except Exception as e:
             logger.warning("Material scan failed for case %s: %s", case_id, e)
 
+    # ── Fiducial calibration card: tamper-evidence + real-world scale ──
+    # Detected in the same primary photo (SOP: place the card flat beside
+    # the item in-frame). Best-effort — absence just means no scale
+    # reference for stone sizing, never a hard block.
+    fiducial_result = None
+    gem_grid_result = None
+    if image_bytes_list:
+        try:
+            arr = np.frombuffer(image_bytes_list[0], dtype=np.uint8)
+            bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+            if bgr is not None:
+                fiducial_result = detect_marker(bgr, branch_id)
+        except Exception as e:
+            logger.warning("Fiducial detection failed for case %s: %s", case_id, e)
+            fiducial_result = {"detected": False, "px_per_mm": None, "reason": f"error: {e}"}
+        if xray_result and xray_result.get("background_removed"):
+            gem_grid_result = build_grid_stats(
+                item_bbox = xray_result.get("item_bbox"),
+                stones    = xray_result.get("stones", []),
+                grid_n    = 4,
+                px_per_mm = (fiducial_result or {}).get("px_per_mm"),
+            )
+
+    # ── Tarnish/rust + UV-pass fluorescence (assistive, low-weight) ──
+    tarnish_result = None
+    if image_bytes_list:
+        try:
+            tarnish_result = analyze_tarnish(image_bytes_list[0], declared_karat or 22)
+        except Exception as e:
+            logger.warning("Tarnish analysis failed for case %s: %s", case_id, e)
+    uv_result = None
+    if uv_bytes:
+        try:
+            uv_result = analyze_uv_pass(uv_bytes)
+        except Exception as e:
+            logger.warning("UV-pass analysis failed for case %s: %s", case_id, e)
+
     density_result  = analyze_density(weight_dry, weight_submerged, declared_karat, water_temp_c)
 
     # CNN probe is off the decision path by default (proxy-trained — no
@@ -349,7 +481,7 @@ async def analyze(
             "mode": "no_cnn" if image_bytes_list else "no_images",
         }
     acoustic_result = analyze_acoustic(audio_bytes) if audio_bytes else {"risk_score": 0.5, "confidence": "low", "mode": "no_audio"}
-    streak_result   = analyze_streak(streak_bytes)
+    streak_result   = analyze_streak(streak_bytes, declared_karat)
 
     # ── Ring-frequency physics (stiff-core / tungsten cross-check) ──
     # Calibration-gated: only decides against a measured genuine band.
@@ -361,6 +493,21 @@ async def analyze(
             acoustic_result["ring"] = {**ring, **ring_check}
         except Exception as e:
             logger.warning("Ring-frequency check failed for case %s: %s", case_id, e)
+
+    # ── Spatial acoustic mapping — the multi-tap grid ──
+    # The primary tap (if any) counts as the first grid point; additional
+    # tap_audio/tap_positions extend it. Needs >=2 usable taps to say
+    # anything about spatial consistency.
+    spatial_taps = []
+    if audio_bytes:
+        spatial_taps.append({"position": "Primary", "audio_bytes": audio_bytes})
+    for i, tb in enumerate(tap_audio_bytes):
+        pos = tap_positions[i] if i < len(tap_positions) else f"Point {i+2}"
+        spatial_taps.append({"position": pos, "audio_bytes": tb})
+    spatial_result = analyze_spatial_taps(spatial_taps) if len(spatial_taps) >= 2 else {
+        "risk_score": 0.5, "confidence": "low", "mode": "insufficient_taps", "taps": [], "n_usable": 0,
+    }
+
     xray_result_score = analyze_xray(xray_result, item_description)
 
     # ── Stone-corrected composition (two-component mixture model) ──
@@ -475,14 +622,57 @@ async def analyze(
 
     benford = run_benford_test()
 
+    # ── Assessed value + RBI-tiered LTV ──
+    # Net gold weight prefers the stone-corrected composition estimate when
+    # the mixture model is valid; falls back to gross dry weight otherwise
+    # (plain-metal items, or a composition model that didn't apply).
+    net_gold_weight_g = (
+        composition_result["gold_mass_g"]
+        if composition_result and composition_result.get("model_valid")
+           and composition_result.get("gold_mass_g") is not None
+        else weight_dry
+    )
+    ltv_result = assess_value(net_gold_weight_g)
+
+    # ── Advisory-signal boost ──
+    # Spatial-acoustic spread, hallmark engraving irregularity, and
+    # tarnish/UV anomalies are real evidence but aren't part of the core
+    # 4-modality fusion model (adding a 5th input would break the trained
+    # XGBoost feature vector) — they fold in as an additive boost, the same
+    # mechanism the contradiction score already uses. Each capped so no
+    # single advisory signal can carry a verdict on its own.
+    aux_boost, aux_notes = 0.0, []
+    if spatial_result.get("spatial_inconsistency_flag"):
+        b = round(min(0.15, spatial_result["risk_score"] * 0.15), 4)
+        aux_boost += b
+        aux_notes.append(f"spatial-acoustic (+{b}): {spatial_result['reason']}")
+    if hallmark_parsed and (hallmark_parsed.get("engraving") or {}).get("risk_score", 0) > 0.6:
+        aux_boost += 0.05
+        aux_notes.append("hallmark (+0.05): engraving pattern inconsistent with laser engraving")
+    if hallmark_parsed and hallmark_parsed.get("cross_check") and hallmark_parsed["cross_check"].get("match") is False:
+        aux_boost += 0.10
+        aux_notes.append("hallmark (+0.10): registry purity does not match declared karat")
+    if tarnish_result and tarnish_result.get("risk_score", 0) > 0.6:
+        aux_boost += 0.05
+        aux_notes.append("tarnish (+0.05): localized rust/tarnish anomaly detected")
+    if uv_result and uv_result.get("risk_score", 0) > 0.6:
+        aux_boost += 0.05
+        aux_notes.append("uv (+0.05): unexpected fluorescence detected")
+    if duplicate_flags:
+        aux_boost += 0.20
+        aux_notes.append(f"integrity (+0.20): {len(duplicate_flags)} photo(s) matched evidence already on file for another case")
+    aux_boost = round(min(0.5, aux_boost), 4)
+    contra["flags"].extend(aux_notes)
+
     policy = load_policy()
     boosted_risk = round(
-        min(1.0, fusion["risk_score"] + contra["contradiction_score"] * policy["contradiction_boost"]), 4)
+        min(1.0, fusion["risk_score"] + contra["contradiction_score"] * policy["contradiction_boost"] + aux_boost), 4)
     risk_level, confidence, loan_action = _determine_verdict(
         fusion["risk_score"],
         contra["contradiction_score"],
         density_risk=density_risk_effective,
         policy=policy,
+        extra_boost=aux_boost,
     )
 
     # Physics override: density says gold, ring pitch says stiffer-than-gold
@@ -539,6 +729,28 @@ async def analyze(
         contra, fusion, (risk_level, confidence, loan_action), boosted_risk,
         water_temp_c,
     )
+    if spatial_result.get("mode") == "spatial_map":
+        verification_trace.append({
+            "step": "Spatial acoustic mapping (multi-tap grid)",
+            "status": "flag" if spatial_result.get("spatial_inconsistency_flag") else "done",
+            "summary": spatial_result.get("reason", ""),
+            "formula": "Ring frequency compared across tap points; risk scales with (max-min)/mean "
+                       "spread beyond a calibrated threshold",
+            "details": {"tap points": spatial_result.get("n_usable"), "spread": spatial_result.get("spread_ratio")},
+            "source": "Extension of the single-tap ring-frequency physics check (acoustic_physics.py)",
+        })
+    verification_trace.append({
+        "step": "Assessed value & RBI-tiered LTV",
+        "status": "done",
+        "summary": (
+            f"Net gold {ltv_result['net_gold_weight_g']} g × ₹{ltv_result['rate_per_gram_inr']:,.0f}/g "
+            f"= ₹{ltv_result['assessed_value_inr']:,.0f}; LTV {ltv_result['ltv_pct']*100:.0f}% "
+            f"({ltv_result['tier']}) → max loan ₹{ltv_result['max_loan_inr']:,.0f}"
+        ),
+        "formula": "assessed_value = net_gold_weight_g × rate_per_gram; max_loan = assessed_value × tiered LTV%",
+        "details": {"tier": ltv_result["tier"], "ltv_pct": ltv_result["ltv_pct"]},
+        "source": ltv_result["source"],
+    })
 
     # ── Persist the evidence itself under data/cases/<case_id>/ ──
     # Photos, the tap-test audio, the streak photo, and every X-ray stage
@@ -547,24 +759,59 @@ async def analyze(
     # in-memory response the browser already has for a live analysis.
     case_dir = CASES_DIR / case_id
     case_dir.mkdir(parents=True, exist_ok=True)
+    analysis_ts = datetime.utcnow()
+
+    def _stamp(img_bytes: bytes, label: str) -> bytes:
+        return stamp_image(
+            img_bytes, case_id=case_id, customer_name=customer_name,
+            evaluator_name=officer_name, evaluator_id=evaluator_id,
+            geo_lat=geo_lat, geo_lon=geo_lon, timestamp=analysis_ts, label=label,
+        )
 
     saved_images = []
     for i, img_bytes in enumerate(image_bytes_list):
         p = case_dir / f"img_{i}.jpg"
-        p.write_bytes(img_bytes)
+        p.write_bytes(_stamp(img_bytes, f"Item photo {i+1}"))
         saved_images.append(str(p))
+        register_photo(img_bytes, case_id=case_id, image_role=f"item_photo_{i}",
+                        timestamp=analysis_ts.isoformat())
 
     saved_audio = None
     if audio_bytes:
-        p = case_dir / "audio.wav"
+        # Save with the container the browser actually recorded (webm/opus
+        # from MediaRecorder, or whatever format an uploaded demo file was)
+        # — always writing ".wav" regardless of real content made the saved
+        # file unplayable once reopened from History: the bytes are a webm
+        # container, but the ".wav" extension makes both the browser and any
+        # media player expect PCM/WAV framing and refuse to decode it. The
+        # live post-analysis player worked around this by playing the
+        # browser's own in-memory Blob instead of the saved file, which hid
+        # the bug until the case was reopened later.
+        ext = _audio_extension(audio)
+        p = case_dir / f"audio.{ext}"
         p.write_bytes(audio_bytes)
         saved_audio = str(p)
+
+    saved_tap_audio = []
+    for i, (tb, tap_upload) in enumerate(zip(tap_audio_bytes, tap_audio)):
+        ext = _audio_extension(tap_upload)
+        p = case_dir / f"tap_{i+2}.{ext}"
+        p.write_bytes(tb)
+        saved_tap_audio.append(str(p))
 
     saved_streak = None
     if streak_bytes:
         p = case_dir / "streak.jpg"
-        p.write_bytes(streak_bytes)
+        p.write_bytes(_stamp(streak_bytes, "Touchstone streak"))
         saved_streak = str(p)
+        register_photo(streak_bytes, case_id=case_id, image_role="streak_photo",
+                        timestamp=analysis_ts.isoformat())
+
+    saved_uv = None
+    if uv_bytes:
+        p = case_dir / "uv.jpg"
+        p.write_bytes(_stamp(uv_bytes, "UV-pass"))
+        saved_uv = str(p)
 
     saved_xray_stages = {}
     if xray_result and xray_result.get("stages"):
@@ -582,32 +829,56 @@ async def analyze(
 
     case = {
         "case_id":          case_id,
-        "timestamp":        datetime.utcnow().isoformat() + "Z",
+        "timestamp":        analysis_ts.isoformat() + "Z",
         "item_description": item_description,
         "declared_karat":   declared_karat,
         "branch_id":        branch_id,
+        "geo":              {"lat": geo_lat, "lon": geo_lon} if geo_lat is not None else None,
+        "weight_capture_source": weight_capture_source,
         "customer": {
             "name":        customer_name,
             "account_no":  customer_account,
             "loan_app_no": loan_app_no,
             "officer_name": officer_name,
         },
+        "evaluator": {
+            "evaluator_id": session["evaluator_id"],
+            "name":         session["name"],
+            "branch_id":    session["branch_id"],
+            "role":         session["role"],
+            "login_time":   session["login_time"],
+            "selfie_captured": bool(session.get("selfie_path")),
+        },
+        "kyc": kyc_parsed,
+        "integrity": {
+            "duplicate_photo_flags": duplicate_flags,
+            "fiducial":              fiducial_result,
+        },
         "media": {
             "images_provided": len(image_bytes_list),
             "audio_provided":  audio_bytes is not None,
             "streak_provided": streak_bytes is not None,
+            "uv_provided":     uv_bytes is not None,
             "images":          saved_images,
             "audio":           saved_audio,
+            "tap_audio":       saved_tap_audio,
             "streak":          saved_streak,
+            "uv":              saved_uv,
             "xray":            xray_result,
         },
         "modality_scores": {
-            "image":    image_result,
-            "density":  density_result,
-            "acoustic": acoustic_result,
-            "streak":   streak_result,
-            "xray":     xray_result_score,
+            "image":            image_result,
+            "density":          density_result,
+            "acoustic":         acoustic_result,
+            "streak":           streak_result,
+            "xray":             xray_result_score,
+            "spatial_acoustic": spatial_result,
+            "tarnish":          tarnish_result,
+            "uv":               uv_result,
         },
+        "hallmark":         hallmark_parsed,
+        "gem_grid":         gem_grid_result,
+        "ltv":              ltv_result,
         "contradiction":    contra,
         "composition":      composition_result,
         "verification_trace": verification_trace,
@@ -619,6 +890,8 @@ async def analyze(
             "loan_action":   loan_action,
             "override_reason": override_reason,
             "fusion_risk":   round(float(fusion["risk_score"]), 4),
+            "aux_boost":     aux_boost,
+            "aux_notes":     aux_notes,
             "boosted_risk":  boosted_risk,
             "plain_english": llm_result["plain_english"],
             "action":        llm_result["action"],

@@ -1,12 +1,15 @@
 import { useState } from 'react'
-import { Pencil, X } from 'lucide-react'
+import { Pencil, X, ShieldCheck, Lock } from 'lucide-react'
 import styles from './CustomerInfoCard.module.css'
 
+// officer_name is deliberately NOT here — it's part of the audit trail
+// (resolved from the authenticated evaluator session at analysis time, see
+// app/auth.py), not a customer detail. Editable fields are customer-facing
+// data an officer might reasonably add after intake.
 const FIELDS = [
   { key: 'name',         label: 'Customer Name' },
   { key: 'account_no',   label: 'Account Number' },
   { key: 'loan_app_no',  label: 'Loan Application No.' },
-  { key: 'officer_name', label: 'Assessment Officer' },
   { key: 'phone',        label: 'Phone Number' },
   { key: 'email',        label: 'Email' },
   { key: 'address',      label: 'Address', full: true },
@@ -15,8 +18,9 @@ const FIELDS = [
 
 // Restores the customer-details section removed from the live form, plus
 // lets an officer fill in anything not captured at intake (phone, email,
-// address, notes) once the case is already in History.
-export default function CustomerInfoCard({ caseId, customer, onUpdated }) {
+// address, notes) once the case is already in History. The evaluator block
+// is shown separately and is read-only — see below.
+export default function CustomerInfoCard({ caseId, customer, evaluator, onUpdated }) {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving]   = useState(false)
   const [error, setError]     = useState(null)
@@ -112,6 +116,35 @@ export default function CustomerInfoCard({ caseId, customer, onUpdated }) {
           </div>
         </div>
       )}
+
+      <div className={styles.evaluatorBlock}>
+        <div className={styles.evaluatorHead}>
+          <ShieldCheck size={13} />
+          <span>Assessment Officer</span>
+          <Lock size={10} className={styles.lockIcon} title="Locked — part of the audit trail, not editable" />
+        </div>
+        {evaluator?.name ? (
+          <div className={styles.table}>
+            <div className={styles.row}>
+              <span className={styles.rowLabel}>Name &amp; ID</span>
+              <span className={styles.rowValue}>{evaluator.name} ({evaluator.evaluator_id})</span>
+            </div>
+            <div className={styles.row}>
+              <span className={styles.rowLabel}>Branch</span>
+              <span className={styles.rowValue}>{evaluator.branch_id || '—'}</span>
+            </div>
+            <div className={styles.row}>
+              <span className={styles.rowLabel}>Session selfie</span>
+              <span className={styles.rowValue}>{evaluator.selfie_captured ? 'Captured' : 'Not captured'}</span>
+            </div>
+          </div>
+        ) : (
+          <p className={styles.empty}>
+            {customer?.officer_name || '—'}
+            <span className={styles.legacyNote}> (legacy case — recorded before evaluator sessions)</span>
+          </p>
+        )}
+      </div>
     </div>
   )
 }

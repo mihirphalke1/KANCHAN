@@ -1,0 +1,8 @@
+{
+  "24": {"hue_low": 32, "hue_high": 50, "sat_min": 0.55, "val_min": 0.55, "calibrated": false},
+  "22": {"hue_low": 28, "hue_high": 50, "sat_min": 0.48, "val_min": 0.50, "calibrated": false},
+  "18": {"hue_low": 22, "hue_high": 52, "sat_min": 0.40, "val_min": 0.45, "calibrated": false},
+  "14": {"hue_low": 16, "hue_high": 55, "sat_min": 0.32, "val_min": 0.40, "calibrated": false},
+  "0":  {"hue_low": 16, "hue_high": 55, "sat_min": 0.32, "val_min": 0.40, "calibrated": false},
+  "_note": "Documented fallback bands (calibrated: false) — replace with measured touchstone streak reference photos per karat when available, same pattern as data/acoustic_calibration.json."
+}

@@ -357,7 +357,7 @@ function CaseDetail({ c, onCaseUpdated }) {
 
       <div className={styles.detailBody}>
         <VerdictCard verdict={verdict} caseId={case_id} />
-        <CustomerInfoCard caseId={case_id} customer={c.customer} onUpdated={onCaseUpdated} />
+        <CustomerInfoCard caseId={case_id} customer={c.customer} evaluator={c.evaluator} onUpdated={onCaseUpdated} />
         <ProcessTrace trace={c.verification_trace} caseData={c} />
         <MediaEvidence caseData={c} />
         <XRayView caseData={c} />

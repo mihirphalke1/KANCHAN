@@ -8,6 +8,7 @@ import CompositionCard from './CompositionCard'
 import SHAPBreakdown from './SHAPBreakdown'
 import MediaEvidence from './MediaEvidence'
 import XRayView from './XRayView'
+import EvidencePanel from './EvidencePanel'
 import EmptyState from './EmptyState'
 import LoadingState from './LoadingState'
 import styles from './ResultsPanel.module.css'
@@ -25,6 +26,7 @@ export default function ResultsPanel({ result, loading, error, localMedia }) {
       <ProcessTrace trace={result.verification_trace} caseData={result} />
       <MediaEvidence caseData={result} localMedia={localMedia} />
       <XRayView caseData={result} />
+      <EvidencePanel caseData={result} />
       <SignalBars scores={modality_scores} />
       {contradiction?.flags?.length > 0 && (
         <ContradictionAlert contradiction={contradiction} scores={modality_scores} />

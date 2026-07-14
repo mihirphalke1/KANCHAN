@@ -10,10 +10,13 @@ router = APIRouter()
 
 
 class CustomerUpdate(BaseModel):
+    # officer_name is deliberately absent: it's audit-trail data resolved
+    # from the authenticated evaluator session at analysis time (see
+    # app/auth.py), not a customer detail — this model can never overwrite
+    # it, regardless of what a client sends.
     name:         Optional[str] = None
     account_no:   Optional[str] = None
     loan_app_no:  Optional[str] = None
-    officer_name: Optional[str] = None
     phone:        Optional[str] = None
     email:        Optional[str] = None
     address:      Optional[str] = None

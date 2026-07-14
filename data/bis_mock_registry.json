@@ -1,0 +1,35 @@
+{
+  "AZ4E58C2": {
+    "huid": "AZ4E58C2",
+    "purity_karat": 22,
+    "fineness": 916,
+    "ahc_name": "Precision Assaying & Hallmarking Centre",
+    "ahc_reg_no": "AH-KA-0231",
+    "jeweller_name": "Sri Lakshmi Jewellers",
+    "jeweller_reg_no": "J-KA-10456",
+    "hallmarked_on": "2025-11-02",
+    "status": "active"
+  },
+  "BQ8K21F0": {
+    "huid": "BQ8K21F0",
+    "purity_karat": 18,
+    "fineness": 750,
+    "ahc_name": "Metro Assaying Centre",
+    "ahc_reg_no": "AH-KA-0117",
+    "jeweller_name": "Royal Gold House",
+    "jeweller_reg_no": "J-KA-20981",
+    "hallmarked_on": "2025-08-19",
+    "status": "active"
+  },
+  "CT1N77X5": {
+    "huid": "CT1N77X5",
+    "purity_karat": 24,
+    "fineness": 999,
+    "ahc_name": "Precision Assaying & Hallmarking Centre",
+    "ahc_reg_no": "AH-KA-0231",
+    "jeweller_name": "Sri Lakshmi Jewellers",
+    "jeweller_reg_no": "J-KA-10456",
+    "hallmarked_on": "2026-01-14",
+    "status": "revoked"
+  }
+}

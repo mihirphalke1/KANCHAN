@@ -1,0 +1,146 @@
+{
+  "a7e76457c797a73a5a891e3d93f28879a9accc03b52803f1": {
+    "token": "a7e76457c797a73a5a891e3d93f28879a9accc03b52803f1",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-13T15:09:41.510612+05:30",
+    "selfie_path": null
+  },
+  "67ec12d8ee847aabe0a7251499cb1e2f20fa741df3748cb7": {
+    "token": "67ec12d8ee847aabe0a7251499cb1e2f20fa741df3748cb7",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-13T15:16:53.683734+05:30",
+    "selfie_path": null
+  },
+  "21a8215dcd1e7a48a427d6610cf2cc3ee0bedfdc5081649b": {
+    "token": "21a8215dcd1e7a48a427d6610cf2cc3ee0bedfdc5081649b",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-13T17:46:03.056500+05:30",
+    "selfie_path": null
+  },
+  "aa93cb199c1dbe065da8a19bf95558f01b63fde8cf31ff3f": {
+    "token": "aa93cb199c1dbe065da8a19bf95558f01b63fde8cf31ff3f",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-13T17:46:35.114102+05:30",
+    "selfie_path": "data/sessions/aa93cb199c1dbe065da8a19bf95558f01b63fde8cf31ff3f/selfie.jpg"
+  },
+  "3c3ef510803d4c5a3a6aedc8881458e2e9e58b8be59ca81d": {
+    "token": "3c3ef510803d4c5a3a6aedc8881458e2e9e58b8be59ca81d",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-13T17:57:55.297663+05:30",
+    "selfie_path": "data/sessions/3c3ef510803d4c5a3a6aedc8881458e2e9e58b8be59ca81d/selfie.jpg"
+  },
+  "4f3fafbb3dac92e73f190fc96ac24575a9dde531b79a50c6": {
+    "token": "4f3fafbb3dac92e73f190fc96ac24575a9dde531b79a50c6",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-13T18:16:22.969823+05:30",
+    "selfie_path": "data/sessions/4f3fafbb3dac92e73f190fc96ac24575a9dde531b79a50c6/selfie.jpg"
+  },
+  "c605089caec6c4ed42b521f0259e4258f7632a84cd10ece9": {
+    "token": "c605089caec6c4ed42b521f0259e4258f7632a84cd10ece9",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-13T19:27:00.187300+05:30",
+    "selfie_path": "data/sessions/c605089caec6c4ed42b521f0259e4258f7632a84cd10ece9/selfie.jpg"
+  },
+  "01aafcb9db37073ef3a1b587233617be08fb7779df3c6c04": {
+    "token": "01aafcb9db37073ef3a1b587233617be08fb7779df3c6c04",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-14T12:25:52.743657+05:30",
+    "selfie_path": "data/sessions/01aafcb9db37073ef3a1b587233617be08fb7779df3c6c04/selfie.jpg"
+  },
+  "350305d0a7e497a2ec746250b109842eea9b7da7787a5360": {
+    "token": "350305d0a7e497a2ec746250b109842eea9b7da7787a5360",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-14T12:27:14.883657+05:30",
+    "selfie_path": "data/sessions/350305d0a7e497a2ec746250b109842eea9b7da7787a5360/selfie.jpg"
+  },
+  "966bd860fd9db96f835de9d9c5a9f376029db8d3a473def6": {
+    "token": "966bd860fd9db96f835de9d9c5a9f376029db8d3a473def6",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-14T13:57:33.684078+05:30",
+    "selfie_path": "data/sessions/966bd860fd9db96f835de9d9c5a9f376029db8d3a473def6/selfie.jpg"
+  },
+  "c484574d3b37f865e12c6039f48f1b8a3ee9d8d4d95b892f": {
+    "token": "c484574d3b37f865e12c6039f48f1b8a3ee9d8d4d95b892f",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-14T16:18:48.131333+05:30",
+    "selfie_path": "data/sessions/c484574d3b37f865e12c6039f48f1b8a3ee9d8d4d95b892f/selfie.jpg"
+  },
+  "1327a56424ca655e3f3643ae6e4a6f4afabc7efa61332179": {
+    "token": "1327a56424ca655e3f3643ae6e4a6f4afabc7efa61332179",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-14T16:42:10.094316+05:30",
+    "selfie_path": "data/sessions/1327a56424ca655e3f3643ae6e4a6f4afabc7efa61332179/selfie.jpg"
+  },
+  "eb7aaf746f91ccd0c21a155be5f75da830a331d81ba7bc54": {
+    "token": "eb7aaf746f91ccd0c21a155be5f75da830a331d81ba7bc54",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-14T17:06:53.298916+05:30",
+    "selfie_path": "data/sessions/eb7aaf746f91ccd0c21a155be5f75da830a331d81ba7bc54/selfie.jpg"
+  },
+  "0bfbe1e2456c079d1b087b2ef9f1e25c90ac018188bc0372": {
+    "token": "0bfbe1e2456c079d1b087b2ef9f1e25c90ac018188bc0372",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-14T17:17:49.034409+05:30",
+    "selfie_path": "data/sessions/0bfbe1e2456c079d1b087b2ef9f1e25c90ac018188bc0372/selfie.jpg"
+  },
+  "f945a0d3e364bd8c204244a26fc2ac478f0f86c2192e4fb4": {
+    "token": "f945a0d3e364bd8c204244a26fc2ac478f0f86c2192e4fb4",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-14T23:27:35.078555+05:30",
+    "selfie_path": "data/sessions/f945a0d3e364bd8c204244a26fc2ac478f0f86c2192e4fb4/selfie.jpg"
+  },
+  "6fc90d67fa4d43c72ab2e471a366e9671d9655b9cb392f05": {
+    "token": "6fc90d67fa4d43c72ab2e471a366e9671d9655b9cb392f05",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-14T23:35:10.112270+05:30",
+    "selfie_path": "data/sessions/6fc90d67fa4d43c72ab2e471a366e9671d9655b9cb392f05/selfie.jpg"
+  }
+}
