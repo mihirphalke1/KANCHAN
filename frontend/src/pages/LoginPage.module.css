@@ -48,3 +48,41 @@
 .demoHint { font-size: 11px; color: var(--text-faint); text-align: center; }
 
 .selfieIntro { font-size: 13px; color: var(--text-mid); line-height: 1.5; }
+
+.uploadingHint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand, #003087);
+}
+
+.selfieHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.logoutBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border: 1px solid var(--border-mid);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-mid);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+.logoutBtn:hover {
+  background: var(--danger-bg, #FEF2F2);
+  color: var(--danger, #DC2626);
+  border-color: var(--danger, #DC2626);
+}

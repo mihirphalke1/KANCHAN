@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from app.benford.monitor import run_benford_test
-from app.main import _numpy_safe
+from app.utils.numpy_safe import numpy_safe as _numpy_safe
 
 router = APIRouter()
 

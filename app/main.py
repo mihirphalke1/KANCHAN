@@ -22,20 +22,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(name)s  %(messa
 # picks it up.
 mimetypes.add_type("audio/webm", ".webm")
 
-import json
-import numpy as np
-
-class _NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, (np.integer,)):  return int(obj)
-        if isinstance(obj, (np.floating,)): return float(obj)
-        if isinstance(obj, (np.bool_,)):    return bool(obj)
-        if isinstance(obj, np.ndarray):     return obj.tolist()
-        return super().default(obj)
-
-def _numpy_safe(data):
-    """Round-trip through JSON to convert all numpy scalars to Python primitives."""
-    return json.loads(json.dumps(data, cls=_NumpyEncoder))
+from app.utils.numpy_safe import numpy_safe as _numpy_safe
 
 from app.routers import analyze, auth, benford, fiducial, hallmark, history, kyc, report, xray
 

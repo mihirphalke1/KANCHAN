@@ -1,7 +1,7 @@
 {
   "project": "KANCHAN-AI",
   "version": "2.0.0-physics-first",
-  "last_updated": "2026-07-12",
+  "last_updated": "2026-07-16",
   "summary": "Physics-first spurious-gold detection. Three mandatory core tests (weight-in-water with propagated uncertainty, DSIP photo material scan, ring-pitch acoustic physics), transparent log-odds fusion, declared decision policy, 10-step officer verification trail. No uploaded media persisted.",
   "decision_stack": {
     "density": "Archimedes + CRC water table + JCGM 106 conformity; claim-blind best-match identification (karat optional)",
@@ -32,5 +32,5 @@
   ],
   "demo_ready": true,
   "presentation": "SuRaksha Cyber Hackathon 2.0 — IISc Bangalore, July 2026",
-  "quick_start": "backend: python3 -m uvicorn app.main:app --reload --port 8001 | frontend: cd frontend && npm run dev | open http://localhost:5173"
+  "quick_start": "backend: python3 -m uvicorn app.main:app --reload --port 8000 | frontend: cd frontend && npm run dev | open http://localhost:5173"
 }

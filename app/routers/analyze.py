@@ -899,7 +899,7 @@ async def analyze(
         },
     }
 
-    from app.main import _numpy_safe
+    from app.utils.numpy_safe import numpy_safe as _numpy_safe
     safe_case = _numpy_safe(case)
 
     # The live response embeds X-ray stages as base64 so the just-completed

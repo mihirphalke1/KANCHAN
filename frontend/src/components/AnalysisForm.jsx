@@ -19,7 +19,7 @@ const KARATS = [
   { value: 0,  label: 'Not declared — identify from physics' },
 ]
 
-const TAP_POSITIONS = ['Point B (3 o’clock)', 'Point C (6 o’clock)', 'Point D (9 o’clock)']
+const TAP_POSITIONS = ["Point B (3 o’clock)", "Point C (6 o’clock)", "Point D (9 o’clock)"]
 
 // CRC Handbook water density (g/cm³), linear interpolation — mirrors app/utils/density.py
 const WATER_DENSITY_TABLE = [
