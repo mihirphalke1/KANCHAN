@@ -10,6 +10,7 @@ import VerdictCard from '@/components/VerdictCard'
 import CustomerInfoCard from '@/components/CustomerInfoCard'
 import ProcessTrace from '@/components/ProcessTrace'
 import MediaEvidence from '@/components/MediaEvidence'
+import GoldVsGemsCard from '@/components/GoldVsGemsCard'
 import XRayView from '@/components/XRayView'
 import SignalBars from '@/components/SignalBars'
 import ContradictionAlert from '@/components/ContradictionAlert'
@@ -360,13 +361,18 @@ function CaseDetail({ c, onCaseUpdated }) {
         <CustomerInfoCard caseId={case_id} customer={c.customer} evaluator={c.evaluator} onUpdated={onCaseUpdated} />
         <ProcessTrace trace={c.verification_trace} caseData={c} />
         <MediaEvidence caseData={c} />
+        <GoldVsGemsCard caseData={c} />
         <XRayView caseData={c} />
         <SignalBars scores={modality_scores} />
         {contradiction?.flags?.length > 0 && (
           <ContradictionAlert contradiction={contradiction} />
         )}
         <DensityDetails density={modality_scores?.density} />
-        <CompositionCard composition={c.composition} weightDry={modality_scores?.density?.weight_dry} />
+        <CompositionCard
+          composition={c.composition}
+          weightDry={modality_scores?.density?.weight_dry}
+          goldGemSplit={c.media?.xray?.gold_gem_split}
+        />
         {fusion?.shap_values && <SHAPBreakdown shap={fusion.shap_values} />}
         {benford && <BenfordStatus benford={benford} />}
       </div>

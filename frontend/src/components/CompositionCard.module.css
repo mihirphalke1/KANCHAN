@@ -74,6 +74,39 @@
 
 .total { color: var(--text-faint); }
 
+/* ── Section heads (photo vs physics) ── */
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.sectionHead svg { flex-shrink: 0; color: var(--brand, #1E4E9C); }
+.sectionHint {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-faint);
+}
+
+.photoSection,
+.physicsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.massSeg {
+  height: 100%;
+  min-width: 2px;
+}
+
 /* ── Gem chips ── */
 .gemList {
   display: flex;

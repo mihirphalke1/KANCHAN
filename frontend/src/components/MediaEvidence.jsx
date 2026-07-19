@@ -7,7 +7,7 @@ import styles from './MediaEvidence.module.css'
 function mediaUrl(path) {
   if (!path) return null
   // path = "data/cases/{id}/img_0.jpg" → "/cases/{id}/img_0.jpg"
-  return '/' + path.replace(/^data\//, '')
+  return '/' + path.replace(/\\/g, '/').replace(/^data\//, '')
 }
 
 // ── Waveform canvas ────────────────────────────────────────────────────

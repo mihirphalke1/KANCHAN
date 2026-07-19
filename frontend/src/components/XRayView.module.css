@@ -187,6 +187,69 @@
   display: inline-block;
 }
 
+/* ── Detected stones list (per-stone agreement) ── */
+.stoneList {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stoneRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text);
+  padding: 3px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.stoneRow:last-child {
+  border-bottom: none;
+}
+
+.stoneIdx {
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  min-width: 22px;
+}
+
+.stoneSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+
+.stoneName {
+  font-weight: 600;
+}
+
+.stoneColour {
+  color: var(--text-muted);
+  font-size: 10px;
+  text-transform: capitalize;
+}
+
+.stoneAgree {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stoneAgree i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
 /* ── Findings ── */
 .findings {
   margin: 0;

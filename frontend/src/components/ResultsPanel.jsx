@@ -8,6 +8,7 @@ import CompositionCard from './CompositionCard'
 import SHAPBreakdown from './SHAPBreakdown'
 import MediaEvidence from './MediaEvidence'
 import XRayView from './XRayView'
+import GoldVsGemsCard from './GoldVsGemsCard'
 import EvidencePanel from './EvidencePanel'
 import EmptyState from './EmptyState'
 import LoadingState from './LoadingState'
@@ -25,6 +26,7 @@ export default function ResultsPanel({ result, loading, error, localMedia }) {
       <VerdictCard verdict={verdict} caseId={case_id} />
       <ProcessTrace trace={result.verification_trace} caseData={result} />
       <MediaEvidence caseData={result} localMedia={localMedia} />
+      <GoldVsGemsCard caseData={result} />
       <XRayView caseData={result} />
       <EvidencePanel caseData={result} />
       <SignalBars scores={modality_scores} />
@@ -32,7 +34,11 @@ export default function ResultsPanel({ result, loading, error, localMedia }) {
         <ContradictionAlert contradiction={contradiction} scores={modality_scores} />
       )}
       <DensityDetails density={modality_scores?.density} />
-      <CompositionCard composition={result.composition} weightDry={modality_scores?.density?.weight_dry} />
+      <CompositionCard
+        composition={result.composition}
+        weightDry={modality_scores?.density?.weight_dry}
+        goldGemSplit={result.media?.xray?.gold_gem_split}
+      />
       {fusion?.shap_values && (
         <SHAPBreakdown shap={fusion.shap_values} scores={modality_scores} fusionMode={fusion.mode} />
       )}

@@ -134,11 +134,17 @@ def analyze_composition(
 
     rho_at_max = (1 - MAX_STONE_FRAC) * rho_gold + MAX_STONE_FRAC * rho_stone
     if not model_valid:
+        photo_bit = (
+            f" The photo still separately finds stones ({gem_area_pct:.1f}% of visible area) "
+            "— see Gold vs Gems in the material scan for the colour split."
+            if gem_area_pct > 0 else
+            " The photo colour split (Gold vs Gems) still runs independently of this density reading."
+        )
         note = (
             f"Measured density ({measured_density:.2f} g/cm³) is below what any realistic stone "
             f"content could explain — even {MAX_STONE_FRAC*100:.0f}% stones would still read "
-            f"≥ {rho_at_max:.1f} g/cm³. The gold/stone mixture model does not apply: "
-            "the item is not predominantly gold."
+            f"≥ {rho_at_max:.1f} g/cm³. Physics cannot estimate gold mass from this reading "
+            f"(the item is not predominantly gold).{photo_bit}"
         )
     elif hidden_volume_flag:
         note = (

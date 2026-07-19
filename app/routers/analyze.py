@@ -32,11 +32,13 @@ from app.utils.composition import analyze_composition
 from app.benford.monitor import append_density_reading, run_benford_test
 from app.utils.fiducial import detect_marker
 from app.utils.gem_grid import build_grid_stats
+from app.utils.gem_weight import estimate_gem_weights
 from app.utils.ltv import assess_value
 from app.utils.phash import check_duplicate, register_photo
 from app.utils.stamp import stamp_image
-from app.utils.xray import xray_preview
+from app.utils.xray import xray_preview, reconcile_stones
 from app.llm.verdict_prompt import generate_verdict
+from app.llm.gem_vision import detect_gems
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -201,8 +203,13 @@ def _build_trace(
             "status": "done" if xray_result.get("background_removed") else "flag",
             "summary": (f"Item = {xray_result.get('item_area_pct')}% of frame, backdrop removed"
                         if xray_result.get("background_removed")
-                        else "Backdrop could not be separated — the photo is set aside "
-                             "(no visual evidence used); retake on a plain background"),
+                        else ("Backdrop could not be separated, so area-based numbers "
+                              "(composition, gold-vs-gems) are omitted — but the AI vision "
+                              "judge still read the stones directly; retake on a plain "
+                              "background for full measurements"
+                              if xray_result.get("gem_regions", 0) > 0
+                              else "Backdrop could not be separated — the photo is set aside "
+                                   "(no visual evidence used); retake on a plain background")),
             "formula": "Backdrop colour from frame border → weighted HSV distance; border-touching components discarded",
             "details": {"stage_image": "material"},
             "source": "Classical CV (no ML) — thresholds in app/utils/xray.py",
@@ -228,6 +235,21 @@ def _build_trace(
                 "details": {"stage_image": "gems", "detection_mode": stone_mode},
                 "source": "Independent CV/ML detection — description text is never trusted",
             })
+            ggs = xray_result.get("gold_gem_split") or {}
+            if ggs:
+                steps.append({
+                    "step": "Separating gold metal from gems by colour",
+                    "status": "done",
+                    "summary": (f"Gold ≈ {ggs.get('gold_pct', 0)}% of item, "
+                                f"gems ≈ {ggs.get('gem_pct', 0)}%, "
+                                f"other ≈ {ggs.get('other_pct', 0)}% "
+                                f"({ggs.get('stones_used', 0)} stone region(s) used)"),
+                    "formula": "Gems = kept stone mask; remaining item pixels → gold if Lab ΔE to "
+                               "metal reference ≤ GOLD_LAB_MATCH_MAX or HSV in gold band; else other",
+                    "details": {"stage_image": "gold_gem", **ggs},
+                    "source": "Additive colour segmentation (app/utils/xray.py::_gold_gem_map) — "
+                              "visual only, does not change fusion risk",
+                })
             steps.append({
                 "step": "Checking dark spots against the found stones",
                 "status": "flag" if xray_result.get("inclusions_unexplained", 0) > 0 else "done",
@@ -236,6 +258,25 @@ def _build_trace(
                 "formula": "Dark region counts as a stone only if ≥25% of it overlaps an independently detected gem",
                 "details": {},
                 "source": "Two independent CV passes must agree (anti-laundering design)",
+            })
+        elif xray_result.get("gem_regions", 0) > 0:
+            # Backdrop could not be separated, yet the AI vision judge read the
+            # ornament directly and still found stones. Area-based numbers stay
+            # omitted (they need the item mask), but the stones themselves are
+            # real evidence and are surfaced so the trace matches the scan card.
+            sa = xray_result.get("stone_agreement") or {}
+            steps.append({
+                "step": "Finding the stones in the photo (AI vision)",
+                "status": "done",
+                "summary": f"{xray_result.get('gem_regions', 0)} stone(s) identified by the AI vision "
+                           "judge directly from the photo, despite the busy background — "
+                           "boundaries refined by MobileSAM where available. "
+                           "Area %/composition are omitted (they need a clean item mask).",
+                "formula": "AI vision model names + locates each set stone; STONE_AI_ONLY makes the AI "
+                           "the sole authority on the stone set, so background separation is not required",
+                "details": {"stage_image": "gems", "detection_mode": "ml_ai",
+                            "n_ai_only": sa.get("n_ai_only", 0), "n_both": sa.get("n_both", 0)},
+                "source": "AI vision (Fireworks/Kimi or Gemini) — description text is never trusted",
             })
 
     if composition_result:
@@ -426,11 +467,42 @@ async def analyze(
     # ready) so the PDF report and the History page can show real evidence,
     # not just the live response the browser already has.
     xray_result = None
+    xray_ctx = None
     if image_bytes_list:
         try:
-            xray_result = xray_preview(image_bytes_list[0])
+            xray_result, xray_ctx = xray_preview(image_bytes_list[0], _return_ctx=True)
         except Exception as e:
             logger.warning("Material scan failed for case %s: %s", case_id, e)
+
+    # ── AI vision stone detection (Layer B — the PRIMARY stone judge) ─────
+    # The AI names + locates every set gemstone directly in the photo; stone
+    # fusion then uses the ML/SAM boundary only where the AI also saw a stone
+    # (STONE_AI_ONLY). The AI reads the raw ornament, so — unlike the ML/CV
+    # pass — it does NOT need the backdrop separated: a busy/leafy background
+    # that defeats background removal must NOT suppress a stone the AI can
+    # plainly see. So this runs whenever we have the pipeline context, even when
+    # background_removed is False. Fully guarded: no API key / toggle off / any
+    # failure -> ai_stones is None and reconcile_stones returns an ML-only
+    # passthrough, so the result is never worse than the ML-only path. Runs on
+    # the illumination-normalised image so the AI's coordinates match the
+    # item bbox the pipeline computed.
+    if xray_result and xray_ctx:
+        try:
+            ai_stones = await detect_gems(xray_ctx.get("norm"), xray_ctx.get("item_bbox"))
+            stats_patch, stage_patch = reconcile_stones(xray_ctx, ai_stones)
+            if stats_patch:
+                xray_result.update(stats_patch)
+            if stage_patch and isinstance(xray_result.get("stages"), dict):
+                xray_result["stages"].update(stage_patch)
+            # The AI reliably found stones even though the backdrop could not be
+            # separated: expose them for display/weighing. Composition/density
+            # stay gated on true background separation (area% needs the item
+            # mask), but the stone list, count and gem overlay do not.
+            if (ai_stones and not xray_result.get("background_removed")
+                    and (stats_patch or {}).get("gem_regions", 0) > 0):
+                xray_result["ai_stones_without_bg"] = True
+        except Exception as e:
+            logger.warning("Stone AI detection failed for case %s: %s", case_id, e)
 
     # ── Fiducial calibration card: tamper-evidence + real-world scale ──
     # Detected in the same primary photo (SOP: place the card flat beside
@@ -438,6 +510,7 @@ async def analyze(
     # reference for stone sizing, never a hard block.
     fiducial_result = None
     gem_grid_result = None
+    gem_weight_result = None
     if image_bytes_list:
         try:
             arr = np.frombuffer(image_bytes_list[0], dtype=np.uint8)
@@ -454,6 +527,15 @@ async def analyze(
                 grid_n    = 4,
                 px_per_mm = (fiducial_result or {}).get("px_per_mm"),
             )
+            try:
+                gem_weight_result = estimate_gem_weights(
+                    stones         = xray_result.get("stones", []),
+                    px_per_mm      = (fiducial_result or {}).get("px_per_mm"),
+                    declared_karat = declared_karat,
+                )
+            except Exception as e:
+                logger.warning("Gem weight estimation failed for case %s: %s", case_id, e)
+                gem_weight_result = None
 
     # ── Tarnish/rust + UV-pass fluorescence (assistive, low-weight) ──
     tarnish_result = None
@@ -878,6 +960,7 @@ async def analyze(
         },
         "hallmark":         hallmark_parsed,
         "gem_grid":         gem_grid_result,
+        "gem_weight":       gem_weight_result,
         "ltv":              ltv_result,
         "contradiction":    contra,
         "composition":      composition_result,
