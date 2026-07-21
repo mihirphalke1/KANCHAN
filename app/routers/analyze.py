@@ -990,7 +990,9 @@ async def analyze(
     # swaps that for the on-disk paths saved above, so case_history.json
     # stays small while a saved case still points at real image files.
     persist_case = json.loads(json.dumps(safe_case))
-    if persist_case.get("media", {}).get("xray", {}).get("stages") is not None:
+    # media["xray"] is present-but-None when no X-ray was captured, so a plain
+    # .get("xray", {}) returns None (not the default) and would blow up below.
+    if ((persist_case.get("media") or {}).get("xray") or {}).get("stages") is not None:
         persist_case["media"]["xray"]["stages"] = saved_xray_stages
     _save_case(persist_case)
     return JSONResponse(content=safe_case)

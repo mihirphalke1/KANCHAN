@@ -35,35 +35,75 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 USE_AI_STONE_CONFIRM = os.getenv("USE_AI_STONE_CONFIRM", "1") != "0"
-# Provider: "fireworks" (Kimi K2.6, vision+reasoning) is primary; "gemini" is
-# the fallback. "auto" picks whichever key is present (Fireworks first).
+# Provider: "fireworks" (Qwen3-VL, a grounding-native vision model) is primary;
+# "gemini" is the fallback. "auto" picks whichever key is present (Fireworks
+# first). Qwen3-VL is chosen over a general reasoning model because stone COUNT
+# and POSITION are a visual-grounding task — Qwen3-VL is trained specifically
+# for bounding-box + point grounding and counting, which is exactly what a
+# per-stone bbox needs.
 GEM_VISION_PROVIDER = os.getenv("GEM_VISION_PROVIDER", "auto").lower()
-FIREWORKS_VISION_MODEL = os.getenv("FIREWORKS_VISION_MODEL", "accounts/fireworks/models/kimi-k2p6")
+# Only FOUR vision models in the Fireworks public catalog are serverless-callable
+# (supportsImageInput AND supportsServerless — see scripts/list_fw_models.py):
+# kimi-k2p6, kimi-k2p7-code, minimax-m3, qwen3p7-plus. Every qwen*-vl and
+# llama-vision entry is catalogued but supportsServerless=False, so it needs a
+# dedicated deployment and 404s on the serverless chat endpoint.
+#
+# Measured on a real pavé ring, 6 runs each (scripts/compare_gem_vision.py),
+# true count ~32-36 stones:
+#   kimi-k2p6       14, 18                  122-187s   (least accurate, slowest)
+#   kimi-k2p7-code  24, 20, 0, 20, 24, 18    46-153s   (1 run returned junk)
+#   qwen3p7-plus    21, 35, 26, 22, 21, 27   49- 77s   (best mean, 0 failures)
+# qwen3p7-plus wins on accuracy, reliability and latency, so it is the default.
+FIREWORKS_VISION_MODEL = os.getenv("FIREWORKS_VISION_MODEL", "accounts/fireworks/models/qwen3p7-plus")
 GEMINI_VISION_MODEL = os.getenv("GEM_VISION_MODEL", "gemini-1.5-flash")
 FIREWORKS_URL = os.getenv("FIREWORKS_URL", "https://api.fireworks.ai/inference/v1/chat/completions")
-# Kimi K2.6 REASONS for a few thousand tokens before emitting the JSON, so the
-# budget and timeout are deliberately generous. Any overrun just falls back to
-# the ML-only result.
-GEM_VISION_MAX_TOKENS = int(os.getenv("GEM_VISION_MAX_TOKENS", "4096"))
-GEM_VISION_TIMEOUT_S = float(os.getenv("GEM_VISION_TIMEOUT_S", "90"))
+# Kimi REASONS at length before emitting the answer: on a real pavé ring it
+# spent ~8.7k completion tokens and ~90s to enumerate every stone. Measured
+# behaviour (same photo, same prompt):
+#     4096 tokens  -> finish_reason=length, truncated mid-reasoning, 0 stones
+#    16384 tokens  -> finish_reason=stop, 16 stones parsed
+# so the budget must comfortably exceed the reasoning, and the timeout must
+# exceed the ~90s call. Any overrun still just falls back to the ML-only result.
+GEM_VISION_MAX_TOKENS = int(os.getenv("GEM_VISION_MAX_TOKENS", "16384"))
+GEM_VISION_TIMEOUT_S = float(os.getenv("GEM_VISION_TIMEOUT_S", "180"))
 # Pad the item crop a little so stones flush to the item edge aren't clipped.
 _CROP_PAD_FRAC = 0.04
 
 _PROMPT = (
     "You are a professional gemologist inspecting ONE gold ornament in the image.\n"
-    "Identify every GEMSTONE that is set into the metal (faceted stones, cabochons, "
-    "pearls, beads).\n"
-    "STRICT RULES:\n"
-    "- Do NOT include the gold/metal itself, prongs, solder joints, engraving, or "
-    "specular reflections/glare.\n"
+    "Your job is to COUNT and LOCATE every gemstone set into the metal — faceted "
+    "stones, cabochons, pearls, and small beads/pavé — with one entry per physical "
+    "stone.\n"
+    "\n"
+    "HOW TO COUNT ACCURATELY:\n"
+    "- Scan the whole item systematically (e.g. left-to-right, top-to-bottom) so no "
+    "region is skipped.\n"
+    "- Count EACH distinct set stone exactly once, including tiny accent beads and "
+    "pavé stones — small does not mean skip.\n"
+    "- A single faceted stone shows several bright facets and internal reflections: "
+    "that is still ONE stone, not many. Do NOT emit a separate entry per facet or "
+    "per glare spot.\n"
+    "- Conversely, do NOT merge a tight cluster of several small stones into one "
+    "entry — if there are visibly separate stones, list them separately.\n"
+    "\n"
+    "WHAT IS NOT A STONE (never include these):\n"
+    "- The gold/metal body itself, prongs, bezels, solder joints, engraving, filigree, "
+    "or hallmark stamps.\n"
+    "- Specular reflections, glare, or bright highlights ON the metal.\n"
     "- Do NOT read, infer from, or use any text, numbers, or watermark in the image.\n"
-    "- If you are unsure whether something is a stone, still include it but give it a "
-    "low confidence.\n"
+    "\n"
+    "LOCATION PRECISION:\n"
+    "- bbox must tightly enclose the stone (not the whole setting), and location is the "
+    "stone's visual centre.\n"
+    "- If unsure whether a small feature is a stone, still include it with a LOW "
+    "confidence rather than dropping it.\n"
+    "\n"
     "Return ONLY valid JSON of the form:\n"
     '{"stones":[{"gem_type":"ruby","colour":"red","shape":"oval","confidence":0.0-1.0,'
     '"location":[x,y],"bbox":[x,y,w,h]}]}\n'
-    "where location is the stone centre and bbox is its bounding box, ALL as fractions "
-    "0..1 of THIS image's width/height. Return an empty list if there are no stones."
+    "where location is the stone centre and bbox is its tight bounding box, ALL as "
+    "fractions 0..1 of THIS image's width/height (x,y = top-left of bbox). Return "
+    '{"stones":[]} if there are genuinely no stones.'
 )
 
 # Colour/gem word -> legacy 4-way bucket used across composition.py and the UI.
@@ -211,18 +251,30 @@ def _crop_to_data_uri(crop_bgr: np.ndarray) -> Optional[str]:
     return "data:image/jpeg;base64," + base64.b64encode(buf).decode()
 
 
+def _real_key(name: str) -> Optional[str]:
+    """Return an API key from the environment only if it looks real — a value
+    that is unset, blank, or still the `.env.example` placeholder
+    (`your_..._here`) counts as absent. This keeps the layer from firing a
+    doomed network call (and adding latency) on every case before falling back
+    to ML-only when no key has actually been configured yet."""
+    v = (os.getenv(name) or "").strip()
+    if not v or (v.startswith("your_") and v.endswith("_here")):
+        return None
+    return v
+
+
 def _active_provider() -> Optional[str]:
-    """Which provider to use given the configured keys. 'fireworks' (Kimi) is
-    preferred; 'gemini' is the fallback; None when no key is available."""
+    """Which provider to use given the configured keys. 'fireworks' (Qwen3-VL)
+    is preferred; 'gemini' is the fallback; None when no real key is available."""
     p = GEM_VISION_PROVIDER
     if p == "fireworks":
-        return "fireworks" if os.getenv("FIREWORKS_API_KEY") else None
+        return "fireworks" if _real_key("FIREWORKS_API_KEY") else None
     if p in ("gemini", "google"):
-        return "gemini" if os.getenv("GOOGLE_API_KEY") else None
+        return "gemini" if _real_key("GOOGLE_API_KEY") else None
     # auto
-    if os.getenv("FIREWORKS_API_KEY"):
+    if _real_key("FIREWORKS_API_KEY"):
         return "fireworks"
-    if os.getenv("GOOGLE_API_KEY"):
+    if _real_key("GOOGLE_API_KEY"):
         return "gemini"
     return None
 
@@ -232,7 +284,7 @@ def _call_fireworks_sync(crop_bgr: np.ndarray) -> Optional[str]:
     chat endpoint. Returns raw text or None on any failure. Kimi is a reasoning
     model, so it emits thinking text before the JSON — _extract_json recovers
     the JSON regardless."""
-    api_key = os.getenv("FIREWORKS_API_KEY")
+    api_key = _real_key("FIREWORKS_API_KEY")
     if not api_key:
         return None
     data_uri = _crop_to_data_uri(crop_bgr)
@@ -240,6 +292,13 @@ def _call_fireworks_sync(crop_bgr: np.ndarray) -> Optional[str]:
         return None
     try:
         import requests
+        # NOTE: deliberately NO "response_format": {"type": "json_object"}.
+        # Measured on the live API: constraining Kimi to json_object makes it
+        # consume the ENTIRE completion budget (16384 tokens, 200s) and still
+        # return truncated output -> 0 stones. Unconstrained, the same request
+        # finishes cleanly (finish_reason=stop, ~8.7k tokens) and returns the
+        # full stone list. _extract_json pulls the JSON out of the trailing
+        # reasoning prose, so the constraint bought nothing and cost everything.
         payload = {
             "model": FIREWORKS_VISION_MODEL,
             "messages": [{"role": "user", "content": [
@@ -248,7 +307,6 @@ def _call_fireworks_sync(crop_bgr: np.ndarray) -> Optional[str]:
             ]}],
             "temperature": 0.0,
             "max_tokens": GEM_VISION_MAX_TOKENS,
-            "response_format": {"type": "json_object"},
         }
         r = requests.post(
             FIREWORKS_URL,
@@ -266,7 +324,7 @@ def _call_fireworks_sync(crop_bgr: np.ndarray) -> Optional[str]:
 
 def _call_gemini_sync(crop_bgr: np.ndarray) -> Optional[str]:
     """Blocking Gemini vision call. Returns raw text or None on any failure."""
-    api_key = os.getenv("GOOGLE_API_KEY")
+    api_key = _real_key("GOOGLE_API_KEY")
     if not api_key:
         return None
     try:

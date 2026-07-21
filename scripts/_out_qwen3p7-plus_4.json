@@ -1,0 +1,488 @@
+[
+  {
+    "index": 1,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.95,
+    "centroid": [
+      426,
+      608
+    ],
+    "bbox": [
+      405,
+      590,
+      45,
+      45
+    ]
+  },
+  {
+    "index": 2,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.95,
+    "centroid": [
+      386,
+      648
+    ],
+    "bbox": [
+      365,
+      630,
+      45,
+      45
+    ]
+  },
+  {
+    "index": 3,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.95,
+    "centroid": [
+      446,
+      658
+    ],
+    "bbox": [
+      425,
+      640,
+      45,
+      45
+    ]
+  },
+  {
+    "index": 4,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.95,
+    "centroid": [
+      426,
+      698
+    ],
+    "bbox": [
+      405,
+      680,
+      45,
+      45
+    ]
+  },
+  {
+    "index": 5,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      420,
+      592
+    ],
+    "bbox": [
+      410,
+      585,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 6,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      435,
+      602
+    ],
+    "bbox": [
+      425,
+      595,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 7,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      450,
+      615
+    ],
+    "bbox": [
+      440,
+      605,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 8,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      460,
+      628
+    ],
+    "bbox": [
+      450,
+      620,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 9,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      470,
+      642
+    ],
+    "bbox": [
+      460,
+      635,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 10,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      475,
+      655
+    ],
+    "bbox": [
+      465,
+      645,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 11,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      468,
+      668
+    ],
+    "bbox": [
+      458,
+      660,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 12,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      455,
+      680
+    ],
+    "bbox": [
+      445,
+      670,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 13,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      440,
+      692
+    ],
+    "bbox": [
+      430,
+      685,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 14,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      425,
+      705
+    ],
+    "bbox": [
+      415,
+      695,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 15,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      410,
+      712
+    ],
+    "bbox": [
+      400,
+      705,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 16,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      395,
+      702
+    ],
+    "bbox": [
+      385,
+      695,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 17,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      382,
+      688
+    ],
+    "bbox": [
+      372,
+      680,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 18,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      370,
+      675
+    ],
+    "bbox": [
+      360,
+      665,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 19,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      358,
+      662
+    ],
+    "bbox": [
+      348,
+      655,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 20,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.8,
+    "centroid": [
+      348,
+      648
+    ],
+    "bbox": [
+      338,
+      640,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 21,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.7,
+    "centroid": [
+      340,
+      635
+    ],
+    "bbox": [
+      330,
+      625,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 22,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.7,
+    "centroid": [
+      345,
+      622
+    ],
+    "bbox": [
+      335,
+      615,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 23,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.7,
+    "centroid": [
+      355,
+      610
+    ],
+    "bbox": [
+      345,
+      602,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 24,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.7,
+    "centroid": [
+      368,
+      602
+    ],
+    "bbox": [
+      358,
+      595,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 25,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.7,
+    "centroid": [
+      382,
+      595
+    ],
+    "bbox": [
+      372,
+      588,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 26,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.7,
+    "centroid": [
+      398,
+      592
+    ],
+    "bbox": [
+      388,
+      585,
+      20,
+      20
+    ]
+  },
+  {
+    "index": 27,
+    "gem_type": "diamond",
+    "colour": "white",
+    "hue_class": "colourless",
+    "shape": "round",
+    "ai_confidence": 0.7,
+    "centroid": [
+      412,
+      590
+    ],
+    "bbox": [
+      402,
+      583,
+      20,
+      20
+    ]
+  }
+]

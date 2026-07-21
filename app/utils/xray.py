@@ -1265,6 +1265,25 @@ def reconcile_stones(ctx: dict, ai_stones) -> tuple[dict, dict]:
             "stones_grid": _encode_stage("stones_grid", grid),
         }
 
+        # The gold-vs-gems split reuses the stone regions as its gem class, so
+        # it MUST be recomputed from the fused set. _run_pipeline computed it
+        # from the ML-only mask, before the AI layer had contributed anything —
+        # leaving a diamond-set ring reading ~97% gold / ~2% gems even though
+        # the AI had found every stone. Rebuild the gem mask from the fused
+        # label map so the split, and its stage image, match the stone list the
+        # officer is actually shown.
+        gold_gem_split = None
+        try:
+            hsv = ctx.get("hsv")
+            if hsv is not None:
+                fused_stone_mask = (labels_out > 0).astype(np.uint8) * 255
+                gold_gem_img, gold_gem_split = _gold_gem_map(
+                    norm, hsv, item, fused_stone_mask, stones, labels_out)
+                stage_patch["gold_gem"] = _encode_stage("gold_gem", gold_gem_img)
+        except Exception as e:  # noqa: BLE001 — visualisation only, never fatal
+            logger.warning("Gold/gem split recompute failed (%s) — keeping ML-only split", e)
+            gold_gem_split = None
+
         # Recompute the gems/colourless summaries over the fused drawn set —
         # same shapes as _run_pipeline, plus the agreement fields.
         gems = [{"area_pct": s["area_pct"], "hue_class": s["hue_class"],
@@ -1296,6 +1315,8 @@ def reconcile_stones(ctx: dict, ai_stones) -> tuple[dict, dict]:
             "stone_detection_mode": detection_mode,
             "stone_agreement": meta,
         }
+        if gold_gem_split is not None:
+            stats_patch["gold_gem_split"] = gold_gem_split
         return stats_patch, stage_patch
     except Exception as e:  # noqa: BLE001 — never break the request path
         logger.warning("Stone AI reconciliation failed (%s) — keeping ML-only result", e)
