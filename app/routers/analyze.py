@@ -27,6 +27,8 @@ from app.models.spatial_acoustic import analyze_spatial_taps
 from app.models.streak_model import analyze_streak
 from app.models.tarnish_model import analyze_tarnish, analyze_uv_pass
 from app.models.xray_model import analyze_xray, VISUAL_BLEND_IMAGE, VISUAL_BLEND_XRAY
+from app.utils.approval import build_approval
+from app.utils.fraud_scenario import map_scenarios
 from app.utils.bis_registry import lookup_huid
 from app.utils.composition import analyze_composition
 from app.benford.monitor import append_density_reading, run_benford_test
@@ -566,7 +568,11 @@ async def analyze(
     # item bbox the pipeline computed.
     if xray_result and xray_ctx:
         try:
-            ai_stones = await detect_gems(xray_ctx.get("norm"), xray_ctx.get("item_bbox"))
+            ai_stones = await detect_gems(
+                xray_ctx.get("norm"), xray_ctx.get("item_bbox"),
+                source_bgr=xray_ctx.get("source_bgr"),
+                source_to_norm=xray_ctx.get("source_to_norm", 1.0),
+            )
             stats_patch, stage_patch = reconcile_stones(xray_ctx, ai_stones)
             if stats_patch:
                 xray_result.update(stats_patch)
@@ -788,13 +794,23 @@ async def analyze(
             density          = density_result["measured_density"],
             case_id          = case_id,
             branch_id        = branch_id,
+            evaluator_id     = evaluator_id,
             declared_karat   = declared_karat,
             weight_submerged = weight_submerged,
         )
     except Exception as e:
         logger.warning("Failed to append density log: %s", e)
 
+    # Branch-level monitor (organised ring across the branch) plus a
+    # per-evaluator slice (localises a systematic anomaly to a single corrupt
+    # officer — P3-11). The per-evaluator result only fires once that officer
+    # has accrued enough attributed readings; until then it reports
+    # insufficient_data and never blocks a case.
     benford = run_benford_test()
+    benford_evaluator = run_benford_test(evaluator_id=evaluator_id)
+    if benford_evaluator.get("alert"):
+        contra["flags"].append(
+            f"benford-evaluator: {benford_evaluator['message']}")
 
     # ── Assessed value + RBI-tiered LTV ──
     # Net gold weight = total measured weight − estimated weight of the set
@@ -954,6 +970,22 @@ async def analyze(
         contra["flags"].append(
             "borrower-present: attestation not recorded — valuation is provisional; "
             "confirm the borrower is present before finalising/disbursing.")
+
+    # Translate the internal verdict + contradiction pattern into the bank's
+    # 8-scenario spurious-gold vocabulary (P3-13) for the response and the PDF.
+    _gross_for_frac = float(net_gold.get("gross_weight_g") or weight_dry or 0.0)
+    _stone_frac = (float(net_gold.get("stone_weight_g") or 0.0) / _gross_for_frac) if _gross_for_frac > 0 else 0.0
+    fraud_scenarios = map_scenarios({
+        "density":              density_result,
+        "contradiction_flags":  contra.get("flags"),
+        "stiff_core_flag":      bool(ring_check and ring_check.get("stiff_core_flag")),
+        "hollow_anomaly":       bool(hollow_anomaly),
+        "hollow_item":          bool(hollow_item),
+        "pledging_exceeds":     bool(pledging.get("exceeds")),
+        "hallmark":             hallmark_parsed,
+        "n_stones":             net_gold.get("n_stones", 0),
+        "stone_weight_fraction": _stone_frac,
+    })
 
     llm_payload = {
         "item_description": item_description or "gold item (no description provided)",
@@ -1157,6 +1189,12 @@ async def analyze(
         "verification_trace": verification_trace,
         "fusion":           fusion,
         "benford":          benford,
+        "benford_evaluator": benford_evaluator,
+        "fraud_scenarios":  fraud_scenarios,
+        "approval": build_approval(
+            risk_level, loan_action,
+            maker_id=session["evaluator_id"], maker_name=session["name"],
+        ),
         "verdict": {
             "risk_level":    risk_level,
             "confidence":    confidence,

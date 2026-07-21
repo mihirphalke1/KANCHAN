@@ -108,6 +108,33 @@ GEM_VISION_CLUSTER_FRAC = float(os.getenv("GEM_VISION_CLUSTER_FRAC", "0.03"))
 # missed it); full agreement keeps all of it. Linear in between.
 GEM_VISION_AGREE_FLOOR = float(os.getenv("GEM_VISION_AGREE_FLOOR", "0.6"))
 
+# ── Adaptive tiling (the fix for DENSE pieces the global pass undercounts) ─────
+# A single whole-item pass systematically undercounts a densely-set piece (a
+# kundan/polki necklace with dozens of stones, a full pavé cluster): the model
+# sees each stone as a handful of pixels and two independent votes are so noisy
+# about the exact positions that the strict-majority consensus collapses to a
+# few stones. Slicing the item into an overlapping grid and detecting per-tile
+# (Slicing-Aided Hyper Inference) makes every stone large within its tile, so
+# recall jumps — this is the standard remedy for dense small-object counting.
+# Gated so a normal single-stone ring never pays for extra calls:
+#   "0"    -> off (default in code; behaviour byte-identical to the old path)
+#   "auto" -> tile only when the item is large enough OR the global pass already
+#             found many stones (i.e. the piece is genuinely dense)
+#   "1"    -> always tile
+GEM_VISION_TILES = os.getenv("GEM_VISION_TILES", "0").strip().lower()
+# In "auto" mode, tile when the item crop's longer side (in the pixels actually
+# sent to the model) is at least this, OR the global pass found >= MIN_STONES.
+GEM_VISION_TILE_TRIGGER_PX = int(os.getenv("GEM_VISION_TILE_TRIGGER_PX", "760"))
+GEM_VISION_TILE_MIN_STONES = int(os.getenv("GEM_VISION_TILE_MIN_STONES", "6"))
+# Grid is GEM_VISION_TILE_GRID x GEM_VISION_TILE_GRID with this fractional
+# overlap between neighbours (so a stone on a seam is whole in at least one tile).
+GEM_VISION_TILE_GRID = max(2, int(os.getenv("GEM_VISION_TILE_GRID", "2")))
+GEM_VISION_TILE_OVERLAP = float(os.getenv("GEM_VISION_TILE_OVERLAP", "0.18"))
+# Votes per tile (tiles are many; keep each cheap — 1 is usually enough because
+# a tile makes stones large and easy). Tile-recovered stones carry low agreement
+# so the fusion layer keeps them review-flagged, never asserted as confirmed.
+GEM_VISION_TILE_VOTES = max(1, int(os.getenv("GEM_VISION_TILE_VOTES", "1")))
+
 _PROMPT = (
     "You are a professional gemologist inspecting ONE gold ornament in the image.\n"
     "Your job is to COUNT and LOCATE every gemstone set into the metal — faceted "
@@ -519,18 +546,127 @@ def _cluster_votes(votes: list[list[dict]], n_success: int, short_side: float) -
     return out
 
 
-async def detect_gems(image_bgr: np.ndarray, item_bbox: Optional[list[int]]) -> Optional[list[dict]]:
+def _scale_stone(det: dict, s: float) -> dict:
+    """Return a copy of a detection with its pixel coordinates scaled by `s`
+    (used to map a detection made on the full-res source back into norm space)."""
+    if s == 1.0:
+        return det
+    out = dict(det)
+    cx, cy = det["centroid"]
+    out["centroid"] = [int(round(cx * s)), int(round(cy * s))]
+    bb = det.get("bbox")
+    if bb and len(bb) >= 4:
+        out["bbox"] = [int(round(bb[0] * s)), int(round(bb[1] * s)),
+                       int(round(bb[2] * s)), int(round(bb[3] * s))]
+    return out
+
+
+def _pad_box(box, shape, frac):
+    """Pad an [x0,y0,x1,y1] box by `frac` of its size, clipped to `shape` (H,W)."""
+    Hf, Wf = shape[:2]
+    x0, y0, x1, y1 = box
+    px = int((x1 - x0) * frac); py = int((y1 - y0) * frac)
+    return [max(0, x0 - px), max(0, y0 - py), min(Wf, x1 + px), min(Hf, y1 + py)]
+
+
+def _tile_boxes(item_box, grid: int, overlap: float) -> list[list[int]]:
+    """Split [x0,y0,x1,y1] into a grid×grid set of overlapping sub-boxes."""
+    x0, y0, x1, y1 = item_box
+    W, H = x1 - x0, y1 - y0
+    tw, th = W / grid, H / grid
+    ox, oy = tw * overlap, th * overlap
+    boxes = []
+    for r in range(grid):
+        for c in range(grid):
+            bx0 = int(x0 + c * tw - ox); by0 = int(y0 + r * th - oy)
+            bx1 = int(x0 + (c + 1) * tw + ox); by1 = int(y0 + (r + 1) * th + oy)
+            boxes.append([max(x0, bx0), max(y0, by0), min(x1, bx1), min(y1, by1)])
+    return boxes
+
+
+async def _detect_in_region(det_img, box, provider, n_votes, timeout_s) -> Optional[list[dict]]:
+    """Run `n_votes` concurrent vision calls over one region box of `det_img`,
+    reconciled into a consensus set (coords in `det_img` pixel space). Returns
+    None if EVERY vote failed (so the caller can fall back to ML-only), or a
+    (possibly empty) list when at least one vote ran. Shared engine for both the
+    whole-item pass and each tile."""
+    x0, y0, x1, y1 = box
+    if x1 <= x0 or y1 <= y0:
+        return None
+    crop = det_img[y0:y1, x0:x1]
+    if crop.size == 0:
+        return None
+    W, H = x1 - x0, y1 - y0
+    send_buf = _upscale_for_vision(crop)
+    short_side = float(min(W, H))
+
+    async def _one_vote() -> Optional[list[dict]]:
+        try:
+            text = await asyncio.wait_for(
+                asyncio.to_thread(_call_vision_sync, send_buf, provider),
+                timeout=timeout_s,
+            )
+        except (asyncio.TimeoutError, Exception) as e:  # noqa: BLE001
+            logger.warning("Gem vision (%s) vote timed out/failed (%s)", provider, e)
+            return None
+        if not text:
+            return None
+        return _parse_gems(text, W, H, x0, y0)
+
+    results = await asyncio.gather(*[_one_vote() for _ in range(n_votes)])
+    successful = [r for r in results if r is not None]
+    if not successful:
+        return None
+    successful = [_dedup_within_vote(v, short_side) for v in successful]
+    return _cluster_votes(successful, len(successful), short_side)
+
+
+def _merge_union(base: list[dict], extra: list[dict], short_side: float) -> list[dict]:
+    """Single-linkage union of two detection sets in the SAME coordinate space,
+    merging entries that point at the same physical stone (so tile seams and the
+    global/tile overlap don't double-count). `base` wins on a collision (it is
+    the higher-agreement global set); unmatched `extra` are appended tagged
+    low_consensus so the fusion layer keeps them review-flagged."""
+    kept = [dict(d) for d in base]
+    for e in extra:
+        if e.get("centroid") is None:
+            continue
+        if any(_same_stone(e, k, short_side) for k in kept):
+            continue
+        e = dict(e)
+        e["low_consensus"] = True
+        e["vote_agreement"] = min(e.get("vote_agreement", 0.5), 0.5)
+        kept.append(e)
+    for i, k in enumerate(kept):
+        k["index"] = i + 1
+    return kept
+
+
+async def detect_gems(
+    image_bgr: np.ndarray,
+    item_bbox: Optional[list[int]],
+    source_bgr: Optional[np.ndarray] = None,
+    source_to_norm: float = 1.0,
+) -> Optional[list[dict]]:
     """AI cross-confirmation entry point.
 
-    Returns a list of pixel-space gem dicts (see `_parse_gems`), or None when
-    the layer is disabled / no key / every vote failed — in which case the
-    caller keeps the ML-only result. An empty list means the model(s) ran and
-    genuinely saw no stones. Never raises.
+    Returns a list of pixel-space gem dicts (see `_parse_gems`) in NORM space,
+    or None when the layer is disabled / no key / every vote failed — in which
+    case the caller keeps the ML-only result. An empty list means the model(s)
+    ran and genuinely saw no stones. Never raises.
+
+    Resolution (`source_bgr`, `source_to_norm`): when the caller supplies the
+    full-resolution source frame, the item is cropped from THAT (not the
+    MAX_SIDE-capped norm) so small accent/pavé stones are actually resolvable;
+    returned coordinates are scaled back into norm space by `source_to_norm`.
+    Omitting it detects on `image_bgr` at scale 1.0 (the old behaviour).
 
     Robustness (see the constants block): GEM_VISION_VOTES independent calls are
     run concurrently, their crops upscaled to GEM_VISION_MIN_SIDE, and the
-    results merged by spatial consensus. With the defaults (VOTES=1, MIN_SIDE=0)
-    this is exactly the single-call path.
+    results merged by spatial consensus. GEM_VISION_TILES additionally slices a
+    dense/large item into an overlapping grid and detects per tile to recover
+    the long tail of small stones a single global pass misses. With the code
+    defaults (VOTES=1, MIN_SIDE=0, TILES=0) this is exactly the single-call path.
     """
     if not USE_AI_STONE_CONFIRM:
         return None
@@ -540,39 +676,74 @@ async def detect_gems(image_bgr: np.ndarray, item_bbox: Optional[list[int]]) -> 
     if image_bgr is None or getattr(image_bgr, "size", 0) == 0:
         return None
 
-    crop, W, H, ox, oy = _item_crop(image_bgr, item_bbox)
-    send_buf = _upscale_for_vision(crop)
-    short_side = float(min(W, H)) if W and H else float(min(image_bgr.shape[:2]))
+    # Detect on the full-res source when available; map coords back to norm.
+    if (source_bgr is not None and getattr(source_bgr, "size", 0) > 0
+            and source_to_norm and 0.0 < source_to_norm < 1.0):
+        det_img = source_bgr
+        inv = 1.0 / source_to_norm
+        if item_bbox and len(item_bbox) == 4:
+            Hs, Ws = det_img.shape[:2]
+            item_box_det = [max(0, int(item_bbox[0] * inv)), max(0, int(item_bbox[1] * inv)),
+                            min(Ws, int(item_bbox[2] * inv)), min(Hs, int(item_bbox[3] * inv))]
+        else:
+            item_box_det = [0, 0, det_img.shape[1], det_img.shape[0]]
+        coord_scale = source_to_norm
+    else:
+        det_img = image_bgr
+        if item_bbox and len(item_bbox) == 4:
+            item_box_det = list(item_bbox)
+        else:
+            item_box_det = [0, 0, det_img.shape[1], det_img.shape[0]]
+        coord_scale = 1.0
 
-    async def _one_vote() -> Optional[list[dict]]:
-        try:
-            text = await asyncio.wait_for(
-                asyncio.to_thread(_call_vision_sync, send_buf, provider),
-                timeout=GEM_VISION_TIMEOUT_S,
-            )
-        except (asyncio.TimeoutError, Exception) as e:  # noqa: BLE001
-            logger.warning("Gem vision (%s) vote timed out/failed (%s)", provider, e)
-            return None
-        if not text:
-            return None
-        return _parse_gems(text, W, H, ox, oy)
+    gbox = _pad_box(item_box_det, det_img.shape, _CROP_PAD_FRAC)
+    gW, gH = gbox[2] - gbox[0], gbox[3] - gbox[1]
+    item_short = float(min(gW, gH)) or 1.0
 
     try:
-        results = await asyncio.wait_for(
-            asyncio.gather(*[_one_vote() for _ in range(GEM_VISION_VOTES)]),
+        global_stones = await asyncio.wait_for(
+            _detect_in_region(det_img, gbox, provider, GEM_VISION_VOTES, GEM_VISION_TIMEOUT_S),
             timeout=GEM_VISION_OUTER_TIMEOUT_S,
         )
     except (asyncio.TimeoutError, Exception) as e:  # noqa: BLE001
-        logger.warning("Gem vision voting round timed out/failed (%s) — ML-only", e)
+        logger.warning("Gem vision global pass timed out/failed (%s) — ML-only", e)
         return None
-
-    successful = [r for r in results if r is not None]
-    if not successful:
+    if global_stones is None:
         return None                      # every vote failed -> ML-only fallback
-    successful = [_dedup_within_vote(v, short_side) for v in successful]
-    if GEM_VISION_VOTES > 1:
-        logger.info(
-            "Gem vision consensus: %d/%d votes returned, counts=%s",
-            len(successful), GEM_VISION_VOTES, [len(r) for r in successful],
-        )
-    return _cluster_votes(successful, len(successful), short_side)
+
+    merged = global_stones
+    # ── Adaptive tiling for dense/large pieces ──
+    long_sent = max(gW, gH) * (GEM_VISION_MIN_SIDE / item_short if GEM_VISION_MIN_SIDE > item_short else 1.0)
+    do_tile = (
+        GEM_VISION_TILES in ("1", "on", "true", "yes")
+        or (GEM_VISION_TILES == "auto"
+            and (len(global_stones) >= GEM_VISION_TILE_MIN_STONES
+                 or long_sent >= GEM_VISION_TILE_TRIGGER_PX))
+    )
+    if do_tile:
+        tiles = _tile_boxes(item_box_det, GEM_VISION_TILE_GRID, GEM_VISION_TILE_OVERLAP)
+        try:
+            tile_sets = await asyncio.wait_for(
+                asyncio.gather(*[
+                    _detect_in_region(det_img, tb, provider, GEM_VISION_TILE_VOTES, GEM_VISION_TIMEOUT_S)
+                    for tb in tiles
+                ]),
+                timeout=GEM_VISION_OUTER_TIMEOUT_S,
+            )
+            tile_pool: list[dict] = []
+            for ts in tile_sets:
+                if ts:
+                    tile_pool = _merge_union(tile_pool, ts, item_short)
+            merged = _merge_union(global_stones, tile_pool, item_short)
+            logger.info(
+                "Gem vision tiling: global=%d tiles(%dx%d)=+%d -> %d stones",
+                len(global_stones), GEM_VISION_TILE_GRID, GEM_VISION_TILE_GRID,
+                len(merged) - len(global_stones), len(merged),
+            )
+        except (asyncio.TimeoutError, Exception) as e:  # noqa: BLE001
+            logger.warning("Gem vision tiling failed (%s) — keeping global pass", e)
+            merged = global_stones
+
+    if coord_scale != 1.0:
+        merged = [_scale_stone(s, coord_scale) for s in merged]
+    return merged

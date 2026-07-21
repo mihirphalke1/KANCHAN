@@ -44,6 +44,18 @@ class HistorySecurityTests(unittest.TestCase):
         hist.append(case)
         H.HISTORY_PATH.write_text(json.dumps(hist, indent=2))
 
+    def _seed_borderline(self, case_id="MC1", maker_id="EMP-1001"):
+        from app.utils.approval import build_approval
+        hist = H._load()
+        case = {"case_id": case_id, "timestamp": "z",
+                "verdict": {"risk_level": "BORDERLINE", "loan_action": "HOLD"},
+                "evaluator": {"evaluator_id": maker_id, "name": "Maker"},
+                "approval": build_approval("BORDERLINE", "HOLD", maker_id, "Maker"),
+                "customer": {"name": "T"}}
+        append_with_chain(hist, case)
+        hist.append(case)
+        H.HISTORY_PATH.write_text(json.dumps(hist, indent=2))
+
     def test_delete_requires_auth(self):
         self.assertEqual(self.client.delete("/api/history/x").status_code, 401)
 
@@ -81,6 +93,43 @@ class HistorySecurityTests(unittest.TestCase):
         v = self.client.get("/api/history/verify",
                             headers={"Authorization": f"Bearer {self.mtok}"}).json()
         self.assertTrue(v["ok"], v.get("reason"))
+
+    def test_signoff_requires_auth(self):
+        self._seed_borderline()
+        self.assertEqual(
+            self.client.post("/api/history/MC1/signoff", json={"decision": "approve"}).status_code, 401)
+
+    def test_signoff_blocks_maker_self_approval(self):
+        # maker == the officer session (EMP-1001) -> segregation of duties.
+        self._seed_borderline(maker_id="EMP-1001")
+        r = self.client.post("/api/history/MC1/signoff", json={"decision": "approve"},
+                             headers={"Authorization": f"Bearer {self.otok}"})
+        self.assertEqual(r.status_code, 403)
+        self.assertIn("Segregation", r.json()["detail"])
+
+    def test_second_officer_can_sign_off_and_chain_holds(self):
+        self._seed_borderline(maker_id="EMP-1001")
+        r = self.client.post("/api/history/MC1/signoff",
+                             json={"decision": "approve", "note": "reviewed"},
+                             headers={"Authorization": f"Bearer {self.mtok}"})
+        self.assertEqual(r.status_code, 200, r.text)
+        ap = r.json()["approval"]
+        self.assertEqual(ap["status"], "approved")
+        self.assertTrue(ap["closable"])
+        self.assertNotEqual(ap["checker_id"], ap["maker_id"])
+        # distinct audit entry recorded
+        case = self.client.get("/api/history/MC1").json()
+        self.assertEqual(len(case["approvals"]), 1)
+        # hash chain still verifies after the restamp
+        v = self.client.get("/api/history/verify",
+                            headers={"Authorization": f"Bearer {self.mtok}"}).json()
+        self.assertTrue(v["ok"], v.get("reason"))
+
+    def test_signoff_rejects_bad_decision(self):
+        self._seed_borderline()
+        r = self.client.post("/api/history/MC1/signoff", json={"decision": "maybe"},
+                             headers={"Authorization": f"Bearer {self.mtok}"})
+        self.assertEqual(r.status_code, 422)
 
     def test_tamper_detected(self):
         self._seed()

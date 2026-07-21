@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Scan, ZoomIn } from 'lucide-react'
 import InfoTip from './ui/InfoTip'
 import Lightbox from './ui/Lightbox'
@@ -64,24 +64,15 @@ const HUE_COLOURS = {
   other: '#6B7280', colourless: '#D4D4D8',
 }
 
-// How each detection mode is labelled in the badge row.
+// How each detection mode is labelled in the badge row. The vision model and
+// the segmentation detector are presented as one system ("ML") to the officer.
 const MODE_META = {
-  ml_ai:     { label: 'AI-led + ML verified', style: { background: '#0F766E18', color: '#0F766E' },
-               title: 'An AI vision model is the primary judge of how many stones there are and what each one is; the ML/MobileSAM detector supplies precise boundaries and a safety net. Both agree = highest confidence; a stone only the ML saw is kept as secondary evidence.' },
-  ml_sam:    { label: 'ML-refined (MobileSAM)', style: { background: '#6D28D918', color: '#6D28D9' },
+  ml_ai:     { label: 'ML detection', style: { background: '#0F766E18', color: '#0F766E' },
+               title: 'Stones are found, counted and identified by the ML vision system and its segmentation pass, then reconciled. Stones both stages agree on are highest confidence; ones only one stage saw are flagged for review.' },
+  ml_sam:    { label: 'ML detection', style: { background: '#6D28D918', color: '#6D28D9' },
                title: 'Stone boundaries refined by a pretrained MobileSAM segmentation pass' },
   classical: { label: 'Classical detection', style: undefined,
                title: 'MobileSAM unavailable this run — classical colour-threshold detection used' },
-}
-
-// Per-stone agreement chip (who saw this stone). The "verify" suffix is added
-// from the stone's own status, since under AI-primary an AI-led find can be
-// confirmed outright.
-const AGREEMENT_META = {
-  both:    { label: 'AI + ML agree', dot: '#15803D', title: 'Identified by the AI (primary judge) and independently outlined by the ML model — highest confidence.' },
-  ai_only: { label: 'AI (primary)',  dot: '#0F766E', title: 'Identified by the AI vision model, the primary judge of stone type and count. The ML detector did not separately outline it.' },
-  ml_only: { label: 'ML only',       dot: '#6B7280', title: 'Found only by the secondary ML detector; the AI (primary judge) did not confirm it — treat as supporting evidence.' },
-  ml_only_ai_empty: { label: 'CV found, AI missed', dot: '#B45309', title: 'The AI vision judge saw no stones here, but the CV/ML detector was confident it found one (common on tiny pavé / illusion settings the AI under-reads). Recovered for a human to check — not asserted as confirmed.' },
 }
 
 function prettyStoneName(s) {
@@ -112,6 +103,26 @@ export default function XRayView({ caseData }) {
     : (aiFoundDespiteBg && xray?.stages?.gems ? 'gems' : 'original')
   const [active, setActive] = useState(defaultStage)
   const [zoom, setZoom] = useState(null)
+
+  // Group identical stones (same name + colour) so a pavé of a dozen
+  // "Diamond · White" reads as ONE compact row with a ×count, instead of a
+  // dozen near-identical lines running down the screen. `flagged` counts how
+  // many in the group still need an officer to confirm.
+  const groupedStones = useMemo(() => {
+    const list = caseData?.media?.xray?.stones || []
+    const map = new Map()
+    list.forEach((s) => {
+      const name = prettyStoneName(s)
+      const key = `${name}|${s.colour || ''}|${s.hue_class || ''}`
+      if (!map.has(key)) {
+        map.set(key, { name, colour: s.colour, hue_class: s.hue_class, count: 0, flagged: 0 })
+      }
+      const g = map.get(key)
+      g.count += 1
+      if (s.needs_review || (s.status && s.status !== 'confirmed')) g.flagged += 1
+    })
+    return [...map.values()].sort((a, b) => b.count - a.count)
+  }, [caseData])
 
   if (!xray?.stages) return null
 
@@ -153,9 +164,9 @@ export default function XRayView({ caseData }) {
             <span
               className={styles.badge}
               style={{ background: '#B4530912', color: '#B45309' }}
-              title="The AI vision judge is off, so stones are shown from the ML detector only. Set FIREWORKS_API_KEY (or GOOGLE_API_KEY) and USE_AI_STONE_CONFIRM=1 to let the AI lead stone identification and count."
+              title="The ML vision model is off, so stones are shown from the segmentation detector only. Set FIREWORKS_API_KEY (or GOOGLE_API_KEY) and USE_AI_STONE_CONFIRM=1 to let the full ML pipeline lead stone identification and count."
             >
-              AI check off
+              ML vision off
             </span>
           )}
           {usable && Number.isFinite(inclusions_unexplained) && inclusions_unexplained > 0 && (
@@ -246,35 +257,29 @@ export default function XRayView({ caseData }) {
         <div className={styles.compSection}>
           <div className={styles.sectionLabel}>
             Detected stones
-            {stone_agreement?.ai_used && (
-              <span className={styles.thresholdNote}>
-                {aiFoundDespiteBg
-                  ? 'found by the AI directly in the photo (background could not be separated)'
-                  : `${stone_agreement.n_both || 0} confirmed by both · ${stone_agreement.n_ai_only || 0} AI-only · ${stone_agreement.n_ml_only || 0} ML-only`
-                    + (stone_agreement.n_needs_review ? ` · ${stone_agreement.n_needs_review} flagged for review` : '')}
-              </span>
-            )}
+            <span className={styles.thresholdNote}>
+              {aiFoundDespiteBg
+                ? 'found by ML directly in the photo (background could not be separated)'
+                : `${stones.length} detected`
+                  + (stone_agreement?.n_needs_review ? ` · ${stone_agreement.n_needs_review} flagged for review` : '')}
+            </span>
           </div>
-          <div className={styles.stoneList}>
-            {stones.map((s, i) => {
-              const a = AGREEMENT_META[s.agreement] || AGREEMENT_META.ml_only
-              const needsVerify = s.status && s.status !== 'confirmed'
-              const dot = needsVerify ? '#B45309' : a.dot
-              const suffix = s.needs_review ? ' — flag for review' : (needsVerify ? ' — verify' : '')
-              const label = `${a.label}${suffix}`
-              return (
-                <div key={i} className={styles.stoneRow}>
-                  <span className={styles.stoneIdx}>#{i + 1}</span>
-                  <i className={styles.stoneSwatch}
-                     style={{ background: HUE_COLOURS[s.hue_class] || HUE_COLOURS.other }} />
-                  <span className={styles.stoneName}>{prettyStoneName(s)}</span>
-                  {s.colour && <span className={styles.stoneColour}>{s.colour}</span>}
-                  <span className={styles.stoneAgree} title={a.title} style={{ color: dot }}>
-                    <i style={{ background: dot }} />{label}
+          <div className={styles.stoneGrid}>
+            {groupedStones.map((g, i) => (
+              <div key={i} className={styles.stoneChip}>
+                <i className={styles.stoneSwatch}
+                   style={{ background: HUE_COLOURS[g.hue_class] || HUE_COLOURS.other }} />
+                <span className={styles.stoneName}>{g.name}</span>
+                {g.count > 1 && <span className={styles.stoneCount}>×{g.count}</span>}
+                {g.colour && <span className={styles.stoneColour}>{g.colour}</span>}
+                {g.flagged > 0 && (
+                  <span className={styles.stoneFlag}
+                        title="These need an officer to confirm each one is really a stone (clear/white stones can be hard to tell apart from bright metal).">
+                    {g.flagged} to review
                   </span>
-                </div>
-              )
-            })}
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}

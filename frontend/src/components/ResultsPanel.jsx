@@ -3,6 +3,8 @@ import VerdictCard from './VerdictCard'
 import ProcessTrace from './ProcessTrace'
 import SignalBars from './SignalBars'
 import ContradictionAlert from './ContradictionAlert'
+import FraudScenarioCard from './FraudScenarioCard'
+import MakerCheckerCard from './MakerCheckerCard'
 import DensityDetails from './DensityDetails'
 import CompositionCard from './CompositionCard'
 import SHAPBreakdown from './SHAPBreakdown'
@@ -24,6 +26,8 @@ export default function ResultsPanel({ result, loading, error, localMedia }) {
   return (
     <div className={styles.panel}>
       <VerdictCard verdict={verdict} caseId={case_id} />
+      <MakerCheckerCard approval={result.approval} caseId={case_id} />
+      <FraudScenarioCard scenarios={result.fraud_scenarios} />
       <ProcessTrace trace={result.verification_trace} caseData={result} />
       <MediaEvidence caseData={result} localMedia={localMedia} />
       <GoldVsGemsCard caseData={result} />

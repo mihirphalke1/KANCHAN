@@ -2,14 +2,27 @@ import { BarChart3, ShieldCheck, ShieldAlert } from 'lucide-react'
 import InfoTip from './ui/InfoTip'
 import styles from './BenfordStatus.module.css'
 
-export default function BenfordStatus({ benford }) {
+export default function BenfordStatus({ benford, evaluator }) {
   if (!benford) return null
 
   const { status, alert, message, n_samples, p_value, digit_observed, digit_expected } = benford
   const hasData = status !== 'insufficient_data' && digit_observed?.length === 9
+  const evAlert = evaluator?.alert
 
   return (
     <div className={`${styles.card} ${alert ? styles.alert : styles.ok}`}>
+      {evAlert && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12,
+          padding: '10px 12px', borderRadius: 8, background: '#fef2f2',
+          border: '1px solid #fca5a5', color: '#991b1b', fontSize: 13, fontWeight: 600,
+        }}>
+          <ShieldAlert size={16} strokeWidth={2.5} />
+          This officer’s own readings show an unusual pattern
+          {evaluator?.n_samples ? ` (${evaluator.n_samples} records)` : ''} — localised to
+          them, not the whole branch. Recommend audit of their appraisals.
+        </div>
+      )}
       <div className={styles.header}>
         <div className={styles.iconTitle}>
           {alert

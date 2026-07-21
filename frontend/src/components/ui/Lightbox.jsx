@@ -29,6 +29,12 @@ export default function Lightbox({ src, alt, onClose }) {
         alt={alt || ''}
         className={styles.img}
         onClick={e => e.stopPropagation()}
+        onError={e => {
+          e.target.replaceWith(Object.assign(document.createElement('div'), {
+            textContent: 'Image unavailable',
+            style: 'color:#e5e7eb;font:500 14px system-ui;padding:40px',
+          }))
+        }}
       />
     </div>
   )

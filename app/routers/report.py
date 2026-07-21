@@ -473,6 +473,39 @@ def build_report(case: dict) -> bytes:
         story.append(et)
         story.append(Spacer(1, 3*mm))
 
+    # Maker-checker sign-off status (P3-12): a BORDERLINE/HELD case cannot close
+    # until a second, different officer signs off. Surface that gate on the face
+    # of the certificate so a reader knows whether the case is closable.
+    approval = case.get('approval') or {}
+    if approval.get('maker_checker_required'):
+        st = approval.get('status')
+        if st == 'approved':
+            ap_txt = (f"DUAL SIGN-OFF COMPLETE — approved by checker "
+                      f"{approval.get('checker_name') or approval.get('checker_id') or '—'}"
+                      f" on {(approval.get('signed_at') or '')[:19].replace('T', ' ')}. Case closable.")
+            ap_bg, ap_ink = GREEN_LIGHT if 'GREEN_LIGHT' in globals() else BLUE_LIGHT, GREY_900
+        elif st == 'rejected':
+            ap_txt = (f"DUAL SIGN-OFF — REJECTED by checker "
+                      f"{approval.get('checker_name') or approval.get('checker_id') or '—'}. Loan not to be disbursed.")
+            ap_bg, ap_ink = AMBER_LIGHT, GREY_900
+        else:
+            ap_txt = ("MAKER-CHECKER REQUIRED — this borderline case is PENDING a second "
+                      "authorised officer's sign-off and cannot be closed on the maker alone.")
+            ap_bg, ap_ink = AMBER_LIGHT, GREY_900
+        apt = _section_tbl([
+            [_cell('MAKER-CHECKER SIGN-OFF', bold=True, color=GREY_500)],
+            [Paragraph(ap_txt, ParagraphStyle('mc', fontName='Helvetica-Bold',
+                                              fontSize=8.5, textColor=ap_ink, leading=13))],
+        ])
+        apt.setStyle(TableStyle(_TS_BASE + [
+            ('BACKGROUND',  (0,0), (-1,0),  GREY_100),
+            ('BACKGROUND',  (0,1), (-1,1),  ap_bg),
+            ('BOX',         (0,0), (-1,-1), 0.5, AMBER),
+            ('LEFTPADDING', (0,0), (-1,-1), 10),
+        ]))
+        story.append(apt)
+        story.append(Spacer(1, 3*mm))
+
     # Recommended action
     action = verdict.get('action', '')
     if action:
@@ -819,6 +852,36 @@ def build_report(case: dict) -> bytes:
             story.append(ft2)
             story.append(Spacer(1, 2*mm))
 
+    # ── Fraud-scenario mapping (bank Sl.1–Sl.8 vocabulary, P3-13) ─────
+    fraud = case.get('fraud_scenarios') or {}
+    fraud_matched = fraud.get('matched') or []
+    if fraud_matched:
+        story.append(Paragraph('6a. Bank Fraud-Scenario Classification', S['h3']))
+        story.append(Spacer(1, 1*mm))
+        story.append(Paragraph(
+            'The verdict and contradiction pattern above, translated into the bank’s '
+            'standard spurious-gold scenario vocabulary:', S['small']))
+        story.append(Spacer(1, 2*mm))
+        fs_rows = [[_cell('Sl.', bold=True), _cell('Scenario', bold=True), _cell('Evidence', bold=True)]]
+        for m in fraud_matched:
+            fs_rows.append([
+                _cell(m.get('sl', ''), bold=True, color=AMBER),
+                _cell(m.get('title', '')),
+                _cell(m.get('evidence', '') or '—', size=7),
+            ])
+        fs_tbl = Table(fs_rows, colWidths=[bw*0.08, bw*0.42, bw*0.50])
+        fs_tbl.setStyle(TableStyle([
+            ('BACKGROUND',    (0,0),(-1,0), AMBER_LIGHT),
+            ('BOX',           (0,0),(-1,-1), 0.5, AMBER),
+            ('INNERGRID',     (0,0),(-1,-1), 0.3, GREY_200),
+            ('TOPPADDING',    (0,0),(-1,-1), 5),
+            ('BOTTOMPADDING', (0,0),(-1,-1), 5),
+            ('LEFTPADDING',   (0,0),(-1,-1), 6),
+            ('VALIGN',        (0,0),(-1,-1), 'TOP'),
+        ]))
+        story.append(fs_tbl)
+        story.append(Spacer(1, 5*mm))
+
     # ── 6. Item photographs + material scan ───────────────────────────
     img_paths   = [p for p in (media.get('images') or []) if p and Path(p).exists()]
     streak_path = (media.get('streak') or '')
@@ -1007,15 +1070,28 @@ def build_report(case: dict) -> bytes:
     b_obs   = benford.get('digit_observed', [])
     b_exp   = benford.get('digit_expected', [])
 
+    # Per-evaluator slice (P3-11): localises an anomaly to a single corrupt
+    # officer rather than diluting it across the whole branch.
+    benford_ev = case.get('benford_evaluator', {}) or {}
+    be_alert   = benford_ev.get('alert', False)
+    be_n       = benford_ev.get('n_samples', 0)
+    be_p       = benford_ev.get('p_value')
+    evaluator_id = (case.get('evaluator') or {}).get('evaluator_id', '—')
+
     bb = [[_cell('PARAMETER'), _cell('RESULT'), _cell('NOTE')]]
+    _be_result = (
+        ('🚨 ANOMALY' if be_alert else '✓ Normal') + (f' (p={be_p:.4f}, n={be_n})' if be_p is not None else f' (n={be_n})')
+    ) if be_n else 'Insufficient attributed data'
     for row in [
         ['Samples Analysed', str(b_n),                                   'Min 30 needed for reliable test'],
         ['Chi-Squared Test', f'p = {b_p:.4f}' if b_p else '—',          'p < 0.05 triggers alert'],
         ['Alert Status',     '🚨 ANOMALY DETECTED' if b_alert else '✓ Normal distribution', ''],
         ['Branch',           case.get('branch_id', '—'),                  ''],
+        ['Per-evaluator (' + str(evaluator_id) + ')', _be_result, 'Localises anomaly to one officer'],
     ]:
         clr = RED if (row[0]=='Alert Status' and b_alert) else \
-              GREEN if row[0]=='Alert Status' else GREY_900
+              GREEN if row[0]=='Alert Status' else \
+              (RED if be_alert else GREEN) if row[0].startswith('Per-evaluator') and be_n else GREY_900
         bb.append([_cell(row[0]), _cell(row[1], bold=True, color=clr), _cell(row[2])])
     bt = Table(bb, colWidths=[bw*0.28, bw*0.28, bw*0.44])
     bt.setStyle(TableStyle(_TS_BASE + [

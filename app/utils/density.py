@@ -17,8 +17,14 @@ computed with the Gaussian CDF. No arbitrary scale factors.
 import math
 import os
 
-# CRC Handbook of Chemistry and Physics, water density (g/cm3) vs temperature.
+# CRC Handbook of Chemistry and Physics / Kell (1975), water density (g/cm3) vs
+# temperature. Spans the full 0–45 °C range the API validator accepts, so an
+# in-range temperature is always interpolated on real data rather than silently
+# clamped to a table endpoint (the previous 10–40 °C table left 0–10 and 40–45
+# uncorrected).
 WATER_DENSITY_TABLE = [
+    (0.0,  0.9998495),
+    (5.0,  0.9999670),
     (10.0, 0.9997026),
     (15.0, 0.9991026),
     (20.0, 0.9982071),
@@ -26,6 +32,7 @@ WATER_DENSITY_TABLE = [
     (30.0, 0.9956502),
     (35.0, 0.9940349),
     (40.0, 0.9922152),
+    (45.0, 0.9901783),
 ]
 
 # 1-sigma repeatability of the branch balance in grams. Instrument property —

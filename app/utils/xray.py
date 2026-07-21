@@ -459,6 +459,10 @@ def _classify_stone_color(bgr_pixels: np.ndarray) -> tuple[str, str, float]:
     median the way it would a mean).
     Returns (stone_name, legacy_bucket, match_confidence 0-1).
     """
+    # Defence in depth: an empty pixel sample (a zero-pixel region slipping
+    # through) would crash cv2.cvtColor with an "empty src" assertion.
+    if bgr_pixels is None or bgr_pixels.size == 0:
+        return "unidentified", "other", 0.0
     lab_pixels = cv2.cvtColor(bgr_pixels.reshape(1, -1, 3), cv2.COLOR_BGR2LAB)[0].astype(np.float32)
     # Drop specular glints (very bright, near-neutral) before taking the
     # region's colour — a white facet flash must not drag a ruby/emerald
@@ -809,6 +813,13 @@ def _detect_stones(
     stones = []
     for i, area in sized:
         region = labels == i
+        # A component can carry a positive cc_stats area yet map to zero pixels
+        # in `labels` when the SAM/CC stats and label array disagree (seen on a
+        # multi-item earring-pair frame). An empty region crashes the downstream
+        # colour classifier (cv2.cvtColor on an empty array) and triggers
+        # mean-of-empty-slice warnings — skip it outright.
+        if not region.any():
+            continue
         # Hard gap-artifact rejection (P1-4): a negative-space gap (split-shank
         # opening, openwork gap) is concave/ragged, so its convex-hull solidity
         # is low. Reject it OUTRIGHT here rather than only down-weighting it via
@@ -1412,6 +1423,20 @@ def xray_preview(
 
     result = {"stages": encoded, **stats}
     if _return_ctx:
+        # Stash the FULL-RESOLUTION source alongside the (MAX_SIDE-capped) norm so
+        # the AI stone-vision layer can crop small items from real pixels instead
+        # of the downscaled frame — the normalisation cap (640px) blurs the few-
+        # pixel accent/pavé stones a catalogue photo carries, and no upscaling
+        # recovers detail that was thrown away before the crop. `source_to_norm`
+        # maps a source-pixel coordinate back into norm space so fused detections
+        # stay in the same coordinate frame as the ML result. Best-effort only.
+        try:
+            full = cv2.imdecode(np.frombuffer(raw_bytes, np.uint8), cv2.IMREAD_COLOR)
+            if full is not None and full.shape[1] > ctx["norm"].shape[1]:
+                ctx["source_bgr"] = full
+                ctx["source_to_norm"] = ctx["norm"].shape[1] / float(full.shape[1])
+        except Exception as e:  # noqa: BLE001 — optional detail boost, never fatal
+            logger.warning("Full-res source decode for AI vision failed (%s)", e)
         return result, ctx
     return result
 

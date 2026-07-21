@@ -44,7 +44,11 @@ async def diagnose(path: str) -> None:
     bg = result.get("background_removed")
     ml_drawn = len([s for s in ctx["all_stones"] if s.get("status") != "candidate"])
 
-    ai_stones = await detect_gems(ctx.get("norm"), ctx.get("item_bbox"))
+    ai_stones = await detect_gems(
+        ctx.get("norm"), ctx.get("item_bbox"),
+        source_bgr=ctx.get("source_bgr"),
+        source_to_norm=ctx.get("source_to_norm", 1.0),
+    )
     stats_patch, _ = reconcile_stones(ctx, ai_stones)
     meta = stats_patch.get("stone_agreement", {})
     stones = stats_patch.get("stones", [])

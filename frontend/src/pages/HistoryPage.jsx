@@ -14,6 +14,8 @@ import GoldVsGemsCard from '@/components/GoldVsGemsCard'
 import XRayView from '@/components/XRayView'
 import SignalBars from '@/components/SignalBars'
 import ContradictionAlert from '@/components/ContradictionAlert'
+import FraudScenarioCard from '@/components/FraudScenarioCard'
+import MakerCheckerCard from '@/components/MakerCheckerCard'
 import DensityDetails from '@/components/DensityDetails'
 import CompositionCard from '@/components/CompositionCard'
 import BenfordStatus from '@/components/BenfordStatus'
@@ -358,6 +360,13 @@ function CaseDetail({ c, onCaseUpdated }) {
 
       <div className={styles.detailBody}>
         <VerdictCard verdict={verdict} caseId={case_id} />
+        <MakerCheckerCard
+          approval={c.approval}
+          caseId={case_id}
+          allowAction
+          onSignedOff={() => onCaseUpdated?.()}
+        />
+        <FraudScenarioCard scenarios={c.fraud_scenarios} />
         <CustomerInfoCard caseId={case_id} customer={c.customer} evaluator={c.evaluator} onUpdated={onCaseUpdated} />
         <ProcessTrace trace={c.verification_trace} caseData={c} />
         <MediaEvidence caseData={c} />
@@ -374,7 +383,7 @@ function CaseDetail({ c, onCaseUpdated }) {
           goldGemSplit={c.media?.xray?.gold_gem_split}
         />
         {fusion?.shap_values && <SHAPBreakdown shap={fusion.shap_values} />}
-        {benford && <BenfordStatus benford={benford} />}
+        {benford && <BenfordStatus benford={benford} evaluator={c.benford_evaluator} />}
       </div>
     </div>
   )

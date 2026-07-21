@@ -9,11 +9,17 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.auth import require_login
+from app.utils.approval import can_check, build_approval
 from app.utils.hashchain import restamp_from, verify_chain, tip_hash
 
 router = APIRouter()
 
 IST = timezone(timedelta(hours=5, minutes=30))
+
+
+class SignoffRequest(BaseModel):
+    decision: str                      # "approve" | "reject"
+    note:     Optional[str] = None
 
 
 class CustomerUpdate(BaseModel):
@@ -87,6 +93,64 @@ async def get_case(case_id: str):
     for case in history:
         if case.get("case_id") == case_id and not _is_deleted(case):
             return JSONResponse(content=case)
+    raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
+
+
+@router.post("/history/{case_id}/signoff")
+async def signoff_case(case_id: str, req: SignoffRequest,
+                       session: dict = Depends(require_login)):
+    """Maker-checker dual sign-off (P3-12). A BORDERLINE / HELD case cannot be
+    closed on the maker's authority alone — a second, DIFFERENT authenticated
+    officer must approve or reject it here. The action is recorded as a distinct
+    `approvals` audit entry (separate from customer `amendments`) and the hash
+    chain is re-stamped forward so the sign-off is tamper-evident."""
+    decision = (req.decision or "").strip().lower()
+    if decision not in ("approve", "reject"):
+        raise HTTPException(status_code=422, detail="decision must be 'approve' or 'reject'")
+
+    history = _load()
+    for idx, case in enumerate(history):
+        if case.get("case_id") != case_id:
+            continue
+        if _is_deleted(case):
+            raise HTTPException(status_code=410, detail=f"Case {case_id} was deleted")
+
+        # Older cases (pre-maker-checker) carry no approval block — derive one
+        # from the stored verdict so they can still be gated retroactively.
+        approval = case.get("approval")
+        if approval is None:
+            verdict = case.get("verdict", {})
+            approval = build_approval(
+                verdict.get("risk_level"), verdict.get("loan_action"),
+                maker_id=(case.get("evaluator") or {}).get("evaluator_id"),
+                maker_name=(case.get("evaluator") or {}).get("name"),
+            )
+            case["approval"] = approval
+
+        ok, reason = can_check(session, approval)
+        if not ok:
+            raise HTTPException(status_code=403, detail=reason)
+
+        now = datetime.now(IST).isoformat()
+        approval["status"]       = "approved" if decision == "approve" else "rejected"
+        approval["decision"]     = approval["status"]
+        approval["checker_id"]   = session.get("evaluator_id")
+        approval["checker_name"] = session.get("name")
+        approval["signed_at"]    = now
+        approval["note"]         = req.note
+        approval["closable"]     = True
+        case.setdefault("approvals", []).append({
+            "at":       now,
+            "by":       session.get("evaluator_id"),
+            "by_name":  session.get("name"),
+            "role":     session.get("role"),
+            "decision": approval["status"],
+            "note":     req.note,
+        })
+        restamp_from(history, idx)
+        _save(history)
+        return JSONResponse(content={"case_id": case_id, "approval": approval})
+
     raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
 
 

@@ -192,11 +192,17 @@ export default function MediaEvidence({ caseData, localMedia }) {
     if (localUrls.audio)  URL.revokeObjectURL(localUrls.audio)
   }, [localUrls])
 
-  const images = localUrls.images.length > 0
-    ? localUrls.images
-    : (media.images || []).filter(Boolean).slice(0, 4).map(mediaUrl)
-  const streakPath = localUrls.streak || (media.streak ? mediaUrl(media.streak) : null)
-  const audioPath  = localUrls.audio  || (media.audio  ? mediaUrl(media.audio)  : null)
+  // Prefer the PERSISTED server files over the browser's own createObjectURL
+  // blobs. The blob URLs are revoked by React StrictMode's double-invoked effect
+  // cleanup in dev (and on any re-render that recomputes localUrls), which left
+  // the photo showing a broken icon and the recording refusing to play. Every
+  // analysed case saves its evidence under /cases, so the server path is stable
+  // and always valid; the local blobs are kept only as a fallback for the brief
+  // moment before a path exists.
+  const serverImages = (media.images || []).filter(Boolean).slice(0, 4).map(mediaUrl).filter(Boolean)
+  const images = serverImages.length > 0 ? serverImages : localUrls.images
+  const streakPath = (media.streak ? mediaUrl(media.streak) : null) || localUrls.streak
+  const audioPath  = (media.audio  ? mediaUrl(media.audio)  : null) || localUrls.audio
 
   const hasImages = images.length > 0 || streakPath
   const hasAudio  = Boolean(audioPath)

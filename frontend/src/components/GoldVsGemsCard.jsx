@@ -26,9 +26,9 @@ const HUE_COLOURS = {
 }
 
 const MODE_LABEL = {
-  ml_ai:     { text: 'AI-led + ML verified', colour: '#0F766E' },
-  ml_sam:    { text: 'ML-refined',            colour: '#6D28D9' },
-  classical: { text: 'Classical',             colour: '#6B7280' },
+  ml_ai:     { text: 'ML detection', colour: '#0F766E' },
+  ml_sam:    { text: 'ML detection', colour: '#6D28D9' },
+  classical: { text: 'Classical',    colour: '#6B7280' },
 }
 
 export default function GoldVsGemsCard({ caseData }) {
@@ -64,7 +64,7 @@ export default function GoldVsGemsCard({ caseData }) {
             return m ? (
               <span className={styles.modeBadge}
                     style={{ background: `${m.colour}14`, color: m.colour }}
-                    title="How the stones were detected: MobileSAM boundaries, optionally confirmed and identified by an AI vision check.">
+                    title="How the stones were detected: the ML vision system finds and identifies each stone, with MobileSAM refining the boundaries.">
                 {m.text}
               </span>
             ) : null

@@ -250,6 +250,49 @@
   display: inline-block;
 }
 
+/* ── Compact grouped stone chips (identical stones collapsed with a ×count) ── */
+/* Wrapping flex row of content-sized chips: each chip is exactly as wide as its
+   text (no fixed grid track), so labels like "Diamond ×23 · 13 to review" are
+   never clipped and the chips flow onto as many rows as needed. */
+.stoneGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stoneChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--text);
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2, rgba(0, 0, 0, 0.015));
+  white-space: nowrap;
+}
+
+.stoneCount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background: var(--border);
+  border-radius: 5px;
+  padding: 1px 5px;
+  font-size: 10px;
+}
+
+.stoneFlag {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #B45309;
+  background: #B4530914;
+  border-radius: 5px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
 /* ── Findings ── */
 .findings {
   margin: 0;
