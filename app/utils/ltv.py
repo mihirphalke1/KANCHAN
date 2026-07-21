@@ -61,6 +61,69 @@ def compute_ltv(assessed_value_inr: float) -> dict:
     }
 
 
+G_PER_CARAT = 0.2
+
+
+def compute_net_gold_weight(gross_weight_g: float, gem_weight_result: dict = None,
+                            composition_result: dict = None) -> dict:
+    """Net gold weight = total measured weight − estimated weight of the set
+    stones, so LTV is charged on the GOLD only (a stone-set ornament isn't
+    lent against at the gold rate for the parts that aren't gold).
+
+    Method priority (each falls through to the next):
+      1. stone_weight_deduction — subtract the DIRECT per-stone weight estimate
+         (each detected stone's photo size → carat → grams, from
+         gem_weight.estimate_gem_weights). Needs a calibration card for scale.
+         This is the method the officer sees itemised.
+      2. density_composition — the density mixture model's gold mass (gold+stone
+         physics) when there's no card for a size-based estimate.
+      3. gross_weight — plain-metal item, or nothing to deduct.
+
+    Returns a breakdown dict (always includes net_gold_weight_g) for the audit
+    trail and the report. Never raises.
+    """
+    gross = float(gross_weight_g or 0.0)
+    gw = gem_weight_result or {}
+    comp = composition_result or {}
+
+    total_ct = gw.get("total_carat")
+    if total_ct is not None and gross > 0:
+        total_ct_hi = gw.get("total_carat_high") or total_ct
+        stone_g = min(gross, total_ct * G_PER_CARAT)     # can't exceed the item
+        stone_g_hi = min(gross, total_ct_hi * G_PER_CARAT)
+        return {
+            "net_gold_weight_g": round(max(0.0, gross - stone_g), 3),
+            "gross_weight_g":    round(gross, 3),
+            "stone_weight_g":    round(stone_g, 3),
+            "stone_weight_g_high": round(stone_g_hi, 3),
+            "stone_carat_total": round(total_ct, 3),
+            "n_stones":          gw.get("n_stones", 0),
+            "method":            "stone_weight_deduction",
+            "explanation": ("Net gold = total weight − estimated weight of the set stones "
+                            "(each stone's photo size × calibration card → carat → grams)."),
+        }
+
+    if comp.get("model_valid") and comp.get("gold_mass_g") is not None:
+        net = float(comp["gold_mass_g"])
+        return {
+            "net_gold_weight_g": round(max(0.0, net), 3),
+            "gross_weight_g":    round(gross, 3),
+            "stone_weight_g":    round(max(0.0, gross - net), 3),
+            "method":            "density_composition",
+            "explanation": ("Net gold from the density mixture model (gold + stones); "
+                            "no calibration card was present for a size-based stone estimate."),
+        }
+
+    return {
+        "net_gold_weight_g": round(gross, 3),
+        "gross_weight_g":    round(gross, 3),
+        "stone_weight_g":    0.0,
+        "method":            "gross_weight",
+        "explanation": ("No stones detected or no way to estimate their weight — "
+                        "net gold = total measured weight."),
+    }
+
+
 def assess_value(net_gold_weight_g: float) -> dict:
     rate = load_gold_rate()
     value = net_gold_weight_g * rate["rate_per_gram_inr"]

@@ -33,7 +33,7 @@ from app.benford.monitor import append_density_reading, run_benford_test
 from app.utils.fiducial import detect_marker
 from app.utils.gem_grid import build_grid_stats
 from app.utils.gem_weight import estimate_gem_weights
-from app.utils.ltv import assess_value
+from app.utils.ltv import assess_value, compute_net_gold_weight
 from app.utils.phash import check_duplicate, register_photo
 from app.utils.stamp import stamp_image
 from app.utils.xray import xray_preview, reconcile_stones
@@ -277,6 +277,27 @@ def _build_trace(
                 "details": {"stage_image": "gems", "detection_mode": "ml_ai",
                             "n_ai_only": sa.get("n_ai_only", 0), "n_both": sa.get("n_both", 0)},
                 "source": "AI vision (Fireworks/Kimi or Gemini) — description text is never trusted",
+            })
+
+        # Two independent detectors disagreed hard: the AI vision judge saw NO
+        # stones, yet the CV/ML pass was confident it found some. Rather than
+        # silently trust the AI's zero (which is how a small/low-contrast pavé
+        # ring gets mis-reported as bare metal), those stones were recovered as
+        # review-flagged evidence — surface that to the officer explicitly.
+        sa = xray_result.get("stone_agreement") or {}
+        if sa.get("ai_empty_ml_disagree"):
+            steps.append({
+                "step": "Detector disagreement — stones flagged for review",
+                "status": "flag",
+                "summary": f"AI vision found no stones, but the CV/ML pass confidently detected "
+                           f"{sa.get('n_rescued_ai_empty', 0)} — kept as UNCERTAIN and flagged for a "
+                           "human check rather than dropped. Common on tiny pavé / illusion settings "
+                           "the vision model under-reads.",
+                "formula": "AI-empty + CV confidence ≥ STONE_RESCUE_ML_MIN_CONF → recover as "
+                           "needs_review (never asserted as confirmed)",
+                "details": {"stage_image": "gems",
+                            "n_rescued": sa.get("n_rescued_ai_empty", 0)},
+                "source": "Graceful degradation (app/utils/stone_fusion.py) — recovers, never invents",
             })
 
     if composition_result:
@@ -705,16 +726,14 @@ async def analyze(
     benford = run_benford_test()
 
     # ── Assessed value + RBI-tiered LTV ──
-    # Net gold weight prefers the stone-corrected composition estimate when
-    # the mixture model is valid; falls back to gross dry weight otherwise
-    # (plain-metal items, or a composition model that didn't apply).
-    net_gold_weight_g = (
-        composition_result["gold_mass_g"]
-        if composition_result and composition_result.get("model_valid")
-           and composition_result.get("gold_mass_g") is not None
-        else weight_dry
-    )
+    # Net gold weight = total measured weight − estimated weight of the set
+    # stones, so LTV is charged on the gold only. Prefers the direct per-stone
+    # size→carat→grams deduction (needs the calibration card), falling back to
+    # the density mixture model, then gross weight. See ltv.compute_net_gold_weight.
+    net_gold = compute_net_gold_weight(weight_dry, gem_weight_result, composition_result)
+    net_gold_weight_g = net_gold["net_gold_weight_g"]
     ltv_result = assess_value(net_gold_weight_g)
+    ltv_result["net_gold_breakdown"] = net_gold
 
     # ── Advisory-signal boost ──
     # Spatial-acoustic spread, hallmark engraving irregularity, and
@@ -821,16 +840,26 @@ async def analyze(
             "details": {"tap points": spatial_result.get("n_usable"), "spread": spatial_result.get("spread_ratio")},
             "source": "Extension of the single-tap ring-frequency physics check (acoustic_physics.py)",
         })
+    _dedn = (
+        f"Total {net_gold['gross_weight_g']} g − stones ≈ {net_gold['stone_weight_g']} g "
+        f"({net_gold.get('n_stones', 0)} stone(s), ~{net_gold.get('stone_carat_total', 0)} ct) "
+        f"= net gold {net_gold['net_gold_weight_g']} g. "
+        if net_gold["method"] == "stone_weight_deduction"
+        else f"Net gold {net_gold['net_gold_weight_g']} g ({net_gold['method']}). "
+    )
     verification_trace.append({
-        "step": "Assessed value & RBI-tiered LTV",
+        "step": "Net gold weight, assessed value & RBI-tiered LTV",
         "status": "done",
         "summary": (
-            f"Net gold {ltv_result['net_gold_weight_g']} g × ₹{ltv_result['rate_per_gram_inr']:,.0f}/g "
-            f"= ₹{ltv_result['assessed_value_inr']:,.0f}; LTV {ltv_result['ltv_pct']*100:.0f}% "
-            f"({ltv_result['tier']}) → max loan ₹{ltv_result['max_loan_inr']:,.0f}"
+            _dedn
+            + f"₹{ltv_result['rate_per_gram_inr']:,.0f}/g → value ₹{ltv_result['assessed_value_inr']:,.0f}; "
+            f"LTV {ltv_result['ltv_pct']*100:.0f}% ({ltv_result['tier']}) "
+            f"→ max loan ₹{ltv_result['max_loan_inr']:,.0f}"
         ),
-        "formula": "assessed_value = net_gold_weight_g × rate_per_gram; max_loan = assessed_value × tiered LTV%",
-        "details": {"tier": ltv_result["tier"], "ltv_pct": ltv_result["ltv_pct"]},
+        "formula": ("net_gold = total_weight − Σ(stone size→carat→grams);  "
+                    "assessed_value = net_gold × rate_per_gram;  max_loan = assessed_value × tiered LTV%"),
+        "details": {"tier": ltv_result["tier"], "ltv_pct": ltv_result["ltv_pct"],
+                    "method": net_gold["method"], **net_gold},
         "source": ltv_result["source"],
     })
 

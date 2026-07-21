@@ -322,5 +322,101 @@
     "case_id": "93425bde",
     "image_role": "streak_photo",
     "timestamp": "2026-07-21T04:38:33.343784"
+  },
+  {
+    "hash": "00169e8e1a160c00",
+    "case_id": "437f5e89",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T14:43:10.387078"
+  },
+  {
+    "hash": "080f978d2b475d33",
+    "case_id": "a13b098e",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T14:43:52.970639"
+  },
+  {
+    "hash": "00100c16164c2000",
+    "case_id": "7817b539",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T14:44:37.753035"
+  },
+  {
+    "hash": "10244c4e4e2c2c10",
+    "case_id": "e80d0506",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T14:45:37.983899"
+  },
+  {
+    "hash": "083046860e2c0410",
+    "case_id": "96f7fe5c",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T14:46:42.215552"
+  },
+  {
+    "hash": "03053d3b259d0b06",
+    "case_id": "9584d551",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T14:47:31.979709"
+  },
+  {
+    "hash": "083046860e2c0410",
+    "case_id": "640d4480",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T16:02:41.785503"
+  },
+  {
+    "hash": "0080200c8c423200",
+    "case_id": "80f2e4c3",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T16:04:01.662084"
+  },
+  {
+    "hash": "00100c16164c2000",
+    "case_id": "8b19224b",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T16:05:06.558992"
+  },
+  {
+    "hash": "00100c16164c2000",
+    "case_id": "c720ca90",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T16:26:16.685530"
+  },
+  {
+    "hash": "10244c4e4e2c2c10",
+    "case_id": "cc0aef49",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T16:27:13.233893"
+  },
+  {
+    "hash": "083046860e2c0410",
+    "case_id": "0b174f82",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T16:28:07.912438"
+  },
+  {
+    "hash": "102c044c4c2c0c10",
+    "case_id": "50b7779f",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T16:29:32.854733"
+  },
+  {
+    "hash": "1060929392926810",
+    "case_id": "eb317ad1",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T16:31:04.795111"
+  },
+  {
+    "hash": "102c044c4c2c0c10",
+    "case_id": "9edfe5c3",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T16:47:49.381792"
+  },
+  {
+    "hash": "1060929392926810",
+    "case_id": "99ffa16d",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-21T16:48:29.719597"
   }
 ]

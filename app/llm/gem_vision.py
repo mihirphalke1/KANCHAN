@@ -25,6 +25,7 @@ import asyncio
 import base64
 import json
 import logging
+import math
 import os
 import re
 from typing import Optional
@@ -68,6 +69,44 @@ GEM_VISION_MAX_TOKENS = int(os.getenv("GEM_VISION_MAX_TOKENS", "16384"))
 GEM_VISION_TIMEOUT_S = float(os.getenv("GEM_VISION_TIMEOUT_S", "180"))
 # Pad the item crop a little so stones flush to the item edge aren't clipped.
 _CROP_PAD_FRAC = 0.04
+
+# ── Robustness layer (why "fails for a few images" happens, and the fix) ──────
+# A single vision call is one roll of the dice: the model's own measured
+# behaviour (see the model table above) includes runs that return junk / 0
+# stones on a pavé ring it counts fine on the next run, and it simply MISSES
+# tiny illusion-set / pavé stones when the crop it sees is small and the stones
+# are only a handful of pixels across. Both are recoverable without distrusting
+# the model — you give it more than one look, and you give it enough pixels to
+# resolve small stones — so this layer adds:
+#   1. VOTES independent calls, spatially clustered into a consensus set. A
+#      stone seen in every vote is asserted; one seen in a minority of votes is
+#      kept but down-weighted (surfaces as "uncertain" downstream, not dropped
+#      and not over-trusted). One junk run therefore can no longer zero out a
+#      good one.
+#   2. MIN_SIDE upscaling of the crop before the call, so a small catalogue
+#      photo's tiny stones are actually resolvable to the model. Coordinates in
+#      the reply are fractional 0..1, so upscaling the pixels the model sees
+#      changes NOTHING about how they map back — it only improves recall.
+#   3. an OUTER timeout bounding the whole voting round so extra votes never
+#      blow the request budget (any overrun still falls back to ML-only).
+# VOTES defaults to 1 and MIN_SIDE to 0 (off): with the defaults this layer is a
+# no-op and behaviour is byte-identical to the single-call path, so nothing that
+# works today regresses. .env turns them on (VOTES=2, MIN_SIDE=640).
+GEM_VISION_VOTES = max(1, int(os.getenv("GEM_VISION_VOTES", "1")))
+GEM_VISION_MIN_SIDE = int(os.getenv("GEM_VISION_MIN_SIDE", "0"))
+GEM_VISION_OUTER_TIMEOUT_S = float(
+    os.getenv("GEM_VISION_OUTER_TIMEOUT_S", str(GEM_VISION_TIMEOUT_S * 1.5))
+)
+# Two detections from different votes are the same physical stone when their
+# centres fall within this fraction of the crop's short side, OR within ~75% of
+# their combined radii (whichever is larger) — the size term keeps big cabochons
+# from splitting while the fixed floor still clusters tiny pavé points that carry
+# no reliable size.
+GEM_VISION_CLUSTER_FRAC = float(os.getenv("GEM_VISION_CLUSTER_FRAC", "0.03"))
+# A minority-agreement stone keeps at least this fraction of its own confidence
+# (so a real stone one good run found is never destroyed just because a junk run
+# missed it); full agreement keeps all of it. Linear in between.
+GEM_VISION_AGREE_FLOOR = float(os.getenv("GEM_VISION_AGREE_FLOOR", "0.6"))
 
 _PROMPT = (
     "You are a professional gemologist inspecting ONE gold ornament in the image.\n"
@@ -352,12 +391,146 @@ def _call_vision_sync(crop_bgr: np.ndarray, provider: str) -> Optional[str]:
     return None
 
 
+def _upscale_for_vision(crop_bgr: np.ndarray) -> np.ndarray:
+    """Upscale the crop so its SHORT side is at least GEM_VISION_MIN_SIDE before
+    the model sees it — tiny pavé / illusion-set stones in a small catalogue
+    photo are only a few pixels across and get missed at native size. Cubic
+    interpolation; never downscales (a big photo is left untouched). Pure: the
+    returned buffer is only what the API sees — coordinate mapping in
+    `_parse_gems` still uses the ORIGINAL crop dimensions, and the reply's
+    coordinates are fractions 0..1, so this cannot shift any position."""
+    if GEM_VISION_MIN_SIDE <= 0 or crop_bgr is None or crop_bgr.size == 0:
+        return crop_bgr
+    h, w = crop_bgr.shape[:2]
+    short = min(h, w)
+    if short >= GEM_VISION_MIN_SIDE:
+        return crop_bgr
+    scale = GEM_VISION_MIN_SIDE / float(short)
+    new_w, new_h = int(round(w * scale)), int(round(h * scale))
+    return cv2.resize(crop_bgr, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
+
+
+def _det_radius(det: dict) -> float:
+    bb = det.get("bbox")
+    if bb and len(bb) >= 4 and bb[2] and bb[3]:
+        return 0.5 * max(float(bb[2]), float(bb[3]))
+    return 0.0
+
+
+def _same_stone(a: dict, b: dict, short_side: float) -> bool:
+    """Do two detections (from different votes) point at the same physical
+    stone? A distance-floor from the crop size handles tiny pointe pavé that
+    carry no reliable bbox; a size term handles large stones."""
+    (ax, ay), (bx, by) = a["centroid"], b["centroid"]
+    d = math.hypot(ax - bx, ay - by)
+    size_thresh = 0.75 * (_det_radius(a) + _det_radius(b))
+    floor = GEM_VISION_CLUSTER_FRAC * short_side
+    return d <= max(floor, size_thresh)
+
+
+def _dedup_within_vote(vote: list[dict], short_side: float) -> list[dict]:
+    """Merge detections WITHIN one vote that point at the same physical stone —
+    a model listing the same stone twice in a single run (or emitting one entry
+    per facet of a big faceted stone despite the prompt) must not inflate the
+    count. Keeps the highest-confidence member of each within-run group. Runs
+    before cross-vote consensus so one run's duplicates can't each seed their
+    own cluster (which the one-det-per-vote-per-cluster rule would otherwise
+    scatter into an overcount)."""
+    kept: list[dict] = []
+    for det in sorted(vote, key=lambda d: -d.get("ai_confidence", 0.0)):
+        if det.get("centroid") is None:
+            continue
+        if any(_same_stone(det, k, short_side) for k in kept):
+            continue
+        kept.append(det)
+    return kept
+
+
+def _cluster_votes(votes: list[list[dict]], n_success: int, short_side: float) -> list[dict]:
+    """Spatially cluster detections ACROSS independent votes into a consensus
+    set. Greedy single-linkage with a one-detection-per-vote-per-cluster rule
+    (a stone the model listed twice in ONE run is a within-run dedup problem,
+    not cross-run agreement).
+
+    Keep policy — why NOT a plain union: on a dense pavé piece two independent
+    runs are each noisy about exact positions and counts, so their union
+    balloons the count (measured: 46 stones in one run -> 126 in the union of
+    two). The reported SET is therefore the STRICT-MAJORITY set — stones seen in
+    at least ⌊n/2⌋+1 votes — which is stable and cannot be inflated by one
+    noisy run. The single exception is the recovery case: if the majority set is
+    EMPTY (the votes could not agree on any stone, e.g. one run saw a lone
+    solitaire and the other returned nothing) we fall back to the UNION so a
+    real stone one good run found is recovered rather than reported as zero —
+    but those recovered stones carry a low vote_agreement so the fusion layer
+    keeps them as review-flagged, not asserted.
+
+    With n_success == 1 the majority threshold is 1, so every detection is
+    "majority" and this returns that one vote's detections unchanged
+    (agreement == 1.0) — identical to the single-call path.
+
+    Each output stone's confidence is scaled by agreement (GEM_VISION_AGREE_FLOOR
+    at minority agreement up to full confidence at unanimity)."""
+    clusters: list[dict] = []   # {"members": [det], "votes": set[int]}
+    for vote_idx, vote in enumerate(votes):
+        for det in vote:
+            if det.get("centroid") is None:
+                continue
+            best, best_d = None, None
+            for cl in clusters:
+                if vote_idx in cl["votes"]:
+                    continue                       # one det per vote per cluster
+                rep = cl["members"][0]
+                if not _same_stone(det, rep, short_side):
+                    continue
+                dd = math.hypot(det["centroid"][0] - rep["centroid"][0],
+                                det["centroid"][1] - rep["centroid"][1])
+                if best_d is None or dd < best_d:
+                    best, best_d = cl, dd
+            if best is not None:
+                best["members"].append(det)
+                best["votes"].add(vote_idx)
+            else:
+                clusters.append({"members": [det], "votes": {vote_idx}})
+
+    denom = max(1, n_success)
+    keep_min = denom // 2 + 1                       # strict majority
+    majority = [cl for cl in clusters if len(cl["votes"]) >= keep_min]
+    # Recovery fallback: votes agreed on nothing but SOMETHING was seen — surface
+    # the union rather than report zero. These are tagged low_consensus so the
+    # fusion layer keeps them review-flagged, not asserted as confirmed.
+    is_fallback = not majority
+    selected = majority if majority else clusters
+
+    out: list[dict] = []
+    for i, cl in enumerate(selected):
+        members = cl["members"]
+        agreement = len(cl["votes"]) / denom
+        # Representative = the member the model was most confident about.
+        rep = max(members, key=lambda m: m.get("ai_confidence", 0.0))
+        mean_conf = float(np.mean([m.get("ai_confidence", 0.0) for m in members]))
+        scale = GEM_VISION_AGREE_FLOOR + (1.0 - GEM_VISION_AGREE_FLOOR) * agreement
+        rep = dict(rep)
+        rep["index"] = i + 1
+        rep["ai_confidence"] = round(min(1.0, mean_conf * scale), 3)
+        rep["vote_agreement"] = round(agreement, 3)
+        rep["votes_seen"] = len(cl["votes"])
+        rep["low_consensus"] = is_fallback
+        out.append(rep)
+    return out
+
+
 async def detect_gems(image_bgr: np.ndarray, item_bbox: Optional[list[int]]) -> Optional[list[dict]]:
     """AI cross-confirmation entry point.
 
     Returns a list of pixel-space gem dicts (see `_parse_gems`), or None when
-    the layer is disabled / no key / any failure — in which case the caller
-    keeps the ML-only result. Never raises.
+    the layer is disabled / no key / every vote failed — in which case the
+    caller keeps the ML-only result. An empty list means the model(s) ran and
+    genuinely saw no stones. Never raises.
+
+    Robustness (see the constants block): GEM_VISION_VOTES independent calls are
+    run concurrently, their crops upscaled to GEM_VISION_MIN_SIDE, and the
+    results merged by spatial consensus. With the defaults (VOTES=1, MIN_SIDE=0)
+    this is exactly the single-call path.
     """
     if not USE_AI_STONE_CONFIRM:
         return None
@@ -366,14 +539,40 @@ async def detect_gems(image_bgr: np.ndarray, item_bbox: Optional[list[int]]) -> 
         return None
     if image_bgr is None or getattr(image_bgr, "size", 0) == 0:
         return None
+
+    crop, W, H, ox, oy = _item_crop(image_bgr, item_bbox)
+    send_buf = _upscale_for_vision(crop)
+    short_side = float(min(W, H)) if W and H else float(min(image_bgr.shape[:2]))
+
+    async def _one_vote() -> Optional[list[dict]]:
+        try:
+            text = await asyncio.wait_for(
+                asyncio.to_thread(_call_vision_sync, send_buf, provider),
+                timeout=GEM_VISION_TIMEOUT_S,
+            )
+        except (asyncio.TimeoutError, Exception) as e:  # noqa: BLE001
+            logger.warning("Gem vision (%s) vote timed out/failed (%s)", provider, e)
+            return None
+        if not text:
+            return None
+        return _parse_gems(text, W, H, ox, oy)
+
     try:
-        crop, W, H, ox, oy = _item_crop(image_bgr, item_bbox)
-        text = await asyncio.wait_for(
-            asyncio.to_thread(_call_vision_sync, crop, provider), timeout=GEM_VISION_TIMEOUT_S
+        results = await asyncio.wait_for(
+            asyncio.gather(*[_one_vote() for _ in range(GEM_VISION_VOTES)]),
+            timeout=GEM_VISION_OUTER_TIMEOUT_S,
         )
     except (asyncio.TimeoutError, Exception) as e:  # noqa: BLE001
-        logger.warning("Gem vision (%s) timed out/failed (%s) — ML-only", provider, e)
+        logger.warning("Gem vision voting round timed out/failed (%s) — ML-only", e)
         return None
-    if not text:
-        return None
-    return _parse_gems(text, W, H, ox, oy)
+
+    successful = [r for r in results if r is not None]
+    if not successful:
+        return None                      # every vote failed -> ML-only fallback
+    successful = [_dedup_within_vote(v, short_side) for v in successful]
+    if GEM_VISION_VOTES > 1:
+        logger.info(
+            "Gem vision consensus: %d/%d votes returned, counts=%s",
+            len(successful), GEM_VISION_VOTES, [len(r) for r in successful],
+        )
+    return _cluster_votes(successful, len(successful), short_side)

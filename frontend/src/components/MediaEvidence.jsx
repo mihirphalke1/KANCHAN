@@ -114,24 +114,34 @@ function WaveformCanvas({ src }) {
       setPlaying(false)
       if (animRef.current) cancelAnimationFrame(animRef.current)
     } else {
-      audio.play()
-      setPlaying(true)
-      tick()
+      // play() returns a promise that rejects if the format can't be decoded —
+      // surface that instead of silently doing nothing, and never leave the
+      // button stuck in a "playing" state.
+      const p = audio.play()
+      if (p && typeof p.then === 'function') {
+        p.then(() => { setPlaying(true); tick() })
+         .catch(() => { setPlaying(false) })
+      } else {
+        setPlaying(true)
+        tick()
+      }
     }
   }
 
   function tick() {
     const audio = audioRef.current
-    if (!audio || !dataRef.current) return
+    if (!audio) return
     const pct = audio.duration ? audio.currentTime / audio.duration : 0
     setProgress(pct)
-    drawWaveform(dataRef.current, pct)
+    // Waveform is a best-effort enhancement: if decode failed we still track
+    // playback progress so the recording is fully playable regardless.
+    if (dataRef.current) drawWaveform(dataRef.current, pct)
     if (!audio.ended && !audio.paused) {
       animRef.current = requestAnimationFrame(tick)
     } else {
       setPlaying(false)
       setProgress(0)
-      drawWaveform(dataRef.current, 0)
+      if (dataRef.current) drawWaveform(dataRef.current, 0)
     }
   }
 
@@ -142,15 +152,20 @@ function WaveformCanvas({ src }) {
         <audio ref={audioRef} src={src} onEnded={() => { setPlaying(false); setProgress(0) }} />
       )}
       <div className={styles.waveFooter}>
-        {src && drawn && (
+        {src && (
+          // Playable whenever there is a recording — NOT gated on the waveform
+          // decode succeeding (webm/opus often can't be decoded by Web Audio
+          // but the <audio> element plays them natively).
           <button className={styles.playBtn} onClick={togglePlay} type="button">
             {playing ? <Pause size={12} /> : <Play size={12} />}
             {playing ? 'Pause' : 'Play recording'}
           </button>
         )}
         <span className={styles.waveLabel}>
-          {src ? 'Acoustic ring fingerprint · Blue = normal · Red = anomalous'
-                : 'No audio recording provided'}
+          {src
+            ? (drawn ? 'Acoustic ring fingerprint · Blue = normal · Red = anomalous'
+                     : 'Acoustic recording · waveform preview unavailable for this format')
+            : 'No audio recording provided'}
         </span>
       </div>
     </div>

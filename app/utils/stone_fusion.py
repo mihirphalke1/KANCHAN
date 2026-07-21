@@ -89,6 +89,42 @@ AI_ONLY = os.getenv("STONE_AI_ONLY", "1") != "0"
 # An AI-only stone at/above this confidence (and physically plausible) is trusted
 # as CONFIRMED rather than merely flagged. Below it, it stays "uncertain".
 AI_CONFIRM_MIN = float(os.getenv("STONE_AI_CONFIRM_MIN", "0.45"))
+# When the AI ran as multiple votes (gem_vision consensus) and the votes could
+# not agree on any stone, gem_vision recovers the union tagged low_consensus.
+# Such a stone is never asserted confirmed — kept but capped at "uncertain" and
+# flagged needs_review. A single-vote run (or an agreeing multi-vote run) tags
+# low_consensus=False, so this is inert unless the votes actually disagreed.
+
+# ── Graceful degradation: AI ran but saw NOTHING ─────────────────────────────
+# STRICT AI-ONLY makes a NON-EMPTY AI set authoritative — that stays. But when
+# the AI returns an EMPTY set (zero stones) while the CV pass is confident it
+# found real stones, silently trusting the AI's "zero" is the actual failure
+# behind "stone detection fails for a few images": a small/low-contrast pavé or
+# illusion-set ring the vision model missed gets reported as bare metal. That is
+# a genuine DISAGREEMENT between two methods, not noise to discard. So instead of
+# dropping to zero, a CV detection the classical/ML pass was confident about is
+# KEPT — but demoted to "uncertain" and tagged needs_review (recovered for the
+# officer, never asserted as confirmed, and never counted as a confirmed stone).
+# Only fires on an EMPTY AI set; a non-empty AI set is still fully authoritative.
+# Gated so it can be disabled; ON by default because it only ever ADDS a
+# review-flagged stone the pipeline would otherwise have thrown away.
+RESCUE_ML_ON_AI_EMPTY = os.getenv("STONE_RESCUE_ML_ON_AI_EMPTY", "1") != "0"
+# CV confidence a would-be-dropped ML stone needs to be rescued for review.
+# Above the 0.40 uncertain floor and near the 0.64 confident bar — high enough
+# that plain-metal glare (which scores low) is not resurrected as a phantom.
+RESCUE_ML_MIN_CONF = float(os.getenv("STONE_RESCUE_ML_MIN_CONF", "0.60"))
+
+
+def _ai_status(conf: float, low_consensus: bool) -> tuple[str, bool]:
+    """Return (status, needs_review) for an AI-detected stone in an AI-PRIMARY
+    run. A low-consensus stone (the votes could not agree — see gem_vision's
+    recovery fallback) is never asserted confirmed: kept as 'uncertain' and
+    flagged for review even when the model's own confidence is high; otherwise
+    the AI's confidence decides. With voting off, low_consensus is False, so this
+    reduces to the confidence test alone."""
+    if low_consensus:
+        return "uncertain", True
+    return ("confirmed", False) if conf >= AI_CONFIRM_MIN else ("uncertain", False)
 
 
 def _equiv_radius(bbox: Optional[list]) -> float:
@@ -192,11 +228,14 @@ def _combined_both(ml_conf: float, ai_conf: float) -> float:
     return round(min(1.0, 0.55 + 0.45 * max(ml_conf, ai_conf)), 3)
 
 
-def _ai_only_mask(ai: dict, item_bool: np.ndarray,
+def _ai_only_mask(ai: dict, envelope: np.ndarray,
                   ai_mask_fn: Optional[Callable[[dict], Optional[np.ndarray]]]) -> Optional[np.ndarray]:
     """Precise mask for an AI-only stone: prefer the SAM-at-point callback,
-    else the AI bbox (a small disc around the centre if no bbox), clipped to
-    the item."""
+    else the AI bbox (a small disc around the centre if no bbox), clipped to the
+    item ENVELOPE (the ornament silhouette incl. openwork gaps), NOT the
+    pixel-precise metal mask — a stone floated in an openwork gap (pavé kite
+    frame, prong-set cluster) sits in a hole of the metal mask and would
+    otherwise be erased to nothing."""
     if ai_mask_fn is not None:
         try:
             m = ai_mask_fn(ai)
@@ -204,8 +243,8 @@ def _ai_only_mask(ai: dict, item_bool: np.ndarray,
             logger.warning("ai_mask_fn failed (%s) — using bbox mask", e)
             m = None
         if m is not None and m.any():
-            return m & item_bool
-    H, W = item_bool.shape
+            return m & envelope
+    H, W = envelope.shape
     mask = np.zeros((H, W), bool)
     bb = ai.get("bbox")
     if bb and bb[2] > 0 and bb[3] > 0:
@@ -220,7 +259,7 @@ def _ai_only_mask(ai: dict, item_bool: np.ndarray,
         r = max(3, int(min(H, W) * 0.03))
         yy, xx = np.ogrid[:H, :W]
         mask = (xx - cx) ** 2 + (yy - cy) ** 2 <= r * r
-    return mask & item_bool
+    return mask & envelope
 
 
 def reconcile(
@@ -229,6 +268,7 @@ def reconcile(
     ai_stones: Optional[list[dict]],
     item_bool: np.ndarray,
     ai_mask_fn: Optional[Callable[[dict], Optional[np.ndarray]]] = None,
+    item_envelope: Optional[np.ndarray] = None,
 ) -> tuple[list[dict], np.ndarray, dict]:
     """Reconcile ML and AI stone detections. See module docstring for rules.
 
@@ -236,12 +276,25 @@ def reconcile(
                 uncertain "candidate" stones, which surface only if AI confirms).
     labels    : int label map; region of ml stone s is (labels == s["_label"]).
     ai_stones : from gem_vision.detect_gems, or None when the AI layer is off.
-    item_bool : item mask (H,W bool).
+    item_bool : item mask (H,W bool) — the pixel-precise metal silhouette.
     ai_mask_fn: optional SAM-at-point callback for AI-only boundaries.
+    item_envelope : the ornament silhouette INCLUDING openwork gaps (e.g. the
+                convex hull of item_bool). AI-only stones are validated against
+                THIS, not item_bool — a stone floated in an openwork gap (pavé
+                kite frame, prong-set cluster) sits in a hole of the metal mask
+                and must not be dropped just because the metal doesn't fill the
+                gap. Defaults to item_bool when not supplied (backward compatible).
 
     Returns (stones, labels_out, meta).
     """
+    if item_envelope is None:
+        item_envelope = item_bool
     item_area = max(1, int(item_bool.sum()))
+    # The "boxed the whole ornament" area guard for AI-only stones is measured
+    # against the ENVELOPE (full ornament extent), not the metal-only mask: on an
+    # openwork piece the metal area is a fraction of the ornament, and gating a
+    # stone's mask against it wrongly rejects normal-sized stones.
+    envelope_area = max(1, int(item_envelope.sum()))
     ys, xs = np.where(item_bool)
     if len(xs):
         item_short_side = float(min(xs.max() - xs.min() + 1, ys.max() - ys.min() + 1))
@@ -267,6 +320,10 @@ def reconcile(
     next_label = int(labels_out.max()) + 1
     matched_ml_idx: set[int] = set()
     result: list[dict] = []
+    # AI ran and returned an EMPTY set — see RESCUE_ML_ON_AI_EMPTY. Distinct from
+    # ai_stones is None (layer off/failed), which was handled above.
+    ai_empty = len(ai_stones) == 0
+    n_rescued = 0
 
     # ── AI detections: match to ML (incl. candidates) or add as AI-only ──────
     for ai in ai_stones:
@@ -278,15 +335,20 @@ def reconcile(
             ai_conf = ai.get("ai_confidence", 0.0)
             t = dict(ml)                        # SAM boundary + geometry
             t["agreement"] = "both"
-            # The AI is the primary judge, so its confidence governs the final
-            # status even for a matched pair: a stone the AI is unsure of
-            # (< AI_CONFIRM_MIN) is only "uncertain", even though the ML pass
-            # also fired there. This stops a low-confidence AI guess that happens
-            # to coincide with an ML glare/specular blob (e.g. phantom "diamonds"
-            # on a polished band) from being asserted as CONFIRMED.
-            t["status"] = ("confirmed"
-                           if (not AI_PRIMARY or ai.get("ai_confidence", 0.0) >= AI_CONFIRM_MIN)
-                           else "uncertain")
+            # The AI is the primary judge, so its confidence AND its multi-vote
+            # consensus govern the final status even for a matched pair: a stone
+            # the AI is unsure of (< AI_CONFIRM_MIN) or that only a minority of
+            # votes saw is only "uncertain", even though the ML pass also fired
+            # there. This stops a low-confidence AI guess that happens to
+            # coincide with an ML glare/specular blob (e.g. phantom "diamonds" on
+            # a polished band) from being asserted as CONFIRMED.
+            if not AI_PRIMARY:
+                t["status"] = "confirmed"
+            else:
+                _st, _nr = _ai_status(ai_conf, ai.get("low_consensus", False))
+                t["status"] = _st
+                if _nr:
+                    t["needs_review"] = True
             t["hue_class"] = ai.get("hue_class", ml.get("hue_class", "other"))
             t["stone_name"] = ai.get("gem_type", ml.get("stone_name", "stone"))
             t["gem_type"] = ai.get("gem_type", "")
@@ -298,35 +360,52 @@ def reconcile(
             t.pop("below_uncertain", None)
             result.append(t)
         else:
-            # AI-only — validate then add, always flagged.
+            # AI-only — validate then add, always flagged. Validated against the
+            # ENVELOPE (ornament silhouette incl. openwork gaps), not the metal
+            # mask: a stone floated in an openwork gap (pavé kite frame,
+            # prong-set cluster) falls in a HOLE of item_bool and would be wrongly
+            # rejected — reintroducing exactly the background-separation
+            # dependency the AI-primary design exists to avoid.
             cx, cy = ai.get("centroid", [None, None])[:2]
             if cx is None:
                 continue
-            H, W = item_bool.shape
-            if not (0 <= int(cy) < H and 0 <= int(cx) < W and item_bool[int(cy), int(cx)]):
-                continue                          # centre outside the item -> reject
-            mask = _ai_only_mask(ai, item_bool, ai_mask_fn)
+            H, W = item_envelope.shape
+            if not (0 <= int(cy) < H and 0 <= int(cx) < W and item_envelope[int(cy), int(cx)]):
+                continue                          # centre outside the ornament -> reject
+            mask = _ai_only_mask(ai, item_envelope, ai_mask_fn)
             if mask is None or not mask.any():
                 continue
             area = int(mask.sum())
-            if area > AI_ONLY_MAX_AREA_FRAC * item_area:
-                continue                          # boxed the whole ornament -> reject
+            if area > AI_ONLY_MAX_AREA_FRAC * envelope_area:
+                # The SAM boundary over-grew (a dense-cluster prompt bleeding into
+                # the whole cluster/opening). Don't drop the stone the AI is sure
+                # of — fall back to its own tight bbox before rejecting; only a
+                # bbox that ALSO spans the ornament is a genuine "boxed it all".
+                bbox_mask = _ai_only_mask(ai, item_envelope, None)
+                if (bbox_mask is not None and bbox_mask.any()
+                        and int(bbox_mask.sum()) <= AI_ONLY_MAX_AREA_FRAC * envelope_area):
+                    mask = bbox_mask
+                    area = int(mask.sum())
+                else:
+                    continue                      # boxed the whole ornament -> reject
             lbl = next_label; next_label += 1
             labels_out[mask] = lbl
             ys, xs = np.where(mask)
             x0, y0 = int(xs.min()), int(ys.min())
             ai_conf = ai.get("ai_confidence", 0.0)
+            ai_needs_review = False
             if AI_PRIMARY:
                 # AI is the authoritative judge — trust its semantic call. The
                 # detection already passed the physical guards (inside item,
-                # plausible size), so confirm it once the AI is confident enough;
-                # only a low-confidence AI call stays flagged for review.
-                ai_status = "confirmed" if ai_conf >= AI_CONFIRM_MIN else "uncertain"
+                # plausible size), so confirm it once the AI is confident enough
+                # AND enough votes agreed; a low-confidence or minority-consensus
+                # call stays flagged for review.
+                ai_status, ai_needs_review = _ai_status(ai_conf, ai.get("low_consensus", False))
                 ai_final_conf = round(min(1.0, 0.45 + 0.55 * ai_conf), 3)
             else:
                 ai_status = "uncertain"           # legacy: AI-only NEVER confirmed
                 ai_final_conf = round(0.5 * ai_conf, 3)
-            result.append({
+            entry = {
                 "_label": lbl,
                 "area_pct": round(area / item_area * 100, 2),
                 "hue_class": ai.get("hue_class", "other"),
@@ -342,7 +421,10 @@ def reconcile(
                 "ai_confidence": ai_conf,
                 "bbox": [x0, y0, int(xs.max() - x0 + 1), int(ys.max() - y0 + 1)],
                 "centroid": [round(float(xs.mean()), 1), round(float(ys.mean()), 1)],
-            })
+            }
+            if ai_needs_review:
+                entry["needs_review"] = True
+            result.append(entry)
 
     # ── ML drawn stones the AI did not match -> ML-only. Below-uncertain
     #    "candidate" stones are skipped unless already promoted via an AI match
@@ -355,7 +437,22 @@ def reconcile(
         if orig_idx in matched_ml_idx or s.get("status") == "candidate":
             continue
         if AI_ONLY:
-            continue                       # strictly AI-based: drop ML-only stones
+            # Graceful degradation: the AI saw NOTHING but the CV pass is
+            # confident here — recover the stone for review instead of dropping
+            # it. Never fires when the AI actually reported stones (that set is
+            # authoritative). See RESCUE_ML_ON_AI_EMPTY.
+            if (RESCUE_ML_ON_AI_EMPTY and ai_empty
+                    and s.get("confidence", 0.0) >= RESCUE_ML_MIN_CONF):
+                t = dict(s)
+                t["agreement"] = "ml_only_ai_empty"
+                t["status"] = "uncertain"      # recovered, never asserted confirmed
+                t["needs_review"] = True
+                t["ml_confidence"] = s.get("confidence", 0.0)
+                t["ai_confidence"] = 0.0
+                t.pop("below_uncertain", None)
+                result.append(t)
+                n_rescued += 1
+            continue                       # strictly AI-based: otherwise drop
         t = dict(s)
         t["agreement"] = "ml_only"
         t["ml_confidence"] = s.get("confidence", 0.0)
@@ -385,5 +482,9 @@ def reconcile(
         "n_both": sum(1 for s in result if s["agreement"] == "both"),
         "n_ml_only": sum(1 for s in result if s["agreement"] == "ml_only"),
         "n_ai_only": sum(1 for s in result if s["agreement"] == "ai_only"),
+        "n_rescued_ai_empty": n_rescued,
+        "n_needs_review": sum(1 for s in result if s.get("needs_review")),
+        # AI and CV disagreed hard: the AI saw no stones yet CV recovered some.
+        "ai_empty_ml_disagree": bool(ai_empty and n_rescued > 0),
     }
     return result, labels_out, meta

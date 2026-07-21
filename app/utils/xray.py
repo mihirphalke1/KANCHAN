@@ -138,6 +138,12 @@ STONE_EDGE_NORM = float(os.getenv("STONE_EDGE_NORM", "38.0"))
 CONFIDENT_THRESHOLD = float(os.getenv("STONE_CONFIDENT_THRESHOLD", "0.64"))
 UNCERTAIN_THRESHOLD = float(os.getenv("STONE_UNCERTAIN_THRESHOLD", "0.40"))
 
+# AI-only stones are validated against the ornament's convex-hull envelope
+# (which includes openwork gaps), dilated by this fraction of the item's short
+# side so pavé flush to the edge — and the vision model's approximate centres —
+# aren't clipped. See reconcile_stones.
+STONE_AI_ENVELOPE_MARGIN_FRAC = float(os.getenv("STONE_AI_ENVELOPE_MARGIN_FRAC", "0.04"))
+
 # ── Layer-A recall widening (manifold-outlier + two-sided chroma) ──────────
 # The single-point lightness-deemphasised delta-E test above misses two real
 # classes of stone: (a) stones whose colour sits CLOSE to the gold in delta-E
@@ -1249,13 +1255,37 @@ def reconcile_stones(ctx: dict, ai_stones) -> tuple[dict, dict]:
         labels = ctx["stone_labels"]; all_stones = ctx["all_stones"]
         item_bbox = ctx["item_bbox"]; item_area = max(1, int(ctx["item_area"]))
 
+        # Envelope = the ornament silhouette INCLUDING openwork gaps (convex
+        # hull of the metal mask). AI-only stones are validated against this, not
+        # item_bool, so a stone floated in an openwork gap (pavé kite frame,
+        # prong-set cluster) — which sits in a HOLE of the metal mask — is not
+        # dropped. Falls back to item_bool if the hull can't be built.
+        item_envelope = item_bool
+        try:
+            ys_e, xs_e = np.where(item_bool)
+            if len(xs_e) >= 3:
+                hull = cv2.convexHull(np.column_stack([xs_e, ys_e]).astype(np.int32))
+                env = np.zeros(item_bool.shape, dtype=np.uint8)
+                cv2.fillConvexPoly(env, hull, 1)
+                # Dilate by a small margin so pavé stones flush to the ornament's
+                # edge (and the vision model's slightly-approximate centres) are
+                # not clipped by a hull that hugs the outermost metal pixel.
+                # Tunable — larger recovers more edge stones at some risk of
+                # accepting an off-item reflection the AI called a stone.
+                Hh, Ww = item_bool.shape
+                margin = max(4, int(STONE_AI_ENVELOPE_MARGIN_FRAC * min(Hh, Ww)))
+                k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (margin, margin))
+                item_envelope = (cv2.dilate(env, k) > 0)
+        except Exception as e:  # noqa: BLE001 — geometry only, never fatal
+            logger.warning("Item envelope (hull) failed (%s) — using metal mask", e)
+
         ai_mask_fn = None
         if ai_stones:
             def ai_mask_fn(ai):   # SAM-precise boundary for AI-only stones
-                return ml_stone_detection.sam_mask_at_point(norm, ai["centroid"], item_bool)
+                return ml_stone_detection.sam_mask_at_point(norm, ai["centroid"], item_envelope)
 
         stones, labels_out, meta = stone_fusion.reconcile(
-            all_stones, labels, ai_stones, item_bool, ai_mask_fn)
+            all_stones, labels, ai_stones, item_bool, ai_mask_fn, item_envelope=item_envelope)
 
         # Re-render overlays from the fused label map + stones.
         gems_overlay = _stones_overlay(norm, item, labels_out, stones)

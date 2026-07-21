@@ -81,6 +81,7 @@ const AGREEMENT_META = {
   both:    { label: 'AI + ML agree', dot: '#15803D', title: 'Identified by the AI (primary judge) and independently outlined by the ML model — highest confidence.' },
   ai_only: { label: 'AI (primary)',  dot: '#0F766E', title: 'Identified by the AI vision model, the primary judge of stone type and count. The ML detector did not separately outline it.' },
   ml_only: { label: 'ML only',       dot: '#6B7280', title: 'Found only by the secondary ML detector; the AI (primary judge) did not confirm it — treat as supporting evidence.' },
+  ml_only_ai_empty: { label: 'CV found, AI missed', dot: '#B45309', title: 'The AI vision judge saw no stones here, but the CV/ML detector was confident it found one (common on tiny pavé / illusion settings the AI under-reads). Recovered for a human to check — not asserted as confirmed.' },
 }
 
 function prettyStoneName(s) {
@@ -249,7 +250,8 @@ export default function XRayView({ caseData }) {
               <span className={styles.thresholdNote}>
                 {aiFoundDespiteBg
                   ? 'found by the AI directly in the photo (background could not be separated)'
-                  : `${stone_agreement.n_both || 0} confirmed by both · ${stone_agreement.n_ai_only || 0} AI-only · ${stone_agreement.n_ml_only || 0} ML-only`}
+                  : `${stone_agreement.n_both || 0} confirmed by both · ${stone_agreement.n_ai_only || 0} AI-only · ${stone_agreement.n_ml_only || 0} ML-only`
+                    + (stone_agreement.n_needs_review ? ` · ${stone_agreement.n_needs_review} flagged for review` : '')}
               </span>
             )}
           </div>
@@ -258,7 +260,8 @@ export default function XRayView({ caseData }) {
               const a = AGREEMENT_META[s.agreement] || AGREEMENT_META.ml_only
               const needsVerify = s.status && s.status !== 'confirmed'
               const dot = needsVerify ? '#B45309' : a.dot
-              const label = needsVerify ? `${a.label} — verify` : a.label
+              const suffix = s.needs_review ? ' — flag for review' : (needsVerify ? ' — verify' : '')
+              const label = `${a.label}${suffix}`
               return (
                 <div key={i} className={styles.stoneRow}>
                   <span className={styles.stoneIdx}>#{i + 1}</span>
