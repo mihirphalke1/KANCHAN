@@ -24,7 +24,7 @@ mimetypes.add_type("audio/webm", ".webm")
 
 from app.utils.numpy_safe import numpy_safe as _numpy_safe
 
-from app.routers import analyze, auth, benford, fiducial, hallmark, history, kyc, report, xray
+from app.routers import analyze, auth, benford, fiducial, gold_rate, hallmark, history, kyc, report, xray
 
 app = FastAPI(
     title="KANCHAN-AI",
@@ -44,6 +44,7 @@ app.include_router(analyze.router,   prefix="/api")
 app.include_router(auth.router,      prefix="/api")
 app.include_router(benford.router,   prefix="/api")
 app.include_router(fiducial.router,  prefix="/api")
+app.include_router(gold_rate.router, prefix="/api")
 app.include_router(hallmark.router,  prefix="/api")
 app.include_router(history.router,   prefix="/api")
 app.include_router(kyc.router,       prefix="/api")

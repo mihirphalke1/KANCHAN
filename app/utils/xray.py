@@ -138,6 +138,26 @@ STONE_EDGE_NORM = float(os.getenv("STONE_EDGE_NORM", "38.0"))
 CONFIDENT_THRESHOLD = float(os.getenv("STONE_CONFIDENT_THRESHOLD", "0.64"))
 UNCERTAIN_THRESHOLD = float(os.getenv("STONE_UNCERTAIN_THRESHOLD", "0.40"))
 
+# Hard gap-artifact rejection (P1-4). A negative-space gap cut into the item
+# silhouette (split-shank opening, openwork gap) is concave and ragged, so its
+# convex-hull solidity is low. A real stone (round/oval/faceted) is convex, so
+# its solidity is high. Below this solidity a backdrop-adjacent candidate is
+# REJECTED OUTRIGHT — not merely down-weighted via the soft shape score — so a
+# gap that happens to score well on the other signals still can't survive.
+GAP_SOLIDITY_MIN = float(os.getenv("STONE_GAP_SOLIDITY_MIN", "0.70"))
+# Backdrop-colour gap/glare signal. A candidate whose mean BGR is within this
+# distance of the frame-border backdrop colour is either a gap (opening onto
+# the backdrop) or specular glare — never a real stone by colour alone.
+BACKDROP_STONE_DIST     = float(os.getenv("STONE_BACKDROP_DIST", "28.0"))
+# For a backdrop-coloured candidate, this is the minimum fraction of its
+# immediate surroundings that must be metal for it to be treated as glare-on-
+# metal (capped to uncertain) rather than a gap opening onto the backdrop
+# (rejected outright).
+BACKDROP_GAP_METAL_FRAC = float(os.getenv("STONE_BACKDROP_GAP_METAL_FRAC", "0.85"))
+# A backdrop-coloured candidate more elongated than this is a gap sliver /
+# wedge / scratch (rejected), not a compact glare spot (capped to uncertain).
+BACKDROP_GAP_ASPECT     = float(os.getenv("STONE_BACKDROP_GAP_ASPECT", "2.5"))
+
 # AI-only stones are validated against the ornament's convex-hull envelope
 # (which includes openwork gaps), dilated by this fraction of the item's short
 # side so pavé flush to the edge — and the vision model's approximate centres —
@@ -540,6 +560,109 @@ def _candidate_mask(bgr: np.ndarray, item: np.ndarray, metal_lab: np.ndarray,
     return cand
 
 
+def _is_enamel_region(hsv_pixels: np.ndarray, edge_pixels: np.ndarray) -> bool:
+    """Meenakari enamel vs a faceted gemstone (P1-2).
+
+    Vitreous enamel is a smooth, flat, opaque fill: uniform hue, uniform
+    saturation, NO specular sparkle, and low internal edge density. A faceted
+    stone fails at least one of these — facets sparkle (specular flashes),
+    split light into hue/saturation variation, and pack the interior with
+    micro-edges. Enamel must pass ALL four; a stone fails most.
+
+    hsv_pixels: (N,3) H,S,V samples of the region. edge_pixels: (N,) edge
+    magnitude at those pixels."""
+    hsv = np.asarray(hsv_pixels, dtype=np.float32)
+    if hsv.ndim != 2 or hsv.shape[0] < 8:
+        return False
+    h, s, v = hsv[:, 0], hsv[:, 1], hsv[:, 2]
+    edges = np.asarray(edge_pixels, dtype=np.float32).ravel()
+
+    hue_uniform  = float(np.std(h)) < 8.0
+    sat_uniform  = float(np.std(s)) < 20.0
+    no_specular  = float(np.mean(v > 240)) < 0.02          # no facet flashes
+    edge_density = float(np.mean(edges > 30)) if edges.size else 0.0
+    low_edges    = edge_density < 0.10                     # smooth, not faceted
+    return bool(hue_uniform and sat_uniform and no_specular and low_edges)
+
+
+def _detect_filigree(mask: np.ndarray) -> dict:
+    """Filigree / Tarakashi openwork detection (P1-3).
+
+    Openwork is thin metal wire enclosing many small gaps (jali). It shows up
+    as a LOT of enclosed holes plus a low fill ratio (mostly air). A plain
+    solitaire ring is also mostly-hollow (one big open centre) but has only ONE
+    enclosed gap — low fill ratio ALONE must not trigger this, so both a high
+    enclosed-gap count AND a low fill ratio are required."""
+    mask_u8 = (np.asarray(mask) > 0).astype(np.uint8) * 255
+    total_area = float((mask_u8 > 0).sum())
+    if total_area < 1:
+        return {"is_filigree": False, "enclosed_gap_count": 0, "fill_ratio": 1.0}
+
+    # Enclosed holes = inner contours (those with a parent) in the hierarchy.
+    contours, hierarchy = cv2.findContours(mask_u8, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    holes = 0
+    if hierarchy is not None:
+        min_hole = max(4.0, 0.0004 * total_area)   # ignore pinhole noise
+        for i, hci in enumerate(hierarchy[0]):
+            if hci[3] != -1 and cv2.contourArea(contours[i]) >= min_hole:
+                holes += 1
+
+    # Fill ratio = material area / solid silhouette area (holes filled).
+    ff = mask_u8.copy()
+    fmask = np.zeros((ff.shape[0] + 2, ff.shape[1] + 2), np.uint8)
+    cv2.floodFill(ff, fmask, (0, 0), 255)
+    filled = mask_u8 | cv2.bitwise_not(ff)
+    filled_area = float((filled > 0).sum()) or total_area
+    fill_ratio = total_area / filled_area
+
+    is_filigree = holes >= 4 and fill_ratio < 0.85
+    return {"is_filigree": bool(is_filigree), "enclosed_gap_count": int(holes),
+            "fill_ratio": round(fill_ratio, 3)}
+
+
+def _detect_multiple_items(mask: np.ndarray) -> dict:
+    """Flag when the frame contains more than one separate item (e.g. an
+    earring pair) — each needs its own valuation, and a single blended weight
+    across two pieces is a common intake error."""
+    mask_u8 = (np.asarray(mask) > 0).astype(np.uint8) * 255
+    total = float((mask_u8 > 0).sum())
+    n, _labels, stats, _cents = cv2.connectedComponentsWithStats(mask_u8, connectivity=8)
+    min_area = max(50.0, 0.02 * total)
+    comps = sorted((int(stats[i, cv2.CC_STAT_AREA]) for i in range(1, n)
+                    if stats[i, cv2.CC_STAT_AREA] >= min_area), reverse=True)
+    count = len(comps)
+    likely_pair = bool(count == 2 and comps[1] / max(comps[0], 1) >= 0.6)
+    return {"multiple_items_detected": bool(count >= 2), "component_count": int(count),
+            "likely_pair": likely_pair}
+
+
+def _watershed_split_touching(cand: np.ndarray) -> np.ndarray:
+    """Split touching-but-not-merged stones (pavé / channel settings) via a
+    distance-transform watershed, so a chain of adjacent stones isn't
+    under-counted as one blob. A single isolated blob is returned untouched."""
+    cand_bin = (np.asarray(cand) > 0).astype(np.uint8)
+    if cand_bin.sum() == 0:
+        return (cand_bin * 255).astype(np.uint8)
+
+    dist = cv2.distanceTransform(cand_bin, cv2.DIST_L2, 5)
+    if dist.max() <= 0:
+        return (cand_bin * 255).astype(np.uint8)
+    _, sure_fg = cv2.threshold(dist, 0.5 * dist.max(), 255, 0)
+    sure_fg = sure_fg.astype(np.uint8)
+    n_fg, markers = cv2.connectedComponents(sure_fg)
+    if n_fg <= 2:                       # 0 or 1 peak → nothing to split
+        return (cand_bin * 255).astype(np.uint8)
+
+    markers = markers + 1
+    unknown = cv2.subtract(cand_bin * 255, sure_fg)
+    markers[unknown == 255] = 0
+    color = cv2.cvtColor(cand_bin * 255, cv2.COLOR_GRAY2BGR)
+    cv2.watershed(color, markers)
+    out = (cand_bin * 255).copy()
+    out[markers == -1] = 0              # carve the watershed ridge lines
+    return out
+
+
 def _region_confidence(
     region: np.ndarray, hsv: np.ndarray, edge_mag: np.ndarray, lap_mag: np.ndarray,
     item: np.ndarray, metal_ref: np.ndarray, area: int, med_area: float,
@@ -647,6 +770,9 @@ def _detect_stones(
     item_area = max(1, int(item_bool.sum()))
     metal_ref = (np.median(hsv[item_bool], axis=0) if item_bool.any()
                  else np.array([20.0, 80.0, 150.0]))
+    # Backdrop colour reference (from the frame border) — used to tell a
+    # backdrop-coloured GAP or specular GLARE apart from a real stone (P1-4).
+    backdrop_bgr = np.median(_border_patch(bgr).astype(np.float32), axis=0)
     lab_full = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
     metal_lab = (np.median(lab_full[item_bool], axis=0) if item_bool.any()
                  else np.array([180.0, 128.0, 128.0], dtype=np.float32))
@@ -683,10 +809,53 @@ def _detect_stones(
     stones = []
     for i, area in sized:
         region = labels == i
+        # Hard gap-artifact rejection (P1-4): a negative-space gap (split-shank
+        # opening, openwork gap) is concave/ragged, so its convex-hull solidity
+        # is low. Reject it OUTRIGHT here rather than only down-weighting it via
+        # the soft shape score, so a gap can't survive by scoring well on the
+        # other signals. Real stones are convex (solidity ≫ threshold).
+        region_u8 = (region.astype(np.uint8)) * 255
+        gcontours, _ = cv2.findContours(region_u8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if gcontours:
+            gc = max(gcontours, key=cv2.contourArea)
+            ghull = cv2.contourArea(cv2.convexHull(gc)) or 1.0
+            if (cv2.contourArea(gc) / ghull) < GAP_SOLIDITY_MIN:
+                continue
+
+        # Backdrop-colour signal (P1-4): a convex triangular split-shank wedge
+        # slips past the solidity filter (a triangle is convex), and a small
+        # specular highlight can look like a colourless stone. Both are the
+        # BACKDROP colour. Discriminate by their surroundings:
+        #   • surroundings open onto the exterior backdrop  → it's a GAP  → reject
+        #   • surroundings are (almost) all metal           → it's GLARE → cap to uncertain
+        cand_bgr = bgr[region].astype(np.float32).mean(axis=0)
+        backdrop_dist = float(np.linalg.norm(cand_bgr - backdrop_bgr))
+        force_uncertain = False
+        if backdrop_dist < BACKDROP_STONE_DIST:
+            (grw, grh) = cv2.minAreaRect(gc)[1] if gcontours else (1.0, 1.0)
+            gap_aspect = max(grw, grh) / max(1.0, min(grw, grh))
+            surround = (cv2.dilate(region_u8, ELLIPSE_9) > 0) & ~region
+            surround_n = int(surround.sum())
+            metal_frac = float((surround & item_bool).sum()) / max(surround_n, 1)
+            # Elongated backdrop-coloured sliver (split-shank wedge, scratch) OR
+            # one that opens onto the exterior backdrop → it's a gap → reject.
+            if gap_aspect > BACKDROP_GAP_ASPECT or metal_frac < BACKDROP_GAP_METAL_FRAC:
+                continue
+            force_uncertain = True       # compact backdrop-coloured spot on metal — glare
+
         confidence, feats = _region_confidence(region, hsv, edge_mag, lap_mag, item, metal_ref, area, med_area)
         # Identify the stone by nearest-reference colour match, not a hard-
         # coded hue band — see _classify_stone_color.
         stone_name, hue_class, match_conf = _classify_stone_color(bgr[region])
+        # Meenakari enamel vs a real set stone: a flat, uniform, non-sparkling
+        # coloured fill is enamel (painted metal), not a gemstone — tag it so it
+        # is excluded from the stone count and weight deduction (P1-2). Only
+        # considered for clearly-coloured regions; colourless/faceted stones
+        # keep their facet edges and fail the enamel test.
+        material = "gemstone"
+        if hue_class != "colourless" and _is_enamel_region(
+                hsv[region].astype(np.float32), edge_mag[region].astype(np.float32)):
+            material = "enamel"
         colourless_ceiling = (
             MAX_COLOURLESS_AREA_FRAC_HIGH_CONTRAST
             if feats["local_contrast_score"] >= HIGH_CONTRAST_FLOOR
@@ -706,11 +875,15 @@ def _detect_stones(
             status = "candidate"
         else:
             status = "confirmed" if confidence >= CONFIDENT_THRESHOLD else "uncertain"
+        # A backdrop-coloured spot on metal is glare — never assert it confirmed.
+        if force_uncertain and status == "confirmed":
+            status = "uncertain"
         x  = int(cc_stats[i, cv2.CC_STAT_LEFT]); y  = int(cc_stats[i, cv2.CC_STAT_TOP])
         bw = int(cc_stats[i, cv2.CC_STAT_WIDTH]); bh = int(cc_stats[i, cv2.CC_STAT_HEIGHT])
         stones.append({
             "area_pct":     round(area / item_area * 100, 2),
             "hue_class":    hue_class,
+            "material":     material,
             "stone_name":   stone_name,
             "match_confidence": match_conf,
             "confidence":   round(confidence, 3),
@@ -1157,6 +1330,10 @@ def _run_pipeline(
         "unexplained_area_pct":   round(unexplained_px / item_area * 100, 1),
         "edge_density":           round(float(edges[item_bool].mean()) * 100, 1),
         "gold_gem_split":         gold_gem_split,
+        # Openwork (filigree/Tarakashi) and multi-item detection — surfaced so
+        # downstream (tarnish/density/acoustic gating, officer UI) can react.
+        "filigree":               _detect_filigree(item_bool),
+        "multiple_items":         _detect_multiple_items(item_bool),
     }
     # Reconciliation context: the raw arrays + FULL labelled stone set (incl.
     # below-uncertain "candidate" regions filtered out of `stats` above) that

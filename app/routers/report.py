@@ -329,6 +329,7 @@ def build_report(case: dict) -> bytes:
     contra   = case.get('contradiction', {})
     fusion   = case.get('fusion', {})
     benford  = case.get('benford', {})
+    ltv      = case.get('ltv', {}) or {}
     customer = case.get('customer', {})
     media    = case.get('media', {})
 
@@ -681,17 +682,31 @@ def build_report(case: dict) -> bytes:
     # Reconstruct boosted_risk for older seeded cases that predate this field
     if boosted is None:
         boosted = round(min(1.0, frisk + contra_sc * 0.40), 4)
+    # Describe the fusion engine that ACTUALLY produced this number (default is
+    # transparent log-odds with per-modality reliability weights; XGBoost is an
+    # opt-in baseline via FUSION_MODE) — never a hardcoded XGBoost/35-30-25-10
+    # description next to a log-odds figure.
+    if fmode == 'xgboost':
+        _fusion_title = '4. XGBoost Fusion Analysis'
+        _fusion_risk_desc = 'Trained XGBoost meta-classifier (10-dim: 4 risks + 6 pairwise contradictions)'
+        _fusion_model_desc = 'XGBoost (10-dim) with SHAP attributions'
+    elif fmode == 'logodds':
+        _fusion_title = '4. Log-Odds Evidence Fusion'
+        _fusion_risk_desc = ('Transparent log-odds sum with reliability weights '
+                             '(density 1.0 · acoustic 0.6 · visual 0.5 · streak 0.3) and blind-spot floors')
+        _fusion_model_desc = 'Log-odds evidence sum (hand-recomputable; reliability-weighted)'
+    else:
+        _fusion_title = '4. Weighted-Heuristic Fusion Analysis'
+        _fusion_risk_desc = 'Weighted average: density 35% · acoustic 30% · visual 25% · streak 10%'
+        _fusion_model_desc = 'Weighted heuristic (density 35%, acoustic 30%, visual 25%, streak 10%)'
     f_body = [[_cell('METRIC'), _cell('VALUE'), _cell('DESCRIPTION')]]
     for row in [
-        ['Fusion Risk Score',   f'{frisk:.2%}',
-         'Weighted average: density 35% · acoustic 30% · visual 25% · streak 10%'],
+        ['Fusion Risk Score',   f'{frisk:.2%}', _fusion_risk_desc],
         ['Contradiction Score', f'{contra_sc:.2%}',
          'Max pairwise disagreement across modalities that actually ran'],
         ['Boosted Risk Score',  f'{boosted:.2%}',
          'Fusion + contradiction×0.40 — THIS is the number that determines the verdict'],
-        ['Fusion Model', fmode.upper(),
-         'XGBoost (10-dim) with SHAP' if fmode == 'xgboost' else
-         'Weighted heuristic (density 35%, acoustic 30%, visual 25%, streak 10%)'],
+        ['Fusion Model', fmode.upper(), _fusion_model_desc],
         ['Confidence',          confidence, ''],
         ['Loan Recommendation', loan_action, ''],
     ]:
@@ -708,16 +723,89 @@ def build_report(case: dict) -> bytes:
         ('TEXTCOLOR',    (0,0), (-1,0),  GREY_500),
     ]))
     story.append(KeepTogether([
-        Paragraph('4. XGBoost Fusion Analysis', S['h3']),
+        Paragraph(_fusion_title, S['h3']),
         Spacer(1, 2*mm),
         ft,
     ]))
     story.append(Spacer(1, 4*mm))
 
+    # ── Valuation & loan eligibility ─────────────────────────────────
+    # The whole point of the appraisal for the branch: net gold weight, the
+    # rate applied, assessed value, the RBI-tiered LTV, and the resulting
+    # maximum loan — none of which the report carried before.
+    if ltv:
+        brk = ltv.get('net_gold_breakdown', {}) or {}
+        rate_src = (case.get('gold_rate_source')
+                    or ('IBJA live feed' if ltv.get('rate_source') == 'ibja_api' else 'admin-configured'))
+        rate_date = ltv.get('rate_updated_at') or '—'
+
+        # Defects noted — pulled from the signals that actually fired.
+        defects = []
+        if case.get('hollow_item'):
+            defects.append('declared hollow' + (' — density anomaly (possible core fill)'
+                                                 if case.get('hollow_anomaly') else ''))
+        _xr = (case.get('media', {}).get('xray') or {})
+        if (_xr.get('filigree') or {}).get('is_filigree'):
+            defects.append('filigree/openwork')
+        if (_xr.get('multiple_items') or {}).get('multiple_items_detected'):
+            defects.append(f"{_xr['multiple_items'].get('component_count')} separate items in frame")
+        _tar = (ms.get('tarnish') or {}).get('features', {})
+        if _tar.get('discoloration_type') == 'contamination_tarnish':
+            defects.append('contamination tarnish')
+        elif _tar.get('discoloration_type') == 'intentional_patina':
+            defects.append('antique patina (intentional)')
+        if brk.get('n_stones'):
+            defects.append(f"{brk['n_stones']} set stone(s) deducted")
+        defects_txt = '; '.join(defects) if defects else 'None noted'
+
+        val_rows = [
+            [_cell('METRIC'), _cell('VALUE'), _cell('BASIS')],
+            ['Gross weight (measured)', f"{brk.get('gross_weight_g', density.get('weight_dry', '—'))} g",
+             'Dry weight on the branch scale'],
+            ['Less: set-stone weight', f"− {brk.get('stone_weight_g', 0)} g",
+             brk.get('method', '—').replace('_', ' ')],
+            ['Net gold weight', f"{ltv.get('net_gold_weight_g', '—')} g",
+             'Gold charged for — stones are not lent against at the gold rate'],
+            ['Gold rate applied', f"₹ {ltv.get('rate_per_gram_inr', 0):,.0f} / g",
+             f'{rate_src} · as of {rate_date}'],
+            ['Assessed value', f"₹ {ltv.get('assessed_value_inr', 0):,.0f}",
+             'Net gold weight × rate'],
+            ['Maximum LTV', f"{ltv.get('ltv_pct', 0)*100:.0f}%",
+             f"RBI tier: {ltv.get('tier', '—')}"],
+            ['Maximum eligible loan', f"₹ {ltv.get('max_loan_inr', 0):,.0f}",
+             'Assessed value × LTV — RBI Gold Collateral Directions 2025'],
+            ['Defects noted', defects_txt, 'From the analysis signals that fired'],
+        ]
+        vt_body = [[_cell(c) for c in val_rows[0]]]
+        for r in val_rows[1:]:
+            vt_body.append([_cell(r[0], color=GREY_500), _cell(r[1], bold=True, color=GREY_900), _cell(r[2])])
+        vt = Table(vt_body, colWidths=[bw*0.30, bw*0.24, bw*0.46])
+        vt.setStyle(TableStyle(_TS_BASE + [
+            ('BACKGROUND', (0,0), (-1,0), GREY_100),
+            ('BACKGROUND', (0,7), (-1,7), BLUE_LIGHT),   # max eligible loan row
+            ('BOX',        (0,0), (-1,-1), 0.5, GREY_200),
+            ('GRID',       (0,0), (-1,-1), 0.3, GREY_200),
+            ('FONTNAME',   (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTNAME',   (0,7), (-1,7), 'Helvetica-Bold'),
+            ('FONTSIZE',   (0,0), (-1,0), 7),
+            ('TEXTCOLOR',  (0,0), (-1,0), GREY_500),
+        ]))
+        borrower_note = ('Borrower attested present at valuation.'
+                         if case.get('borrower_present')
+                         else 'NOTE: borrower-present attestation not recorded — confirm before disbursal.')
+        story.append(KeepTogether([
+            Paragraph('5. Valuation & Loan Eligibility', S['h3']),
+            Spacer(1, 2*mm),
+            vt,
+            Spacer(1, 2*mm),
+            Paragraph(borrower_note, S['body']),
+        ]))
+        story.append(Spacer(1, 4*mm))
+
     # ── 4. Contradiction flags ───────────────────────────────────────
     flags = contra.get('flags', [])
     if flags:
-        story.append(Paragraph('5. Cross-Modal Contradiction Flags', S['h3']))
+        story.append(Paragraph('6. Cross-Modal Contradiction Flags', S['h3']))
         story.append(Spacer(1, 2*mm))
         for flag in flags:
             ft2 = Table([[_cell(f'⚠  {flag}', bold=True, color=AMBER)]], colWidths=[bw])
@@ -752,7 +840,7 @@ def build_report(case: dict) -> bytes:
     )
 
     if all_photos:
-        story.append(Paragraph('6. Item Photographs & Material Scan', S['h3']))
+        story.append(Paragraph('7. Item Photographs & Material Scan', S['h3']))
         story.append(Spacer(1, 2*mm))
         # (photos grid is large enough that KeepTogether would force a page break — leave as-is)
 
@@ -825,7 +913,7 @@ def build_report(case: dict) -> bytes:
                 ('VALIGN',    (0,0),(-1,-1), 'MIDDLE'),
             ]))
             story.append(KeepTogether([
-                Paragraph('7. Acoustic Fingerprint — Ring Test Waveform', S['h3']),
+                Paragraph('8. Acoustic Fingerprint — Ring Test Waveform', S['h3']),
                 Spacer(1, 2*mm),
                 Paragraph(
                     'Amplitude envelope of the recorded ring sound. '
@@ -838,13 +926,13 @@ def build_report(case: dict) -> bytes:
             ]))
         else:
             story.append(KeepTogether([
-                Paragraph('7. Acoustic Fingerprint — Ring Test Waveform', S['h3']),
+                Paragraph('8. Acoustic Fingerprint — Ring Test Waveform', S['h3']),
                 Spacer(1, 2*mm),
                 _Drawing(_no_waveform(int(bw), 72)),
             ]))
     else:
         story.append(KeepTogether([
-            Paragraph('7. Acoustic Fingerprint — Ring Test Waveform', S['h3']),
+            Paragraph('8. Acoustic Fingerprint — Ring Test Waveform', S['h3']),
             Spacer(1, 2*mm),
             _Drawing(_no_waveform(int(bw), 72)),
             Spacer(1, 2*mm),
@@ -939,7 +1027,7 @@ def build_report(case: dict) -> bytes:
         ('TEXTCOLOR',    (0,0), (-1,0),  GREY_500),
     ]))
     story.append(KeepTogether([
-        Paragraph("7. Benford's Law Population Monitor", S['h3']),
+        Paragraph("9. Benford's Law Population Monitor", S['h3']),
         Spacer(1, 2*mm),
         Paragraph(
             "The Benford's Law Monitor analyses the distribution of first significant digits in "
@@ -1023,7 +1111,7 @@ def build_report(case: dict) -> bytes:
     for row in [
         ['Case ID',      f'#{case_id}',                    'Analysis Timestamp', ts_display],
         ['AI System',    'KANCHAN-AI v1.0',                'LLM Provider',       verdict.get('llm_provider','heuristic')],
-        ['Fusion Model', f"XGBoost ({fmode})",             'Benford Samples',    str(b_n)],
+        ['Fusion Model', {'logodds': 'Log-odds', 'xgboost': 'XGBoost', 'heuristic': 'Weighted-heuristic'}.get(fmode, fmode).title() + f" ({fmode})", 'Benford Samples', str(b_n)],
         ['Branch',       case.get('branch_id','—'),        'Report Generated',   datetime.now(IST).strftime('%d %b %Y %H:%M IST')],
     ]:
         a_body.append([_cell(row[0], color=GREY_500), _cell(row[1], bold=True),

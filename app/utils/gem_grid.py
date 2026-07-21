@@ -56,6 +56,10 @@ def build_grid_stats(
         return {"grid_n": grid_n, "cells": [], "total_stones": 0,
                 "px_per_mm": px_per_mm, "total_deduction_g": None}
 
+    # Meenakari enamel is painted metal, not a set stone — it must not be
+    # counted as a gemstone nor earn a weight deduction (P1-2).
+    stones = [s for s in stones if s.get("material") != "enamel"]
+
     x0, y0, x1, y1 = item_bbox
     w, h = max(x1 - x0, 1), max(y1 - y0, 1)
     table = load_deduction_table()

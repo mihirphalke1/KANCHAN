@@ -21,7 +21,10 @@ class TestFiducialWhiteBalance(unittest.TestCase):
     def _card_on_canvas(self, tint_gain=None):
         from app.utils.fiducial import generate_marker_png
 
-        png = generate_marker_png("BLR-001", on_date=date(2026, 7, 20))
+        # Today's date, not a hardcoded one — detect_marker's checksum grace
+        # window is relative to the real wall clock (date.today()), so a fixed
+        # past date drifts out of the grace window as days pass.
+        png = generate_marker_png("BLR-001", on_date=date.today())
         arr = np.frombuffer(png, dtype=np.uint8)
         card_img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
 
@@ -323,7 +326,9 @@ class TestConvexWedgeAndSmallHighlightRealCase(unittest.TestCase):
 
         canvas = self._synthetic_ring_photo()
         with patch.object(M, "USE_ML_STONES", False):
-            _stages, stats = X._run_pipeline(canvas)
+            # _run_pipeline returns (stages, stats, ctx) — ctx was added later
+            # for the AI-fusion reconciliation path; behaviour asserted below.
+            _stages, stats, _ctx = X._run_pipeline(canvas)
 
         self.assertEqual(stats["stone_detection_mode"], "classical")
         stones = stats["stones"]

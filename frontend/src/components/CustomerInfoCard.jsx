@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Pencil, X, ShieldCheck, Lock } from 'lucide-react'
 import styles from './CustomerInfoCard.module.css'
+import { apiFetch } from '../lib/auth'
 
 // officer_name is deliberately NOT here — it's part of the audit trail
 // (resolved from the authenticated evaluator session at analysis time, see
@@ -40,7 +41,7 @@ export default function CustomerInfoCard({ caseId, customer, evaluator, onUpdate
     setSaving(true)
     setError(null)
     try {
-      const res = await fetch(`/api/history/${caseId}`, {
+      const res = await apiFetch(`/api/history/${caseId}`, {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(form),

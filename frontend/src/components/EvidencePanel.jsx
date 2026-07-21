@@ -26,15 +26,24 @@ export default function EvidencePanel({ caseData }) {
             <span>Assessed Value &amp; RBI-Tiered LTV</span>
             <InfoTip text="Net gold weight × configured gold rate = assessed value. Max loan uses the RBI's tiered LTV structure (85% up to ₹2.5L, 80% up to ₹5L, 75% above) — not the old flat 75% cap." side="right" />
           </div>
-          {ltv.net_gold_breakdown && ltv.net_gold_breakdown.method === 'stone_weight_deduction' && (
+          {ltv.net_gold_breakdown &&
+            (ltv.net_gold_breakdown.method === 'stone_weight_deduction' ||
+             ltv.net_gold_breakdown.method === 'trade_deduction') && (
             <div className={styles.deduction}>
               <span>Total weight <b>{ltv.net_gold_breakdown.gross_weight_g} g</b></span>
               <span className={styles.minus}>−</span>
               <span>stones ≈ <b>{ltv.net_gold_breakdown.stone_weight_g} g</b>
-                {ltv.net_gold_breakdown.n_stones ? ` (${ltv.net_gold_breakdown.n_stones}, ~${ltv.net_gold_breakdown.stone_carat_total} ct)` : ''}</span>
+                {ltv.net_gold_breakdown.n_stones
+                  ? ` (${ltv.net_gold_breakdown.n_stones}${ltv.net_gold_breakdown.stone_carat_total ? `, ~${ltv.net_gold_breakdown.stone_carat_total} ct` : ''})`
+                  : ''}</span>
               <span className={styles.minus}>=</span>
               <span>net gold <b>{ltv.net_gold_weight_g} g</b></span>
             </div>
+          )}
+          {ltv.net_gold_breakdown?.calibration_flag && (
+            <p className={styles.calibrationWarning}>
+              <ShieldAlert size={12} /> {ltv.net_gold_breakdown.calibration_flag}
+            </p>
           )}
           <div className={styles.ltvGrid}>
             <div>

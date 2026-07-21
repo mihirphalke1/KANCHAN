@@ -1,0 +1,11 @@
+{
+  "feature_dim": 122,
+  "n_train": 8,
+  "n_genuine": 4,
+  "n_fake": 4,
+  "loocv": 0.25,
+  "reliable": false,
+  "trained_at": "2026-07-21T17:14:56.259927+00:00",
+  "source": "data/demo/test-kit/audio (DS-1 absent)",
+  "note": "DATA-LIMITED: too few labelled taps (DS-1 absent) for a trustworthy classifier \u2014 analyze_acoustic returns a neutral score and defers to the ring-frequency physics. Restore DS-1 and re-run to enable."
+}

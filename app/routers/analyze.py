@@ -33,7 +33,9 @@ from app.benford.monitor import append_density_reading, run_benford_test
 from app.utils.fiducial import detect_marker
 from app.utils.gem_grid import build_grid_stats
 from app.utils.gem_weight import estimate_gem_weights
+from app.utils.hashchain import append_with_chain
 from app.utils.ltv import assess_value, compute_net_gold_weight
+from app.utils.pledging import check_pledging_cap
 from app.utils.phash import check_duplicate, register_photo
 from app.utils.stamp import stamp_image
 from app.utils.xray import xray_preview, reconcile_stones
@@ -59,6 +61,9 @@ def _load_history() -> list:
 def _save_case(case: dict) -> None:
     HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
     history = _load_history()
+    # Stamp the case into the tamper-evident hash chain (prev_hash + entry_hash)
+    # before it is persisted, so the ledger is verifiable from this point on.
+    append_with_chain(history, case)
     history.append(case)
     HISTORY_PATH.write_text(json.dumps(history, indent=2))
 
@@ -324,31 +329,61 @@ def _build_trace(
             "source": "Two-component mixture rule; gem SG per Webster/GIA",
         })
 
+    _ac_mode = acoustic_result.get("mode", "—")
+    if _ac_mode == "svm":
+        _ac_formula = ("122-dim MFCC + Δ (velocity) + ΔΔ (acceleration) fingerprint → RBF-SVM. "
+                       "ΔΔ captures the acceleration of spectral decay that separates a solid "
+                       "ring from a damped composite thud.")
+    elif _ac_mode == "svm_data_limited":
+        _ac_formula = ("122-dim MFCC + Δ + ΔΔ fingerprint computed, but the classifier is "
+                       "data-limited (DS-1 absent) — reported for information only; the ring-pitch "
+                       "physics below carries the acoustic verdict.")
+    else:
+        _ac_formula = ("122-dim MFCC + Δ + ΔΔ fingerprint → heuristic fallback "
+                       "(RMS-decay ratio + zero-crossing rate).")
+    _ac_details = {"method": _ac_mode}
+    if acoustic_result.get("svm_raw_risk") is not None:
+        _ac_details["svm raw risk (not fused)"] = acoustic_result["svm_raw_risk"]
+        _ac_details["svm LOOCV"] = acoustic_result.get("svm_loocv")
     steps.append({
         "step": "Sound test (ring of the tapped item)",
-        "status": "done" if acoustic_result.get("mode") not in ("no_audio",) else "skipped",
+        "status": "done" if _ac_mode not in ("no_audio",) else "skipped",
         "summary": (f"risk {acoustic_result['risk_score']}"
-                    if acoustic_result.get("mode") not in ("no_audio",)
+                    if _ac_mode not in ("no_audio",)
                     else "No tap recording provided — the filled-core check needs it"),
-        "formula": "MFCC-ΔΔ features → SVM (trained on DS-1 tap recordings)",
-        "details": {"method": acoustic_result.get("mode", "—")},
-        "source": "DS-1: Kaggle counterfeit-gold tap dataset",
+        "formula": _ac_formula,
+        "details": _ac_details,
+        "source": "MFCC-ΔΔ per librosa; classifier via scripts/retrain_acoustic_svm.py",
     })
 
     ring = acoustic_result.get("ring")
     if ring:
+        _vcc = ring.get("velocity_cross_check") or {}
+        _ring_details = {
+            "measured pitch (Hz)": ring.get("dominant_freq_hz") or "—",
+            "genuine band (Hz)":   " – ".join(map(str, ring.get("genuine_band_hz", []))) or "uncalibrated",
+            "recording SNR (dB)":  ring.get("snr_db"),
+        }
+        # Noise-cleanup trail (0a): show what cleaning bought, for auditability.
+        if ring.get("snr_pre_db") is not None:
+            _ring_details["SNR before / after cleanup (dB)"] = f"{ring.get('snr_pre_db')} → {ring.get('snr_post_db')}"
+            _ring_details["noise cleanup"] = "on" if ring.get("denoise_applied") else "off"
+        # Length-adaptive velocity cross-check (0c).
+        if _vcc.get("available"):
+            if _vcc.get("gold_ref_velocity_ms"):
+                _ring_details["velocity v=2·L·f (m/s)"] = f"{_vcc.get('velocity_ms')} vs genuine {_vcc.get('gold_ref_velocity_ms')} (ratio {_vcc.get('velocity_ratio')})"
+            else:
+                _ring_details["velocity v=2·L·f (m/s)"] = _vcc.get("velocity_ms")
+            _ring_details["item length (mm)"] = _vcc.get("item_length_mm")
         steps.append({
             "step": "Checking the ring pitch against genuine gold",
             "status": "flag" if ring.get("stiff_core_flag") else (
                 "done" if ring.get("status") in ("consistent", "marginal") else "skipped"),
             "summary": ring.get("reason", ring.get("status", "")),
             "formula": "Sound speed v = √(stiffness E / density ρ) — a stiffer core rings higher. "
-                       "Measured pitch is compared to a band CALIBRATED from known-genuine recordings",
-            "details": {
-                "measured pitch (Hz)": ring.get("dominant_freq_hz") or "—",
-                "genuine band (Hz)":   " – ".join(map(str, ring.get("genuine_band_hz", []))) or "uncalibrated",
-                "recording SNR (dB)":  ring.get("snr_db"),
-            },
+                       "Pitch is compared to a CALIBRATED genuine band, and cross-checked against the "
+                       "length-adaptive expectation v = 2·L·f when the calibration card gives item size.",
+            "details": _ring_details,
             "source": "E per CRC/ASM (Au 79 GPa, W 411 GPa); band via scripts/calibrate_acoustic.py",
         })
 
@@ -407,6 +442,8 @@ async def analyze(
     weight_dry: float = Form(...),
     weight_submerged: float = Form(...),
     water_temp_c: float = Form(25.0),
+    hollow_item: bool = Form(False),
+    borrower_present: bool = Form(False),
     branch_id: str = Form("default"),
     customer_name: str = Form(""),
     customer_account: str = Form(""),
@@ -419,15 +456,35 @@ async def analyze(
     hallmark_result: str = Form(""),
     kyc_record: str = Form(""),
     images: list[UploadFile] = File(default=[]),
+    image_sources: list[str] = Form(default=[]),
     audio: Optional[UploadFile] = File(default=None),
     streak_image: Optional[UploadFile] = File(default=None),
+    streak_source: str = Form("camera"),
     tap_audio: list[UploadFile] = File(default=[]),
     tap_positions: list[str] = Form(default=[]),
     uv_image: Optional[UploadFile] = File(default=None),
+    uv_source: str = Form("camera"),
     session: dict = Depends(require_session),
 ):
     case_id = uuid.uuid4().hex[:8]
     response.headers["X-Case-ID"] = case_id
+
+    # Evidence capture policy (P2): in production (ALLOW_UPLOAD_EVIDENCE=0) only
+    # live-camera captures are accepted as photographic evidence — a gallery /
+    # file-picker upload could be an old or someone else's photo, defeating the
+    # whole live-capture chain. We reject such a submission outright rather than
+    # silently trusting client-side labelling. Kept permissive by default so the
+    # demo/dev upload escape hatch still works; the source is recorded either way.
+    _evidence_sources = [s for s in ([*image_sources, streak_source, uv_source]) if s]
+    _uploaded = [s for s in _evidence_sources if s == "upload"]
+    if _uploaded and os.getenv("ALLOW_UPLOAD_EVIDENCE", "1").strip() not in ("1", "true", "True"):
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"{len(_uploaded)} evidence image(s) were gallery-uploaded, not live-captured. "
+                "This deployment accepts only live-camera evidence — retake the photo(s) with the camera."
+            ),
+        )
     # officer_name is now resolved from the authenticated evaluator session,
     # not trusted as free text — the Evaluator Integrity Layer's whole point
     # is that every case is traceable to a person who was physically present
@@ -588,11 +645,25 @@ async def analyze(
 
     # ── Ring-frequency physics (stiff-core / tungsten cross-check) ──
     # Calibration-gated: only decides against a measured genuine band.
+    # Item longest dimension in metres, from the calibration-card scale — feeds
+    # the length-adaptive v = 2·L·f velocity cross-check. None when the card
+    # isn't in frame (then the velocity check simply abstains).
+    item_length_m = None
+    try:
+        _ppm = (fiducial_result or {}).get("px_per_mm")
+        _bbox = (xray_result or {}).get("item_bbox")
+        if _ppm and _bbox and len(_bbox) == 4:
+            longest_px = max(_bbox[2] - _bbox[0], _bbox[3] - _bbox[1])
+            if longest_px > 0:
+                item_length_m = longest_px / _ppm / 1000.0
+    except Exception as e:
+        logger.warning("Item-length derivation failed for case %s: %s", case_id, e)
+
     ring_check = None
     if audio_bytes:
         try:
             ring = extract_ring_frequency(audio_bytes)
-            ring_check = ring_frequency_check(ring, density_result)
+            ring_check = ring_frequency_check(ring, density_result, item_length_m=item_length_m)
             acoustic_result["ring"] = {**ring, **ring_check}
         except Exception as e:
             logger.warning("Ring-frequency check failed for case %s: %s", case_id, e)
@@ -730,10 +801,22 @@ async def analyze(
     # stones, so LTV is charged on the gold only. Prefers the direct per-stone
     # size→carat→grams deduction (needs the calibration card), falling back to
     # the density mixture model, then gross weight. See ltv.compute_net_gold_weight.
-    net_gold = compute_net_gold_weight(weight_dry, gem_weight_result, composition_result)
+    net_gold = compute_net_gold_weight(weight_dry, gem_weight_result, composition_result, gem_grid_result)
     net_gold_weight_g = net_gold["net_gold_weight_g"]
     ltv_result = assess_value(net_gold_weight_g)
     ltv_result["net_gold_breakdown"] = net_gold
+
+    # Per-borrower aggregate pledging cap (RBI Para 16, P4-15): a breach blocks
+    # sanction. Coins vs ornaments inferred from the item description.
+    _item_type = "coin" if "coin" in (item_description or "").lower() else "ornament"
+    pledging = check_pledging_cap(customer_account, net_gold_weight_g, item_type=_item_type,
+                                  exclude_case_id=case_id)
+    ltv_result["pledging_cap"] = pledging
+
+    # Borrower-present attestation gate (P4-16): valuation/LTV is only FINAL when
+    # the borrower is attested present at valuation; otherwise it is provisional.
+    ltv_result["borrower_present"] = bool(borrower_present)
+    ltv_result["status"] = "final" if borrower_present else "provisional"
 
     # ── Advisory-signal boost ──
     # Spatial-acoustic spread, hallmark engraving irregularity, and
@@ -743,7 +826,12 @@ async def analyze(
     # mechanism the contradiction score already uses. Each capped so no
     # single advisory signal can carry a verdict on its own.
     aux_boost, aux_notes = 0.0, []
-    if spatial_result.get("spatial_inconsistency_flag"):
+    # spatial_acoustic is experimental and unvalidated for smartphone-mic
+    # jewellery acoustics, so by default it must NOT move a real verdict — it is
+    # still computed and displayed for information, but only contributes to
+    # aux_boost when explicitly enabled (ENABLE_SPATIAL_ACOUSTIC=1).
+    _spatial_enabled = os.getenv("ENABLE_SPATIAL_ACOUSTIC", "0").strip() in ("1", "true", "True")
+    if _spatial_enabled and spatial_result.get("spatial_inconsistency_flag"):
         b = round(min(0.15, spatial_result["risk_score"] * 0.15), 4)
         aux_boost += b
         aux_notes.append(f"spatial-acoustic (+{b}): {spatial_result['reason']}")
@@ -762,6 +850,40 @@ async def analyze(
     if duplicate_flags:
         aux_boost += 0.20
         aux_notes.append(f"integrity (+0.20): {len(duplicate_flags)} photo(s) matched evidence already on file for another case")
+
+    # Hollow-item density correction (P1-1). A genuinely hollow piece (bangle,
+    # jhumka dome) should read LIGHTER than solid gold. If the officer marks the
+    # item hollow (or the photo shows filigree openwork) yet the density sits in
+    # a solid-gold karat band, that is the dense-core-fill signature — the
+    # density "looks like gold" precisely because a dense filler replaced the
+    # air. Density's reassurance is inverted, and the acoustic ring pitch is
+    # promoted to the decisive signal for this case.
+    xray_filigree = (xray_result or {}).get("filigree") or {}
+    is_openwork = bool(xray_filigree.get("is_filigree"))
+    treat_hollow = bool(hollow_item or is_openwork)
+    hollow_anomaly = False
+    if treat_hollow:
+        best = (density_result or {}).get("best_match") or {}
+        if best.get("kind") == "karat":
+            hollow_anomaly = True
+            aux_boost += 0.15
+            src = "declared hollow" if hollow_item else "photo shows filigree openwork"
+            aux_notes.append(
+                f"hollow-item (+0.15): {src}, but density is consistent with SOLID gold "
+                f"({best.get('label', 'a gold karat band')}) — a hollow piece should read lighter. "
+                "Possible dense-core fill; ring-pitch acoustic is the decisive check."
+            )
+        # Promote acoustic: for a hollow/openwork item, an above-band ring pitch
+        # (not only the stricter stiff_core_flag) is treated as decisive later.
+
+    if (xray_result or {}).get("multiple_items", {}).get("multiple_items_detected"):
+        mi = xray_result["multiple_items"]
+        aux_notes.append(
+            f"multiple items: {mi.get('component_count')} separate pieces in frame"
+            + (" (likely a pair)" if mi.get("likely_pair") else "")
+            + " — value and weigh each separately; a single blended reading is unreliable."
+        )
+
     aux_boost = round(min(0.5, aux_boost), 4)
     contra["flags"].extend(aux_notes)
 
@@ -783,6 +905,17 @@ async def analyze(
         risk_level, confidence, loan_action = "REJECT", "HIGH", "DECLINE"
         override_reason = ring_check["reason"]
         contra["flags"].append("density↔ring-pitch: " + ring_check["reason"])
+    elif treat_hollow and hollow_anomaly and ring_check and ring_check.get("status") == "above_genuine_band":
+        # Acoustic promoted to primary for a hollow/openwork item: a solid-gold
+        # density on a piece that should be hollow, plus a ring pitch above the
+        # genuine band, is the dense-core-fill signature even short of the
+        # stricter stiff_core_flag threshold.
+        risk_level, confidence, loan_action = "REJECT", "HIGH", "DECLINE"
+        override_reason = (
+            "Item is hollow/openwork yet density reads as solid gold and the ring pitch is "
+            "above the genuine band — dense-core-fill signature (acoustic promoted to primary)."
+        )
+        contra["flags"].append("hollow↔ring-pitch: " + override_reason)
 
     # Multi-test mandate: an APPROVE must rest on the full core battery
     # (weight + photo + sound). One failing test can reject — a fake needs
@@ -803,6 +936,24 @@ async def analyze(
             f"missing: {', '.join(core_missing)}. Add the missing test(s) and re-analyse. "
             "No single test can approve an item on its own."
         )
+
+    # RBI Para 16 aggregate pledging cap (P4-15): a breach blocks sanction
+    # regardless of the authenticity verdict — the gold may be genuine, but the
+    # borrower has hit their pledging ceiling.
+    if pledging.get("exceeds"):
+        contra["flags"].append("pledging-cap: " + pledging["reason"])
+        if loan_action != "DECLINE":
+            risk_level, confidence, loan_action = "BORDERLINE", confidence, "HOLD"
+            override_reason = pledging["reason"]
+
+    # Borrower-present attestation (P4-16): the valuation/LTV cannot be finalised
+    # until the borrower is attested present. This does not change the
+    # authenticity verdict — it holds the LOAN from being disbursed on an
+    # unattested valuation.
+    if loan_action == "APPROVE" and not borrower_present:
+        contra["flags"].append(
+            "borrower-present: attestation not recorded — valuation is provisional; "
+            "confirm the borrower is present before finalising/disbursing.")
 
     llm_payload = {
         "item_description": item_description or "gold item (no description provided)",
@@ -943,9 +1094,19 @@ async def analyze(
         "timestamp":        analysis_ts.isoformat() + "Z",
         "item_description": item_description,
         "declared_karat":   declared_karat,
+        "hollow_item":      bool(hollow_item),
+        "hollow_anomaly":   bool(hollow_anomaly),
+        "borrower_present": bool(borrower_present),
         "branch_id":        branch_id,
         "geo":              {"lat": geo_lat, "lon": geo_lon} if geo_lat is not None else None,
         "weight_capture_source": weight_capture_source,
+        "evidence_capture": {
+            "image_sources": list(image_sources),
+            "streak_source": streak_source if streak_image is not None else None,
+            "uv_source":     uv_source if uv_image is not None else None,
+            "any_uploaded":  bool(_uploaded),
+            "policy":        "live_only" if os.getenv("ALLOW_UPLOAD_EVIDENCE", "1").strip() not in ("1", "true", "True") else "upload_allowed",
+        },
         "customer": {
             "name":        customer_name,
             "account_no":  customer_account,

@@ -75,3 +75,14 @@
 .note { font-size: 12px; color: var(--text-mid); line-height: 1.55; }
 .alertNote { font-size: 12px; color: var(--danger); font-weight: 600; line-height: 1.55; margin-bottom: 4px; }
 .warnText { color: var(--danger); }
+
+.calibrationWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--warn, #B45309);
+  line-height: 1.5;
+  margin: 6px 0 4px;
+}
+.calibrationWarning svg { flex-shrink: 0; margin-top: 1px; }

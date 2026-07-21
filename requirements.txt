@@ -3,6 +3,7 @@ uvicorn==0.30.0
 python-multipart==0.0.9
 librosa==0.10.2
 soundfile==0.12.1
+noisereduce>=3.0.0   # tap-recording noise cleanup (P0); guarded fallback if absent
 numpy>=2.0,<2.5   # numba (a librosa dependency) does not yet support numpy 2.5+
 scipy==1.13.0
 scikit-learn==1.5.0

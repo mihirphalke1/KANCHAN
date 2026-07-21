@@ -48,6 +48,8 @@ const BLANK_FORM = {
   customer_account:  '',
   loan_app_no:       '',
   huid:              '',
+  hollow_item:       false,
+  borrower_present:  false,
 }
 
 // Image-first flow: photos + weights get a verdict; text details are an
@@ -57,10 +59,13 @@ const BLANK_FORM = {
 export default function AnalysisForm({ onSubmit, loading, hasResult }) {
   const [form, setForm]       = useState(BLANK_FORM)
   const [photos, setPhotos]   = useState([null])          // up to 4 live-captured angles
+  const [photoSources, setPhotoSources] = useState([null]) // 'camera' | 'upload' per slot
   const [primaryTap, setPrimaryTap] = useState(null)
   const [extraTaps, setExtraTaps]   = useState([])         // spatial acoustic grid points
   const [streak, setStreak]   = useState(null)
+  const [streakSource, setStreakSource] = useState(null)
   const [uv, setUv]           = useState(null)
+  const [uvSource, setUvSource] = useState(null)
   const [hallmarkPhoto, setHallmarkPhoto] = useState(null)
   const [moreOpen, setMoreOpen] = useState(false)
 
@@ -209,18 +214,31 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
     if (hallmarkResult) fd.append('hallmark_result', JSON.stringify(hallmarkResult))
     if (kycRecord)      fd.append('kyc_record', JSON.stringify(kycRecord))
 
-    capturedPhotos.forEach(img => fd.append('images', img))
+    // Per-image capture provenance, aligned to the `images` order, so the
+    // backend can enforce live-capture-only evidence in production
+    // (ALLOW_UPLOAD_EVIDENCE=0) and record the source either way.
+    photos.forEach((img, idx) => {
+      if (!img) return
+      fd.append('images', img)
+      fd.append('image_sources', photoSources[idx] || 'camera')
+    })
     fd.append('audio', primaryTap)
     extraTaps.forEach(t => { if (t.file) { fd.append('tap_audio', t.file); fd.append('tap_positions', t.position) } })
-    if (streak) fd.append('streak_image', streak)
-    if (uv)     fd.append('uv_image', uv)
+    if (streak) { fd.append('streak_image', streak); fd.append('streak_source', streakSource || 'camera') }
+    if (uv)     { fd.append('uv_image', uv); fd.append('uv_source', uvSource || 'camera') }
 
     onSubmit(fd, { images: capturedPhotos, audio: primaryTap, streak })
   }
 
-  const addPhotoSlot = () => photos.length < 4 && setPhotos(p => [...p, null])
-  const setPhotoAt = (i, file) => setPhotos(p => p.map((x, idx) => idx === i ? file : x))
-  const removePhotoSlot = (i) => setPhotos(p => p.length > 1 ? p.filter((_, idx) => idx !== i) : [null])
+  const addPhotoSlot = () => photos.length < 4 && (setPhotos(p => [...p, null]), setPhotoSources(s => [...s, null]))
+  const setPhotoAt = (i, file, source = 'camera') => {
+    setPhotos(p => p.map((x, idx) => idx === i ? file : x))
+    setPhotoSources(s => s.map((x, idx) => idx === i ? (file ? source : null) : x))
+  }
+  const removePhotoSlot = (i) => {
+    setPhotos(p => p.length > 1 ? p.filter((_, idx) => idx !== i) : [null])
+    setPhotoSources(s => s.length > 1 ? s.filter((_, idx) => idx !== i) : [null])
+  }
 
   const addTapPoint = () => extraTaps.length < 3 &&
     setExtraTaps(t => [...t, { position: TAP_POSITIONS[t.length] || `Point ${t.length + 2}`, file: null }])
@@ -273,6 +291,16 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
           </div>
         )}
         {kycError && <p className={styles.fieldError}>{kycError}</p>}
+        <label className={styles.checkRow}>
+          <input
+            type="checkbox" checked={form.borrower_present}
+            onChange={e => set('borrower_present', e.target.checked)}
+          />
+          <span>
+            Borrower is physically present at valuation
+            <InfoTip text="RBI requires the borrower present when the pledge is valued. Until this is attested, the loan valuation (LTV) is treated as provisional and cannot be finalised for disbursal." />
+          </span>
+        </label>
       </fieldset>
 
       {/* ── 2. Photos — live capture only ── */}
@@ -390,6 +418,17 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
           </div>
         </div>
 
+        <label className={styles.checkRow}>
+          <input
+            type="checkbox" checked={form.hollow_item}
+            onChange={e => set('hollow_item', e.target.checked)}
+          />
+          <span>
+            Hollow item (bangle, jhumka dome, etc.)
+            <InfoTip text="A hollow piece should read lighter than solid gold. If it's hollow but the density reads solid-gold, that's the dense-core-fill signature — the ring-pitch sound test becomes the decisive check." />
+          </span>
+        </label>
+
         {tempError && <p className={styles.fieldError}>{tempError}</p>}
         {weightError && <p className={styles.fieldError}>{weightError}</p>}
         {!tempError && !weightError && form.weight_dry && form.weight_submerged &&
@@ -463,7 +502,7 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
                 <Camera size={12} /> Touchstone Streak Photo
                 <InfoTip text="Rub the item on the touchstone and photograph the streak mark. HSV hue analysed against per-karat reference bands — catches surface-level plating a rub cuts through." />
               </label>
-              <CameraCapture facingMode="environment" label="streak photo" onCapture={setStreak} />
+              <CameraCapture facingMode="environment" label="streak photo" onCapture={(f, s) => { setStreak(f); setStreakSource(s) }} />
             </div>
 
             <div className={styles.field}>
@@ -471,7 +510,7 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
                 <Flashlight size={12} /> UV-Pass ("Blacklight") Photo
                 <InfoTip text="Photograph the item under a UV-A torch. Solid genuine gold should not fluoresce; rhodium plating and many synthetic stones do — an assistive signal, not conclusive on its own." />
               </label>
-              <CameraCapture facingMode="environment" label="UV-pass photo" onCapture={setUv} />
+              <CameraCapture facingMode="environment" label="UV-pass photo" onCapture={(f, s) => { setUv(f); setUvSource(s) }} />
             </div>
 
             <div className={styles.field}>

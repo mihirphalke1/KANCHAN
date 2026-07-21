@@ -59,6 +59,26 @@
 
 .field:last-child { margin-bottom: 0; }
 
+.checkRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 10px 0 14px;
+  font-size: 13px;
+  color: var(--text-secondary, #374151);
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.checkRow input[type="checkbox"] {
+  margin-top: 2px;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--brand, #019EEC);
+}
+
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
