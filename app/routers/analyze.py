@@ -12,10 +12,11 @@ from typing import Optional
 
 import cv2
 import numpy as np
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.auth import require_session
+from app.rate_limit import ANALYZE_RATE_LIMIT, limiter
 from app.models.acoustic_model import analyze_acoustic
 from app.models.acoustic_physics import extract_ring_frequency, ring_frequency_check
 from app.models.contradiction import contradiction_summary
@@ -27,16 +28,22 @@ from app.models.spatial_acoustic import analyze_spatial_taps
 from app.models.streak_model import analyze_streak
 from app.models.tarnish_model import analyze_tarnish, analyze_uv_pass
 from app.models.xray_model import analyze_xray, VISUAL_BLEND_IMAGE, VISUAL_BLEND_XRAY
+from app.utils.approval import build_approval
+from app.utils.fraud_scenario import map_scenarios
 from app.utils.bis_registry import lookup_huid
 from app.utils.composition import analyze_composition
 from app.benford.monitor import append_density_reading, run_benford_test
 from app.utils.fiducial import detect_marker
 from app.utils.gem_grid import build_grid_stats
-from app.utils.ltv import assess_value
+from app.utils.gem_weight import estimate_gem_weights
+from app.utils.hashchain import append_with_chain
+from app.utils.ltv import assess_value, compute_net_gold_weight
+from app.utils.pledging import check_pledging_cap
 from app.utils.phash import check_duplicate, register_photo
 from app.utils.stamp import stamp_image
-from app.utils.xray import xray_preview
+from app.utils.xray import xray_preview, reconcile_stones
 from app.llm.verdict_prompt import generate_verdict
+from app.llm.gem_vision import detect_gems
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -57,6 +64,9 @@ def _load_history() -> list:
 def _save_case(case: dict) -> None:
     HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
     history = _load_history()
+    # Stamp the case into the tamper-evident hash chain (prev_hash + entry_hash)
+    # before it is persisted, so the ledger is verifiable from this point on.
+    append_with_chain(history, case)
     history.append(case)
     HISTORY_PATH.write_text(json.dumps(history, indent=2))
 
@@ -179,18 +189,36 @@ def _build_trace(
     physics_says = f" Physics best match: {best.get('name', '—')}"
     if density_result.get("misdeclared_purity"):
         physics_says += " — likely purity mis-declaration, not fake metal"
+
+    # Status reflects the discrete verdict bucket (does the point estimate sit
+    # in the expected band?), NOT the raw Gaussian-CDF risk_score directly.
+    # risk_score is P(true density outside the band | measurement uncertainty)
+    # — it can exceed 0.5 purely from a large sigma (a light item on the same
+    # balance has proportionally more measurement noise) even when the
+    # measured density sits squarely inside the band, which used to show this
+    # step as "flag" (amber) despite karat_verdict == IN_RANGE. That
+    # uncertainty is still real and worth surfacing, so it's now a caution
+    # note in the summary rather than a false "this looks wrong" flag.
+    _density_ok = density_result["karat_verdict"] in ("IN_RANGE", "IDENTIFIED_FROM_PHYSICS")
+    _low_confidence = _density_ok and not density_result.get("measurement_adequate", True)
+    confidence_note = (
+        " Note: measurement precision is limited for an item this light — the "
+        "reading passes, but a heavier sample or repeat weighing would be more conclusive."
+        if _low_confidence else ""
+    )
     steps.append({
         "step": "Does the density match the declared karat?",
-        "status": "flag" if density_result["risk_score"] > 0.5 else "done",
+        "status": "done" if _density_ok else "flag",
         "summary": f"{verdict_text}; chance it matches: "
                    f"{round(density_result['conformity_probability'] * 100, 1)}%."
-                   + physics_says,
+                   + physics_says + confidence_note,
         "formula": "risk = P(true ρ outside karat band | measurement), Gaussian CDF",
         "details": {
             "declared band (g/cm³)": f"{density_result['expected_low']} – {density_result['expected_high']}",
             "raw density risk":      density_result["risk_score"],
             "closest fake metal":    density_result["closest_fake"] or "—",
             "tungsten blind spot":   density_result["tungsten_warning"],
+            "measurement adequate":  density_result.get("measurement_adequate", True),
         },
         "source": "Band derived from IS 1417:2016 fineness + CRC densities (mixture rule); scoring per JCGM 106",
     })
@@ -201,8 +229,13 @@ def _build_trace(
             "status": "done" if xray_result.get("background_removed") else "flag",
             "summary": (f"Item = {xray_result.get('item_area_pct')}% of frame, backdrop removed"
                         if xray_result.get("background_removed")
-                        else "Backdrop could not be separated — the photo is set aside "
-                             "(no visual evidence used); retake on a plain background"),
+                        else ("Backdrop could not be separated, so area-based numbers "
+                              "(composition, gold-vs-gems) are omitted — but the AI vision "
+                              "judge still read the stones directly; retake on a plain "
+                              "background for full measurements"
+                              if xray_result.get("gem_regions", 0) > 0
+                              else "Backdrop could not be separated — the photo is set aside "
+                                   "(no visual evidence used); retake on a plain background")),
             "formula": "Backdrop colour from frame border → weighted HSV distance; border-touching components discarded",
             "details": {"stage_image": "material"},
             "source": "Classical CV (no ML) — thresholds in app/utils/xray.py",
@@ -228,6 +261,21 @@ def _build_trace(
                 "details": {"stage_image": "gems", "detection_mode": stone_mode},
                 "source": "Independent CV/ML detection — description text is never trusted",
             })
+            ggs = xray_result.get("gold_gem_split") or {}
+            if ggs:
+                steps.append({
+                    "step": "Separating gold metal from gems by colour",
+                    "status": "done",
+                    "summary": (f"Gold ≈ {ggs.get('gold_pct', 0)}% of item, "
+                                f"gems ≈ {ggs.get('gem_pct', 0)}%, "
+                                f"other ≈ {ggs.get('other_pct', 0)}% "
+                                f"({ggs.get('stones_used', 0)} stone region(s) used)"),
+                    "formula": "Gems = kept stone mask; remaining item pixels → gold if Lab ΔE to "
+                               "metal reference ≤ GOLD_LAB_MATCH_MAX or HSV in gold band; else other",
+                    "details": {"stage_image": "gold_gem", **ggs},
+                    "source": "Additive colour segmentation (app/utils/xray.py::_gold_gem_map) — "
+                              "visual only, does not change fusion risk",
+                })
             steps.append({
                 "step": "Checking dark spots against the found stones",
                 "status": "flag" if xray_result.get("inclusions_unexplained", 0) > 0 else "done",
@@ -236,6 +284,46 @@ def _build_trace(
                 "formula": "Dark region counts as a stone only if ≥25% of it overlaps an independently detected gem",
                 "details": {},
                 "source": "Two independent CV passes must agree (anti-laundering design)",
+            })
+        elif xray_result.get("gem_regions", 0) > 0:
+            # Backdrop could not be separated, yet the AI vision judge read the
+            # ornament directly and still found stones. Area-based numbers stay
+            # omitted (they need the item mask), but the stones themselves are
+            # real evidence and are surfaced so the trace matches the scan card.
+            sa = xray_result.get("stone_agreement") or {}
+            steps.append({
+                "step": "Finding the stones in the photo (AI vision)",
+                "status": "done",
+                "summary": f"{xray_result.get('gem_regions', 0)} stone(s) identified by the AI vision "
+                           "judge directly from the photo, despite the busy background — "
+                           "boundaries refined by MobileSAM where available. "
+                           "Area %/composition are omitted (they need a clean item mask).",
+                "formula": "AI vision model names + locates each set stone; STONE_AI_ONLY makes the AI "
+                           "the sole authority on the stone set, so background separation is not required",
+                "details": {"stage_image": "gems", "detection_mode": "ml_ai",
+                            "n_ai_only": sa.get("n_ai_only", 0), "n_both": sa.get("n_both", 0)},
+                "source": "AI vision (Fireworks/Kimi or Gemini) — description text is never trusted",
+            })
+
+        # Two independent detectors disagreed hard: the AI vision judge saw NO
+        # stones, yet the CV/ML pass was confident it found some. Rather than
+        # silently trust the AI's zero (which is how a small/low-contrast pavé
+        # ring gets mis-reported as bare metal), those stones were recovered as
+        # review-flagged evidence — surface that to the officer explicitly.
+        sa = xray_result.get("stone_agreement") or {}
+        if sa.get("ai_empty_ml_disagree"):
+            steps.append({
+                "step": "Detector disagreement — stones flagged for review",
+                "status": "flag",
+                "summary": f"AI vision found no stones, but the CV/ML pass confidently detected "
+                           f"{sa.get('n_rescued_ai_empty', 0)} — kept as UNCERTAIN and flagged for a "
+                           "human check rather than dropped. Common on tiny pavé / illusion settings "
+                           "the vision model under-reads.",
+                "formula": "AI-empty + CV confidence ≥ STONE_RESCUE_ML_MIN_CONF → recover as "
+                           "needs_review (never asserted as confirmed)",
+                "details": {"stage_image": "gems",
+                            "n_rescued": sa.get("n_rescued_ai_empty", 0)},
+                "source": "Graceful degradation (app/utils/stone_fusion.py) — recovers, never invents",
             })
 
     if composition_result:
@@ -262,31 +350,61 @@ def _build_trace(
             "source": "Two-component mixture rule; gem SG per Webster/GIA",
         })
 
+    _ac_mode = acoustic_result.get("mode", "—")
+    if _ac_mode == "svm":
+        _ac_formula = ("122-dim MFCC + Δ (velocity) + ΔΔ (acceleration) fingerprint → RBF-SVM. "
+                       "ΔΔ captures the acceleration of spectral decay that separates a solid "
+                       "ring from a damped composite thud.")
+    elif _ac_mode == "svm_data_limited":
+        _ac_formula = ("122-dim MFCC + Δ + ΔΔ fingerprint computed, but the classifier is "
+                       "data-limited (DS-1 absent) — reported for information only; the ring-pitch "
+                       "physics below carries the acoustic verdict.")
+    else:
+        _ac_formula = ("122-dim MFCC + Δ + ΔΔ fingerprint → heuristic fallback "
+                       "(RMS-decay ratio + zero-crossing rate).")
+    _ac_details = {"method": _ac_mode}
+    if acoustic_result.get("svm_raw_risk") is not None:
+        _ac_details["svm raw risk (not fused)"] = acoustic_result["svm_raw_risk"]
+        _ac_details["svm LOOCV"] = acoustic_result.get("svm_loocv")
     steps.append({
         "step": "Sound test (ring of the tapped item)",
-        "status": "done" if acoustic_result.get("mode") not in ("no_audio",) else "skipped",
+        "status": "done" if _ac_mode not in ("no_audio",) else "skipped",
         "summary": (f"risk {acoustic_result['risk_score']}"
-                    if acoustic_result.get("mode") not in ("no_audio",)
+                    if _ac_mode not in ("no_audio",)
                     else "No tap recording provided — the filled-core check needs it"),
-        "formula": "MFCC-ΔΔ features → SVM (trained on DS-1 tap recordings)",
-        "details": {"method": acoustic_result.get("mode", "—")},
-        "source": "DS-1: Kaggle counterfeit-gold tap dataset",
+        "formula": _ac_formula,
+        "details": _ac_details,
+        "source": "MFCC-ΔΔ per librosa; classifier via scripts/retrain_acoustic_svm.py",
     })
 
     ring = acoustic_result.get("ring")
     if ring:
+        _vcc = ring.get("velocity_cross_check") or {}
+        _ring_details = {
+            "measured pitch (Hz)": ring.get("dominant_freq_hz") or "—",
+            "genuine band (Hz)":   " – ".join(map(str, ring.get("genuine_band_hz", []))) or "uncalibrated",
+            "recording SNR (dB)":  ring.get("snr_db"),
+        }
+        # Noise-cleanup trail (0a): show what cleaning bought, for auditability.
+        if ring.get("snr_pre_db") is not None:
+            _ring_details["SNR before / after cleanup (dB)"] = f"{ring.get('snr_pre_db')} → {ring.get('snr_post_db')}"
+            _ring_details["noise cleanup"] = "on" if ring.get("denoise_applied") else "off"
+        # Length-adaptive velocity cross-check (0c).
+        if _vcc.get("available"):
+            if _vcc.get("gold_ref_velocity_ms"):
+                _ring_details["velocity v=2·L·f (m/s)"] = f"{_vcc.get('velocity_ms')} vs genuine {_vcc.get('gold_ref_velocity_ms')} (ratio {_vcc.get('velocity_ratio')})"
+            else:
+                _ring_details["velocity v=2·L·f (m/s)"] = _vcc.get("velocity_ms")
+            _ring_details["item length (mm)"] = _vcc.get("item_length_mm")
         steps.append({
             "step": "Checking the ring pitch against genuine gold",
             "status": "flag" if ring.get("stiff_core_flag") else (
                 "done" if ring.get("status") in ("consistent", "marginal") else "skipped"),
             "summary": ring.get("reason", ring.get("status", "")),
             "formula": "Sound speed v = √(stiffness E / density ρ) — a stiffer core rings higher. "
-                       "Measured pitch is compared to a band CALIBRATED from known-genuine recordings",
-            "details": {
-                "measured pitch (Hz)": ring.get("dominant_freq_hz") or "—",
-                "genuine band (Hz)":   " – ".join(map(str, ring.get("genuine_band_hz", []))) or "uncalibrated",
-                "recording SNR (dB)":  ring.get("snr_db"),
-            },
+                       "Pitch is compared to a CALIBRATED genuine band, and cross-checked against the "
+                       "length-adaptive expectation v = 2·L·f when the calibration card gives item size.",
+            "details": _ring_details,
             "source": "E per CRC/ASM (Au 79 GPa, W 411 GPa); band via scripts/calibrate_acoustic.py",
         })
 
@@ -338,13 +456,17 @@ def _build_trace(
 
 
 @router.post("/analyze")
+@limiter.limit(ANALYZE_RATE_LIMIT)
 async def analyze(
+    request: Request,
     response: Response,
     item_description: str = Form(""),
     declared_karat: int = Form(...),
     weight_dry: float = Form(...),
     weight_submerged: float = Form(...),
     water_temp_c: float = Form(25.0),
+    hollow_item: bool = Form(False),
+    borrower_present: bool = Form(False),
     branch_id: str = Form("default"),
     customer_name: str = Form(""),
     customer_account: str = Form(""),
@@ -357,15 +479,35 @@ async def analyze(
     hallmark_result: str = Form(""),
     kyc_record: str = Form(""),
     images: list[UploadFile] = File(default=[]),
+    image_sources: list[str] = Form(default=[]),
     audio: Optional[UploadFile] = File(default=None),
     streak_image: Optional[UploadFile] = File(default=None),
+    streak_source: str = Form("camera"),
     tap_audio: list[UploadFile] = File(default=[]),
     tap_positions: list[str] = Form(default=[]),
     uv_image: Optional[UploadFile] = File(default=None),
+    uv_source: str = Form("camera"),
     session: dict = Depends(require_session),
 ):
     case_id = uuid.uuid4().hex[:8]
     response.headers["X-Case-ID"] = case_id
+
+    # Evidence capture policy (P2): in production (ALLOW_UPLOAD_EVIDENCE=0) only
+    # live-camera captures are accepted as photographic evidence — a gallery /
+    # file-picker upload could be an old or someone else's photo, defeating the
+    # whole live-capture chain. We reject such a submission outright rather than
+    # silently trusting client-side labelling. Kept permissive by default so the
+    # demo/dev upload escape hatch still works; the source is recorded either way.
+    _evidence_sources = [s for s in ([*image_sources, streak_source, uv_source]) if s]
+    _uploaded = [s for s in _evidence_sources if s == "upload"]
+    if _uploaded and os.getenv("ALLOW_UPLOAD_EVIDENCE", "1").strip() not in ("1", "true", "True"):
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"{len(_uploaded)} evidence image(s) were gallery-uploaded, not live-captured. "
+                "This deployment accepts only live-camera evidence — retake the photo(s) with the camera."
+            ),
+        )
     # officer_name is now resolved from the authenticated evaluator session,
     # not trusted as free text — the Evaluator Integrity Layer's whole point
     # is that every case is traceable to a person who was physically present
@@ -373,13 +515,14 @@ async def analyze(
     officer_name = session["name"]
     evaluator_id = session["evaluator_id"]
 
-    if declared_karat not in (0, 14, 18, 22, 24):
+    if declared_karat not in (0, 14, 18, 22, 23, 24):
         raise HTTPException(status_code=422,
-                            detail="declared_karat must be 14, 18, 22, 24, or 0 (not declared)")
+                            detail="declared_karat must be 14, 18, 22, 23, 24, or 0 (not declared)")
     if weight_dry <= 0 or weight_submerged <= 0:
         raise HTTPException(status_code=422, detail="Weights must be positive")
     if weight_submerged >= weight_dry:
-        raise HTTPException(status_code=422, detail="Submerged weight must be less than dry weight")
+        raise HTTPException(status_code=422,
+                            detail="Water displaced must be greater than zero — check the reading and that the scale was tared")
     if not 0.0 < water_temp_c < 45.0:
         raise HTTPException(status_code=422, detail="water_temp_c must be between 0 and 45 °C")
 
@@ -426,11 +569,46 @@ async def analyze(
     # ready) so the PDF report and the History page can show real evidence,
     # not just the live response the browser already has.
     xray_result = None
+    xray_ctx = None
     if image_bytes_list:
         try:
-            xray_result = xray_preview(image_bytes_list[0])
+            xray_result, xray_ctx = xray_preview(image_bytes_list[0], _return_ctx=True)
         except Exception as e:
             logger.warning("Material scan failed for case %s: %s", case_id, e)
+
+    # ── AI vision stone detection (Layer B — the PRIMARY stone judge) ─────
+    # The AI names + locates every set gemstone directly in the photo; stone
+    # fusion then uses the ML/SAM boundary only where the AI also saw a stone
+    # (STONE_AI_ONLY). The AI reads the raw ornament, so — unlike the ML/CV
+    # pass — it does NOT need the backdrop separated: a busy/leafy background
+    # that defeats background removal must NOT suppress a stone the AI can
+    # plainly see. So this runs whenever we have the pipeline context, even when
+    # background_removed is False. Fully guarded: no API key / toggle off / any
+    # failure -> ai_stones is None and reconcile_stones returns an ML-only
+    # passthrough, so the result is never worse than the ML-only path. Runs on
+    # the illumination-normalised image so the AI's coordinates match the
+    # item bbox the pipeline computed.
+    if xray_result and xray_ctx:
+        try:
+            ai_stones = await detect_gems(
+                xray_ctx.get("norm"), xray_ctx.get("item_bbox"),
+                source_bgr=xray_ctx.get("source_bgr"),
+                source_to_norm=xray_ctx.get("source_to_norm", 1.0),
+            )
+            stats_patch, stage_patch = reconcile_stones(xray_ctx, ai_stones)
+            if stats_patch:
+                xray_result.update(stats_patch)
+            if stage_patch and isinstance(xray_result.get("stages"), dict):
+                xray_result["stages"].update(stage_patch)
+            # The AI reliably found stones even though the backdrop could not be
+            # separated: expose them for display/weighing. Composition/density
+            # stay gated on true background separation (area% needs the item
+            # mask), but the stone list, count and gem overlay do not.
+            if (ai_stones and not xray_result.get("background_removed")
+                    and (stats_patch or {}).get("gem_regions", 0) > 0):
+                xray_result["ai_stones_without_bg"] = True
+        except Exception as e:
+            logger.warning("Stone AI detection failed for case %s: %s", case_id, e)
 
     # ── Fiducial calibration card: tamper-evidence + real-world scale ──
     # Detected in the same primary photo (SOP: place the card flat beside
@@ -438,6 +616,7 @@ async def analyze(
     # reference for stone sizing, never a hard block.
     fiducial_result = None
     gem_grid_result = None
+    gem_weight_result = None
     if image_bytes_list:
         try:
             arr = np.frombuffer(image_bytes_list[0], dtype=np.uint8)
@@ -454,6 +633,15 @@ async def analyze(
                 grid_n    = 4,
                 px_per_mm = (fiducial_result or {}).get("px_per_mm"),
             )
+            try:
+                gem_weight_result = estimate_gem_weights(
+                    stones         = xray_result.get("stones", []),
+                    px_per_mm      = (fiducial_result or {}).get("px_per_mm"),
+                    declared_karat = declared_karat,
+                )
+            except Exception as e:
+                logger.warning("Gem weight estimation failed for case %s: %s", case_id, e)
+                gem_weight_result = None
 
     # ── Tarnish/rust + UV-pass fluorescence (assistive, low-weight) ──
     tarnish_result = None
@@ -485,11 +673,25 @@ async def analyze(
 
     # ── Ring-frequency physics (stiff-core / tungsten cross-check) ──
     # Calibration-gated: only decides against a measured genuine band.
+    # Item longest dimension in metres, from the calibration-card scale — feeds
+    # the length-adaptive v = 2·L·f velocity cross-check. None when the card
+    # isn't in frame (then the velocity check simply abstains).
+    item_length_m = None
+    try:
+        _ppm = (fiducial_result or {}).get("px_per_mm")
+        _bbox = (xray_result or {}).get("item_bbox")
+        if _ppm and _bbox and len(_bbox) == 4:
+            longest_px = max(_bbox[2] - _bbox[0], _bbox[3] - _bbox[1])
+            if longest_px > 0:
+                item_length_m = longest_px / _ppm / 1000.0
+    except Exception as e:
+        logger.warning("Item-length derivation failed for case %s: %s", case_id, e)
+
     ring_check = None
     if audio_bytes:
         try:
             ring = extract_ring_frequency(audio_bytes)
-            ring_check = ring_frequency_check(ring, density_result)
+            ring_check = ring_frequency_check(ring, density_result, item_length_m=item_length_m)
             acoustic_result["ring"] = {**ring, **ring_check}
         except Exception as e:
             logger.warning("Ring-frequency check failed for case %s: %s", case_id, e)
@@ -614,25 +816,47 @@ async def analyze(
             density          = density_result["measured_density"],
             case_id          = case_id,
             branch_id        = branch_id,
+            evaluator_id     = evaluator_id,
             declared_karat   = declared_karat,
             weight_submerged = weight_submerged,
         )
     except Exception as e:
         logger.warning("Failed to append density log: %s", e)
 
+    # Branch-level monitor (organised ring across the branch) plus a
+    # per-evaluator slice (localises a systematic anomaly to a single corrupt
+    # officer — P3-11). The per-evaluator result only fires once that officer
+    # has accrued enough attributed readings; until then it reports
+    # insufficient_data and never blocks a case.
     benford = run_benford_test()
+    benford_evaluator = run_benford_test(evaluator_id=evaluator_id)
+    if benford_evaluator.get("alert"):
+        contra["flags"].append(
+            f"benford-evaluator: {benford_evaluator['message']}")
 
     # ── Assessed value + RBI-tiered LTV ──
-    # Net gold weight prefers the stone-corrected composition estimate when
-    # the mixture model is valid; falls back to gross dry weight otherwise
-    # (plain-metal items, or a composition model that didn't apply).
-    net_gold_weight_g = (
-        composition_result["gold_mass_g"]
-        if composition_result and composition_result.get("model_valid")
-           and composition_result.get("gold_mass_g") is not None
-        else weight_dry
-    )
-    ltv_result = assess_value(net_gold_weight_g)
+    # Net gold weight = total measured weight − estimated weight of the set
+    # stones, so LTV is charged on the gold only. Prefers the direct per-stone
+    # size→carat→grams deduction (needs the calibration card), falling back to
+    # the density mixture model, then gross weight. See ltv.compute_net_gold_weight.
+    net_gold = compute_net_gold_weight(weight_dry, gem_weight_result, composition_result, gem_grid_result)
+    net_gold_weight_g = net_gold["net_gold_weight_g"]
+    _density_best_match = density_result.get("best_match") or {}
+    _matched_karat = _density_best_match.get("karat") if _density_best_match.get("kind") == "karat" else None
+    ltv_result = assess_value(net_gold_weight_g, declared_karat=declared_karat or None, matched_karat=_matched_karat)
+    ltv_result["net_gold_breakdown"] = net_gold
+
+    # Per-borrower aggregate pledging cap (RBI Para 16, P4-15): a breach blocks
+    # sanction. Coins vs ornaments inferred from the item description.
+    _item_type = "coin" if "coin" in (item_description or "").lower() else "ornament"
+    pledging = check_pledging_cap(customer_account, net_gold_weight_g, item_type=_item_type,
+                                  exclude_case_id=case_id)
+    ltv_result["pledging_cap"] = pledging
+
+    # Borrower-present attestation gate (P4-16): valuation/LTV is only FINAL when
+    # the borrower is attested present at valuation; otherwise it is provisional.
+    ltv_result["borrower_present"] = bool(borrower_present)
+    ltv_result["status"] = "final" if borrower_present else "provisional"
 
     # ── Advisory-signal boost ──
     # Spatial-acoustic spread, hallmark engraving irregularity, and
@@ -642,7 +866,12 @@ async def analyze(
     # mechanism the contradiction score already uses. Each capped so no
     # single advisory signal can carry a verdict on its own.
     aux_boost, aux_notes = 0.0, []
-    if spatial_result.get("spatial_inconsistency_flag"):
+    # spatial_acoustic is experimental and unvalidated for smartphone-mic
+    # jewellery acoustics, so by default it must NOT move a real verdict — it is
+    # still computed and displayed for information, but only contributes to
+    # aux_boost when explicitly enabled (ENABLE_SPATIAL_ACOUSTIC=1).
+    _spatial_enabled = os.getenv("ENABLE_SPATIAL_ACOUSTIC", "0").strip() in ("1", "true", "True")
+    if _spatial_enabled and spatial_result.get("spatial_inconsistency_flag"):
         b = round(min(0.15, spatial_result["risk_score"] * 0.15), 4)
         aux_boost += b
         aux_notes.append(f"spatial-acoustic (+{b}): {spatial_result['reason']}")
@@ -661,6 +890,40 @@ async def analyze(
     if duplicate_flags:
         aux_boost += 0.20
         aux_notes.append(f"integrity (+0.20): {len(duplicate_flags)} photo(s) matched evidence already on file for another case")
+
+    # Hollow-item density correction (P1-1). A genuinely hollow piece (bangle,
+    # jhumka dome) should read LIGHTER than solid gold. If the officer marks the
+    # item hollow (or the photo shows filigree openwork) yet the density sits in
+    # a solid-gold karat band, that is the dense-core-fill signature — the
+    # density "looks like gold" precisely because a dense filler replaced the
+    # air. Density's reassurance is inverted, and the acoustic ring pitch is
+    # promoted to the decisive signal for this case.
+    xray_filigree = (xray_result or {}).get("filigree") or {}
+    is_openwork = bool(xray_filigree.get("is_filigree"))
+    treat_hollow = bool(hollow_item or is_openwork)
+    hollow_anomaly = False
+    if treat_hollow:
+        best = (density_result or {}).get("best_match") or {}
+        if best.get("kind") == "karat":
+            hollow_anomaly = True
+            aux_boost += 0.15
+            src = "declared hollow" if hollow_item else "photo shows filigree openwork"
+            aux_notes.append(
+                f"hollow-item (+0.15): {src}, but density is consistent with SOLID gold "
+                f"({best.get('label', 'a gold karat band')}) — a hollow piece should read lighter. "
+                "Possible dense-core fill; ring-pitch acoustic is the decisive check."
+            )
+        # Promote acoustic: for a hollow/openwork item, an above-band ring pitch
+        # (not only the stricter stiff_core_flag) is treated as decisive later.
+
+    if (xray_result or {}).get("multiple_items", {}).get("multiple_items_detected"):
+        mi = xray_result["multiple_items"]
+        aux_notes.append(
+            f"multiple items: {mi.get('component_count')} separate pieces in frame"
+            + (" (likely a pair)" if mi.get("likely_pair") else "")
+            + " — value and weigh each separately; a single blended reading is unreliable."
+        )
+
     aux_boost = round(min(0.5, aux_boost), 4)
     contra["flags"].extend(aux_notes)
 
@@ -682,6 +945,17 @@ async def analyze(
         risk_level, confidence, loan_action = "REJECT", "HIGH", "DECLINE"
         override_reason = ring_check["reason"]
         contra["flags"].append("density↔ring-pitch: " + ring_check["reason"])
+    elif treat_hollow and hollow_anomaly and ring_check and ring_check.get("status") == "above_genuine_band":
+        # Acoustic promoted to primary for a hollow/openwork item: a solid-gold
+        # density on a piece that should be hollow, plus a ring pitch above the
+        # genuine band, is the dense-core-fill signature even short of the
+        # stricter stiff_core_flag threshold.
+        risk_level, confidence, loan_action = "REJECT", "HIGH", "DECLINE"
+        override_reason = (
+            "Item is hollow/openwork yet density reads as solid gold and the ring pitch is "
+            "above the genuine band — dense-core-fill signature (acoustic promoted to primary)."
+        )
+        contra["flags"].append("hollow↔ring-pitch: " + override_reason)
 
     # Multi-test mandate: an APPROVE must rest on the full core battery
     # (weight + photo + sound). One failing test can reject — a fake needs
@@ -702,6 +976,40 @@ async def analyze(
             f"missing: {', '.join(core_missing)}. Add the missing test(s) and re-analyse. "
             "No single test can approve an item on its own."
         )
+
+    # RBI Para 16 aggregate pledging cap (P4-15): a breach blocks sanction
+    # regardless of the authenticity verdict — the gold may be genuine, but the
+    # borrower has hit their pledging ceiling.
+    if pledging.get("exceeds"):
+        contra["flags"].append("pledging-cap: " + pledging["reason"])
+        if loan_action != "DECLINE":
+            risk_level, confidence, loan_action = "BORDERLINE", confidence, "HOLD"
+            override_reason = pledging["reason"]
+
+    # Borrower-present attestation (P4-16): the valuation/LTV cannot be finalised
+    # until the borrower is attested present. This does not change the
+    # authenticity verdict — it holds the LOAN from being disbursed on an
+    # unattested valuation.
+    if loan_action == "APPROVE" and not borrower_present:
+        contra["flags"].append(
+            "borrower-present: attestation not recorded — valuation is provisional; "
+            "confirm the borrower is present before finalising/disbursing.")
+
+    # Translate the internal verdict + contradiction pattern into the bank's
+    # 8-scenario spurious-gold vocabulary (P3-13) for the response and the PDF.
+    _gross_for_frac = float(net_gold.get("gross_weight_g") or weight_dry or 0.0)
+    _stone_frac = (float(net_gold.get("stone_weight_g") or 0.0) / _gross_for_frac) if _gross_for_frac > 0 else 0.0
+    fraud_scenarios = map_scenarios({
+        "density":              density_result,
+        "contradiction_flags":  contra.get("flags"),
+        "stiff_core_flag":      bool(ring_check and ring_check.get("stiff_core_flag")),
+        "hollow_anomaly":       bool(hollow_anomaly),
+        "hollow_item":          bool(hollow_item),
+        "pledging_exceeds":     bool(pledging.get("exceeds")),
+        "hallmark":             hallmark_parsed,
+        "n_stones":             net_gold.get("n_stones", 0),
+        "stone_weight_fraction": _stone_frac,
+    })
 
     llm_payload = {
         "item_description": item_description or "gold item (no description provided)",
@@ -739,16 +1047,31 @@ async def analyze(
             "details": {"tap points": spatial_result.get("n_usable"), "spread": spatial_result.get("spread_ratio")},
             "source": "Extension of the single-tap ring-frequency physics check (acoustic_physics.py)",
         })
+    _dedn = (
+        f"Total {net_gold['gross_weight_g']} g − stones ≈ {net_gold['stone_weight_g']} g "
+        f"({net_gold.get('n_stones', 0)} stone(s), ~{net_gold.get('stone_carat_total', 0)} ct) "
+        f"= net gold {net_gold['net_gold_weight_g']} g. "
+        if net_gold["method"] == "stone_weight_deduction"
+        else f"Net gold {net_gold['net_gold_weight_g']} g ({net_gold['method']}). "
+    )
+    _rate_note = f"₹{ltv_result['rate_per_gram_inr']:,.0f}/g at {ltv_result['valuation_karat']}K"
+    if ltv_result.get("rate_per_gram_calculated_karat") and ltv_result["valuation_karat"] != _matched_karat:
+        _rate_note += (f" (physics matched {_matched_karat}K ≈ "
+                       f"₹{ltv_result['rate_per_gram_calculated_karat']:,.0f}/g, for comparison only)")
     verification_trace.append({
-        "step": "Assessed value & RBI-tiered LTV",
+        "step": "Net gold weight, assessed value & RBI-tiered LTV",
         "status": "done",
         "summary": (
-            f"Net gold {ltv_result['net_gold_weight_g']} g × ₹{ltv_result['rate_per_gram_inr']:,.0f}/g "
-            f"= ₹{ltv_result['assessed_value_inr']:,.0f}; LTV {ltv_result['ltv_pct']*100:.0f}% "
-            f"({ltv_result['tier']}) → max loan ₹{ltv_result['max_loan_inr']:,.0f}"
+            _dedn
+            + f"{_rate_note} → value ₹{ltv_result['assessed_value_inr']:,.0f}; "
+            f"LTV {ltv_result['ltv_pct']*100:.0f}% ({ltv_result['tier']}) "
+            f"→ max loan ₹{ltv_result['max_loan_inr']:,.0f}"
         ),
-        "formula": "assessed_value = net_gold_weight_g × rate_per_gram; max_loan = assessed_value × tiered LTV%",
-        "details": {"tier": ltv_result["tier"], "ltv_pct": ltv_result["ltv_pct"]},
+        "formula": ("net_gold = total_weight − Σ(stone size→carat→grams);  "
+                    "rate_per_gram = rate_24k_999 × BIS fineness(karat);  "
+                    "assessed_value = net_gold × rate_per_gram;  max_loan = assessed_value × tiered LTV%"),
+        "details": {"tier": ltv_result["tier"], "ltv_pct": ltv_result["ltv_pct"],
+                    "method": net_gold["method"], **net_gold},
         "source": ltv_result["source"],
     })
 
@@ -832,9 +1155,19 @@ async def analyze(
         "timestamp":        analysis_ts.isoformat() + "Z",
         "item_description": item_description,
         "declared_karat":   declared_karat,
+        "hollow_item":      bool(hollow_item),
+        "hollow_anomaly":   bool(hollow_anomaly),
+        "borrower_present": bool(borrower_present),
         "branch_id":        branch_id,
         "geo":              {"lat": geo_lat, "lon": geo_lon} if geo_lat is not None else None,
         "weight_capture_source": weight_capture_source,
+        "evidence_capture": {
+            "image_sources": list(image_sources),
+            "streak_source": streak_source if streak_image is not None else None,
+            "uv_source":     uv_source if uv_image is not None else None,
+            "any_uploaded":  bool(_uploaded),
+            "policy":        "live_only" if os.getenv("ALLOW_UPLOAD_EVIDENCE", "1").strip() not in ("1", "true", "True") else "upload_allowed",
+        },
         "customer": {
             "name":        customer_name,
             "account_no":  customer_account,
@@ -878,12 +1211,19 @@ async def analyze(
         },
         "hallmark":         hallmark_parsed,
         "gem_grid":         gem_grid_result,
+        "gem_weight":       gem_weight_result,
         "ltv":              ltv_result,
         "contradiction":    contra,
         "composition":      composition_result,
         "verification_trace": verification_trace,
         "fusion":           fusion,
         "benford":          benford,
+        "benford_evaluator": benford_evaluator,
+        "fraud_scenarios":  fraud_scenarios,
+        "approval": build_approval(
+            risk_level, loan_action,
+            maker_id=session["evaluator_id"], maker_name=session["name"],
+        ),
         "verdict": {
             "risk_level":    risk_level,
             "confidence":    confidence,
@@ -899,7 +1239,7 @@ async def analyze(
         },
     }
 
-    from app.main import _numpy_safe
+    from app.utils.numpy_safe import numpy_safe as _numpy_safe
     safe_case = _numpy_safe(case)
 
     # The live response embeds X-ray stages as base64 so the just-completed
@@ -907,7 +1247,9 @@ async def analyze(
     # swaps that for the on-disk paths saved above, so case_history.json
     # stays small while a saved case still points at real image files.
     persist_case = json.loads(json.dumps(safe_case))
-    if persist_case.get("media", {}).get("xray", {}).get("stages") is not None:
+    # media["xray"] is present-but-None when no X-ray was captured, so a plain
+    # .get("xray", {}) returns None (not the default) and would blow up below.
+    if ((persist_case.get("media") or {}).get("xray") or {}).get("stages") is not None:
         persist_case["media"]["xray"]["stages"] = saved_xray_stages
     _save_case(persist_case)
     return JSONResponse(content=safe_case)

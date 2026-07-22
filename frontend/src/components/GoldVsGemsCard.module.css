@@ -1,0 +1,98 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+.title svg { color: var(--gold, #B8882E); }
+
+.headline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 800;
+}
+.headlineGold { color: var(--gold, #B8882E); }
+.headlineGem { color: #DC285A; }
+.headlineSep { color: var(--text-faint); }
+.modeBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.body { display: flex; gap: 16px; flex-wrap: wrap; }
+.hero { flex: 0 0 240px; max-width: 100%; }
+.hero img { width: 100%; border-radius: var(--r); display: block; }
+.right { flex: 1 1 260px; min-width: 240px; }
+
+.bar {
+  display: flex;
+  height: 16px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.seg { height: 100%; }
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.legendItem { display: inline-flex; align-items: center; gap: 5px; }
+.legendItem i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+.weights { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+.weightRow { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; }
+.weightLabel { color: var(--text-muted); }
+.weightValue { font-weight: 700; color: var(--text); }
+.weightMuted { color: var(--text-faint); font-style: italic; font-size: 12px; }
+.range { color: var(--text-faint); font-weight: 400; font-size: 11px; }
+
+.gemChips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.gemChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg, #F9FAFB);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11.5px;
+  color: var(--text);
+}
+.gemChip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.gemChip svg { color: var(--text-muted); flex-shrink: 0; }
+
+.note {
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  line-height: 1.5;
+}

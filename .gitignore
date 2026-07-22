@@ -21,4 +21,6 @@ INSTRUCTIONS.md
 AGENT_LOG.md
 .claude/
 venv/
-
+.venv/
+data/sessions
+data/sessions.json

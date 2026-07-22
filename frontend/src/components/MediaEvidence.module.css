@@ -69,7 +69,11 @@
 .photo {
   width: 100%;
   aspect-ratio: 4 / 3;
-  object-fit: cover;
+  /* contain, not cover: this is evidence — the whole item must be visible,
+     never cropped to fill the cell (portrait/square catalogue shots were
+     losing the top/bottom of the piece). */
+  object-fit: contain;
+  background: var(--bg);
   display: block;
 }
 

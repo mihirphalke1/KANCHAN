@@ -1,0 +1,11 @@
+DejaVu Sans / DejaVu Sans Mono fonts (regular + bold), vendored here so the
+PDF report (app/routers/report.py) can render Unicode glyphs — currency (₹),
+status marks (✓ ✗ ⚠), Greek/physics symbols (Δ ρ σ √ →) — that the base-14
+PDF fonts (Helvetica/Courier) don't have.
+
+DejaVu fonts are a derivative of the Bitstream Vera fonts. Bitstream Vera is
+copyright (c) Bitstream, Inc., with permission for modification/distribution;
+DejaVu changes are placed in the public domain. Full license text:
+https://dejavu-fonts.github.io/License.html
+
+Fonts are used unmodified from the DejaVu Fonts project (dejavu-fonts.github.io).

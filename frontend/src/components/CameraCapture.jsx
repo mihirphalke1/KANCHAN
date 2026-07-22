@@ -67,7 +67,7 @@ export default function CameraCapture({ facingMode = 'environment', onCapture, l
       const file = new File([blob], `capture-${Date.now()}.jpg`, { type: 'image/jpeg' })
       setPreviewUrl(URL.createObjectURL(blob))
       setSource('camera')
-      onCapture(file)
+      onCapture(file, 'camera')
       stop()
     }, 'image/jpeg', 0.92)
   }
@@ -78,13 +78,13 @@ export default function CameraCapture({ facingMode = 'environment', onCapture, l
     if (!file) return
     setPreviewUrl(URL.createObjectURL(file))
     setSource('upload')
-    onCapture(file)
+    onCapture(file, 'upload')
   }
 
   const retake = () => {
     setPreviewUrl(null)
     setSource(null)
-    onCapture(null)
+    onCapture(null, null)
   }
 
   if (previewUrl) {

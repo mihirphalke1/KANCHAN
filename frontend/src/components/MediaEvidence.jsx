@@ -7,7 +7,7 @@ import styles from './MediaEvidence.module.css'
 function mediaUrl(path) {
   if (!path) return null
   // path = "data/cases/{id}/img_0.jpg" → "/cases/{id}/img_0.jpg"
-  return '/' + path.replace(/^data\//, '')
+  return '/' + path.replace(/\\/g, '/').replace(/^data\//, '')
 }
 
 // ── Waveform canvas ────────────────────────────────────────────────────
@@ -114,24 +114,34 @@ function WaveformCanvas({ src }) {
       setPlaying(false)
       if (animRef.current) cancelAnimationFrame(animRef.current)
     } else {
-      audio.play()
-      setPlaying(true)
-      tick()
+      // play() returns a promise that rejects if the format can't be decoded —
+      // surface that instead of silently doing nothing, and never leave the
+      // button stuck in a "playing" state.
+      const p = audio.play()
+      if (p && typeof p.then === 'function') {
+        p.then(() => { setPlaying(true); tick() })
+         .catch(() => { setPlaying(false) })
+      } else {
+        setPlaying(true)
+        tick()
+      }
     }
   }
 
   function tick() {
     const audio = audioRef.current
-    if (!audio || !dataRef.current) return
+    if (!audio) return
     const pct = audio.duration ? audio.currentTime / audio.duration : 0
     setProgress(pct)
-    drawWaveform(dataRef.current, pct)
+    // Waveform is a best-effort enhancement: if decode failed we still track
+    // playback progress so the recording is fully playable regardless.
+    if (dataRef.current) drawWaveform(dataRef.current, pct)
     if (!audio.ended && !audio.paused) {
       animRef.current = requestAnimationFrame(tick)
     } else {
       setPlaying(false)
       setProgress(0)
-      drawWaveform(dataRef.current, 0)
+      if (dataRef.current) drawWaveform(dataRef.current, 0)
     }
   }
 
@@ -142,15 +152,20 @@ function WaveformCanvas({ src }) {
         <audio ref={audioRef} src={src} onEnded={() => { setPlaying(false); setProgress(0) }} />
       )}
       <div className={styles.waveFooter}>
-        {src && drawn && (
+        {src && (
+          // Playable whenever there is a recording — NOT gated on the waveform
+          // decode succeeding (webm/opus often can't be decoded by Web Audio
+          // but the <audio> element plays them natively).
           <button className={styles.playBtn} onClick={togglePlay} type="button">
             {playing ? <Pause size={12} /> : <Play size={12} />}
             {playing ? 'Pause' : 'Play recording'}
           </button>
         )}
         <span className={styles.waveLabel}>
-          {src ? 'Acoustic ring fingerprint · Blue = normal · Red = anomalous'
-                : 'No audio recording provided'}
+          {src
+            ? (drawn ? 'Acoustic ring fingerprint · Blue = normal · Red = anomalous'
+                     : 'Acoustic recording · waveform preview unavailable for this format')
+            : 'No audio recording provided'}
         </span>
       </div>
     </div>
@@ -177,11 +192,17 @@ export default function MediaEvidence({ caseData, localMedia }) {
     if (localUrls.audio)  URL.revokeObjectURL(localUrls.audio)
   }, [localUrls])
 
-  const images = localUrls.images.length > 0
-    ? localUrls.images
-    : (media.images || []).filter(Boolean).slice(0, 4).map(mediaUrl)
-  const streakPath = localUrls.streak || (media.streak ? mediaUrl(media.streak) : null)
-  const audioPath  = localUrls.audio  || (media.audio  ? mediaUrl(media.audio)  : null)
+  // Prefer the PERSISTED server files over the browser's own createObjectURL
+  // blobs. The blob URLs are revoked by React StrictMode's double-invoked effect
+  // cleanup in dev (and on any re-render that recomputes localUrls), which left
+  // the photo showing a broken icon and the recording refusing to play. Every
+  // analysed case saves its evidence under /cases, so the server path is stable
+  // and always valid; the local blobs are kept only as a fallback for the brief
+  // moment before a path exists.
+  const serverImages = (media.images || []).filter(Boolean).slice(0, 4).map(mediaUrl).filter(Boolean)
+  const images = serverImages.length > 0 ? serverImages : localUrls.images
+  const streakPath = (media.streak ? mediaUrl(media.streak) : null) || localUrls.streak
+  const audioPath  = (media.audio  ? mediaUrl(media.audio)  : null) || localUrls.audio
 
   const hasImages = images.length > 0 || streakPath
   const hasAudio  = Boolean(audioPath)

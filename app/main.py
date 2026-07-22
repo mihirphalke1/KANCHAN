@@ -11,6 +11,9 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(name)s  %(message)s")
@@ -22,28 +25,19 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(name)s  %(messa
 # picks it up.
 mimetypes.add_type("audio/webm", ".webm")
 
-import json
-import numpy as np
+from app.utils.numpy_safe import numpy_safe as _numpy_safe
+from app.rate_limit import limiter
 
-class _NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, (np.integer,)):  return int(obj)
-        if isinstance(obj, (np.floating,)): return float(obj)
-        if isinstance(obj, (np.bool_,)):    return bool(obj)
-        if isinstance(obj, np.ndarray):     return obj.tolist()
-        return super().default(obj)
-
-def _numpy_safe(data):
-    """Round-trip through JSON to convert all numpy scalars to Python primitives."""
-    return json.loads(json.dumps(data, cls=_NumpyEncoder))
-
-from app.routers import analyze, auth, benford, fiducial, hallmark, history, kyc, report, xray
+from app.routers import admin, analyze, auth, benford, fiducial, gold_rate, hallmark, history, kyc, report, xray
 
 app = FastAPI(
     title="KANCHAN-AI",
     description="Spurious Gold Intelligence System — Canara Bank / SuRaksha Hackathon 2.0",
     version="1.0.0",
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -53,10 +47,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(admin.router,     prefix="/api")
 app.include_router(analyze.router,   prefix="/api")
 app.include_router(auth.router,      prefix="/api")
 app.include_router(benford.router,   prefix="/api")
 app.include_router(fiducial.router,  prefix="/api")
+app.include_router(gold_rate.router, prefix="/api")
 app.include_router(hallmark.router,  prefix="/api")
 app.include_router(history.router,   prefix="/api")
 app.include_router(kyc.router,       prefix="/api")
@@ -75,6 +71,22 @@ CASES_DIR = Path("data/cases")
 CASES_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/cases", StaticFiles(directory=str(CASES_DIR)), name="case_media")
 
+class SPAStaticFiles(StaticFiles):
+    """Serve the Vite build, falling back to index.html for any path that
+    isn't a real file — react-router routes (/login, /dashboard, /admin, ...)
+    only exist client-side, so a direct navigation, refresh, or PWA launch
+    (manifest start_url) needs the SPA shell returned instead of a 404.
+    Starlette's StaticFiles raises HTTPException(404) rather than returning
+    a 404 response, so the fallback has to catch it, not check a status code."""
+    async def get_response(self, path: str, scope):
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code == 404:
+                return await super().get_response("index.html", scope)
+            raise
+
+
 FRONTEND_DIST = Path("frontend/dist")
 if FRONTEND_DIST.exists():
-    app.mount("/", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="frontend")
+    app.mount("/", SPAStaticFiles(directory=str(FRONTEND_DIST), html=True), name="frontend")

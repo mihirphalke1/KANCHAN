@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Search, CheckCircle2, AlertTriangle, XCircle,
   Clock, ChevronRight, BarChart3, X, Filter,
@@ -10,9 +10,12 @@ import VerdictCard from '@/components/VerdictCard'
 import CustomerInfoCard from '@/components/CustomerInfoCard'
 import ProcessTrace from '@/components/ProcessTrace'
 import MediaEvidence from '@/components/MediaEvidence'
+import GoldVsGemsCard from '@/components/GoldVsGemsCard'
 import XRayView from '@/components/XRayView'
 import SignalBars from '@/components/SignalBars'
 import ContradictionAlert from '@/components/ContradictionAlert'
+import FraudScenarioCard from '@/components/FraudScenarioCard'
+import MakerCheckerCard from '@/components/MakerCheckerCard'
 import DensityDetails from '@/components/DensityDetails'
 import CompositionCard from '@/components/CompositionCard'
 import BenfordStatus from '@/components/BenfordStatus'
@@ -29,15 +32,22 @@ const VERDICT_OPTIONS = ['All', 'GENUINE', 'BORDERLINE', 'REJECT']
 
 export default function HistoryPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  // Drill-down from the admin dashboard (or any deep link): ?branch=BLR-001,
+  // ?verdict=REJECT, ?case=<case_id> pre-filter/pre-select on load.
+  const initialBranch  = searchParams.get('branch')  || 'All'
+  const initialVerdict = searchParams.get('verdict') || 'All'
+  const initialCaseId  = searchParams.get('case')
+
   const [cases, setCases]       = useState([])
   const [total, setTotal]       = useState(0)
   const [loading, setLoading]   = useState(true)
   const [selected, setSelected] = useState(null)
 
   const [search, setSearch]   = useState('')
-  const [verdict, setVerdict] = useState('All')
+  const [verdict, setVerdict] = useState(initialVerdict)
   const [karat, setKarat]     = useState('All')
-  const [branch, setBranch]   = useState('All')
+  const [branch, setBranch]   = useState(initialBranch)
   const [sortDir, setSortDir] = useState('desc')
 
   useEffect(() => {
@@ -47,10 +57,19 @@ export default function HistoryPage() {
         const all = d.cases || []
         setCases(all)
         setTotal(d.total || 0)
-        if (all.length > 0) setSelected(all[0])
+        const deepLinked = initialCaseId && all.find(c => c.case_id === initialCaseId)
+        const firstMatchingFilter = (initialBranch !== 'All' || initialVerdict !== 'All')
+          && all.find(c =>
+            (initialBranch === 'All' || c.branch_id === initialBranch) &&
+            (initialVerdict === 'All' || c.verdict?.risk_level === initialVerdict)
+          )
+        if (deepLinked) setSelected(deepLinked)
+        else if (firstMatchingFilter) setSelected(firstMatchingFilter)
+        else if (all.length > 0) setSelected(all[0])
       })
       .catch(() => {})
       .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const branches = useMemo(() => {
@@ -357,18 +376,30 @@ function CaseDetail({ c, onCaseUpdated }) {
 
       <div className={styles.detailBody}>
         <VerdictCard verdict={verdict} caseId={case_id} />
+        <MakerCheckerCard
+          approval={c.approval}
+          caseId={case_id}
+          allowAction
+          onSignedOff={() => onCaseUpdated?.()}
+        />
+        <FraudScenarioCard scenarios={c.fraud_scenarios} />
         <CustomerInfoCard caseId={case_id} customer={c.customer} evaluator={c.evaluator} onUpdated={onCaseUpdated} />
         <ProcessTrace trace={c.verification_trace} caseData={c} />
         <MediaEvidence caseData={c} />
+        <GoldVsGemsCard caseData={c} />
         <XRayView caseData={c} />
         <SignalBars scores={modality_scores} />
         {contradiction?.flags?.length > 0 && (
           <ContradictionAlert contradiction={contradiction} />
         )}
         <DensityDetails density={modality_scores?.density} />
-        <CompositionCard composition={c.composition} weightDry={modality_scores?.density?.weight_dry} />
+        <CompositionCard
+          composition={c.composition}
+          weightDry={modality_scores?.density?.weight_dry}
+          goldGemSplit={c.media?.xray?.gold_gem_split}
+        />
         {fusion?.shap_values && <SHAPBreakdown shap={fusion.shap_values} />}
-        {benford && <BenfordStatus benford={benford} />}
+        {benford && <BenfordStatus benford={benford} evaluator={c.benford_evaluator} />}
       </div>
     </div>
   )

@@ -2,11 +2,20 @@
 LLM-generated plain-English verdict using Groq or Google Gemini.
 Falls back gracefully when no API key is set.
 """
+import asyncio
 import logging
 import os
 from typing import Literal
 
 logger = logging.getLogger(__name__)
+
+# Each provider attempt (Groq, then Gemini, or vice versa per LLM_PROVIDER)
+# is bounded by this many seconds. Without it, a slow/hanging LLM API has no
+# ceiling — the SDK's own defaults (Groq: ~60s read timeout x up to 3 tries;
+# Gemini: effectively unbounded) — and because the network call is
+# synchronous, an unbounded wait here blocks the whole FastAPI event loop,
+# not just this one request (see asyncio.to_thread usage below).
+VERDICT_TIMEOUT_S = float(os.getenv("VERDICT_TIMEOUT_S", "20"))
 
 
 def _build_prompt(payload: dict) -> str:
@@ -169,9 +178,45 @@ def _heuristic_verdict(
     return explanation, action
 
 
+def _parse_two_paragraphs(text: str) -> tuple[str, str]:
+    paragraphs = [p.strip() for p in text.strip().split("\n\n") if p.strip()]
+    explanation = paragraphs[0] if paragraphs else text.strip()
+    action = paragraphs[1] if len(paragraphs) > 1 else ""
+    return explanation, action
+
+
+def _call_groq_sync(prompt: str, api_key: str) -> dict:
+    """Blocking Groq call — run via asyncio.to_thread, never awaited directly."""
+    from groq import Groq
+    client = Groq(api_key=api_key, timeout=VERDICT_TIMEOUT_S)
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
+        max_tokens=300,
+    )
+    explanation, action = _parse_two_paragraphs(response.choices[0].message.content)
+    return {"plain_english": explanation, "action": action, "llm_provider": "groq:llama-3.3-70b-versatile"}
+
+
+def _call_gemini_sync(prompt: str, api_key: str) -> dict:
+    """Blocking Gemini call — run via asyncio.to_thread, never awaited directly."""
+    import google.generativeai as genai
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = model.generate_content(prompt, request_options={"timeout": VERDICT_TIMEOUT_S})
+    explanation, action = _parse_two_paragraphs(response.text)
+    return {"plain_english": explanation, "action": action, "llm_provider": "gemini-1.5-flash"}
+
+
 async def generate_verdict(payload: dict) -> dict:
     """
-    Generate LLM verdict. Tries Groq first, then Gemini, then heuristic.
+    Generate LLM verdict. Tries the configured primary provider, then the
+    other as a fallback, then a heuristic. Each provider attempt is bounded
+    by VERDICT_TIMEOUT_S and run off the event loop via asyncio.to_thread —
+    both SDK calls are synchronous network I/O, so awaiting them directly
+    (the previous behaviour) blocked every other concurrent request on this
+    server for however long a slow/hanging LLM API took to respond.
     """
     provider = os.getenv("LLM_PROVIDER", "groq").lower()
     fusion_risk  = payload.get("fusion_risk", 0.5)
@@ -183,49 +228,25 @@ async def generate_verdict(payload: dict) -> dict:
 
     prompt = _build_prompt(payload)
 
-    if provider == "groq":
-        api_key = os.getenv("GROQ_API_KEY")
-        if api_key:
-            try:
-                from groq import Groq
-                client = Groq(api_key=api_key)
-                response = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.3,
-                    max_tokens=300,
-                )
-                text = response.choices[0].message.content.strip()
-                paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
-                explanation = paragraphs[0] if paragraphs else text
-                action = paragraphs[1] if len(paragraphs) > 1 else ""
-                return {
-                    "plain_english":  explanation,
-                    "action":         action,
-                    "llm_provider":   "groq:llama-3.3-70b-versatile",
-                }
-            except Exception as e:
-                logger.warning("Groq LLM failed (%s), trying Gemini", e)
+    groq_key   = os.getenv("GROQ_API_KEY")
+    google_key = os.getenv("GOOGLE_API_KEY")
+    groq_attempt   = ("groq",   groq_key,   _call_groq_sync)
+    gemini_attempt = ("gemini", google_key, _call_gemini_sync)
+    # Try the configured primary first, then the other as a fallback — a
+    # failure/timeout on the primary no longer skips the fallback (it used
+    # to, whenever GROQ_API_KEY was set and provider=="groq": the Gemini
+    # branch's own condition guarded against that exact case).
+    attempts = [gemini_attempt, groq_attempt] if provider in ("gemini", "google") else [groq_attempt, gemini_attempt]
 
-    if provider in ("gemini", "google") or (provider == "groq" and not os.getenv("GROQ_API_KEY")):
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if api_key:
-            try:
-                import google.generativeai as genai
-                genai.configure(api_key=api_key)
-                model   = genai.GenerativeModel("gemini-1.5-flash")
-                response = model.generate_content(prompt)
-                text = response.text.strip()
-                paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
-                explanation = paragraphs[0] if paragraphs else text
-                action = paragraphs[1] if len(paragraphs) > 1 else ""
-                return {
-                    "plain_english":  explanation,
-                    "action":         action,
-                    "llm_provider":   "gemini-1.5-flash",
-                }
-            except Exception as e:
-                logger.warning("Gemini LLM failed (%s), using heuristic", e)
+    for name, api_key, fn in attempts:
+        if not api_key:
+            continue
+        try:
+            return await asyncio.wait_for(asyncio.to_thread(fn, prompt, api_key), timeout=VERDICT_TIMEOUT_S)
+        except asyncio.TimeoutError:
+            logger.warning("%s LLM verdict timed out after %ss — falling back", name, VERDICT_TIMEOUT_S)
+        except Exception as e:
+            logger.warning("%s LLM verdict failed (%s) — falling back", name, e)
 
     explanation, action = _heuristic_verdict(
         fusion_risk,

@@ -1,7 +1,7 @@
 [
   {
     "evaluator_id": "EMP-1001",
-    "name": "Ramesh Kulkarni",
+    "name": "Mihir Phalke",
     "branch_id": "BLR-001",
     "role": "assessment_officer",
     "salt": "c50d7b5f8ba6c740",
@@ -22,5 +22,13 @@
     "role": "branch_manager",
     "salt": "16d6f3b6c75b6511",
     "pin_hash": "3d76a3bf80e9d20d5fc61d0d4457bb17e5d8eaff87f5183f0a18c031b9217b34"
+  },
+  {
+    "evaluator_id": "EMP-9999",
+    "name": "Head Office Admin (Demo)",
+    "branch_id": "HO-000",
+    "role": "admin",
+    "salt": "ad56c075cc319a09",
+    "pin_hash": "bc58c35a04175011e0f048032f34dbfa5b067428748742fe775e0c8062ebb86a"
   }
 ]

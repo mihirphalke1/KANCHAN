@@ -2,7 +2,7 @@
 DSIP pseudo X-ray pipeline — material segmentation of jewellery photographs.
 
 Stages 1-7 are classical image processing (no ML), stage 8 is a
-classical/ML hybrid:
+classical/ML hybrid, stage 9 is an additive gold-vs-gems colour map:
   1. Illumination normalisation (white-balance + local contrast correction)
   2. BT.709 luminance greyscale
   3. Intensity inversion (radiographic negative)
@@ -26,6 +26,10 @@ classical/ML hybrid:
      against a reference stone-colour table (ruby, emerald, sapphire,
      diamond, ...) — two different questions, two different, both
      inspectable, non-black-box answers.
+  9. Gold vs gems map (_gold_gem_map) — paints kept stone regions as gems
+     and classifies remaining item pixels as gold vs other via Lab ΔE to
+     the item's own metal colour plus an HSV gold band. Visual / reporting
+     only — does not change fusion or loan-decision risk.
 """
 import base64
 import logging
@@ -115,17 +119,73 @@ INCLUSION_OVERLAP_EXPLAINED = 0.25   # ≥25% overlap with a kept stone = explai
 # single signal (e.g. a round, smooth highlight scoring well on "identity")
 # can push a candidate to CONFIDENT on its own — CONFIDENT_THRESHOLD sits
 # well above any one signal's own weight.
-W_EDGE     = float(os.getenv("STONE_W_EDGE", "0.28"))       # boundary contrast
-W_CONTRAST = float(os.getenv("STONE_W_CONTRAST", "0.22"))   # local colour contrast
+W_EDGE     = float(os.getenv("STONE_W_EDGE", "0.20"))       # boundary contrast
+W_CONTRAST = float(os.getenv("STONE_W_CONTRAST", "0.28"))   # local colour contrast
 W_SHAPE    = float(os.getenv("STONE_W_SHAPE", "0.15"))      # convexity / aspect
-W_IDENTITY = float(os.getenv("STONE_W_IDENTITY", "0.20"))   # facet sparkle or roundness
+W_IDENTITY = float(os.getenv("STONE_W_IDENTITY", "0.22"))   # facet sparkle or roundness
 W_SIZE     = float(os.getenv("STONE_W_SIZE", "0.15"))       # size consistency
+# edge_score normalisation divisor. On 640px-max, illumination-normalised
+# photos the boundary-vs-interior gradient gap is genuinely compressed; 55
+# was too harsh and systematically underscored real stones (measured on the
+# demo panel — the single biggest driver of "no stone ever confirmed", since
+# edge carried the largest weight yet was consistently the lowest signal).
+STONE_EDGE_NORM = float(os.getenv("STONE_EDGE_NORM", "38.0"))
 # Deliberately conservative: a false "confirmed" silently asserts something
 # wrong, while a false "uncertain" still routes to officer review — so the
-# bar to CONFIDENT is set high, and ties go to "uncertain", not the other
-# way round.
-CONFIDENT_THRESHOLD = float(os.getenv("STONE_CONFIDENT_THRESHOLD", "0.72"))
+# bar to CONFIDENT stays high, and ties go to "uncertain", not the other way
+# round. Calibrated on the demo panel: clear stones land ~0.64-0.77, plain-
+# metal glare stays below, so the bar sits at 0.64 (with the weights above).
+CONFIDENT_THRESHOLD = float(os.getenv("STONE_CONFIDENT_THRESHOLD", "0.64"))
 UNCERTAIN_THRESHOLD = float(os.getenv("STONE_UNCERTAIN_THRESHOLD", "0.40"))
+
+# Hard gap-artifact rejection (P1-4). A negative-space gap cut into the item
+# silhouette (split-shank opening, openwork gap) is concave and ragged, so its
+# convex-hull solidity is low. A real stone (round/oval/faceted) is convex, so
+# its solidity is high. Below this solidity a backdrop-adjacent candidate is
+# REJECTED OUTRIGHT — not merely down-weighted via the soft shape score — so a
+# gap that happens to score well on the other signals still can't survive.
+GAP_SOLIDITY_MIN = float(os.getenv("STONE_GAP_SOLIDITY_MIN", "0.70"))
+# Backdrop-colour gap/glare signal. A candidate whose mean BGR is within this
+# distance of the frame-border backdrop colour is either a gap (opening onto
+# the backdrop) or specular glare — never a real stone by colour alone.
+BACKDROP_STONE_DIST     = float(os.getenv("STONE_BACKDROP_DIST", "28.0"))
+# For a backdrop-coloured candidate, this is the minimum fraction of its
+# immediate surroundings that must be metal for it to be treated as glare-on-
+# metal (capped to uncertain) rather than a gap opening onto the backdrop
+# (rejected outright).
+BACKDROP_GAP_METAL_FRAC = float(os.getenv("STONE_BACKDROP_GAP_METAL_FRAC", "0.85"))
+# A backdrop-coloured candidate more elongated than this is a gap sliver /
+# wedge / scratch (rejected), not a compact glare spot (capped to uncertain).
+BACKDROP_GAP_ASPECT     = float(os.getenv("STONE_BACKDROP_GAP_ASPECT", "2.5"))
+
+# AI-only stones are validated against the ornament's convex-hull envelope
+# (which includes openwork gaps), dilated by this fraction of the item's short
+# side so pavé flush to the edge — and the vision model's approximate centres —
+# aren't clipped. See reconcile_stones.
+STONE_AI_ENVELOPE_MARGIN_FRAC = float(os.getenv("STONE_AI_ENVELOPE_MARGIN_FRAC", "0.04"))
+
+# ── Layer-A recall widening (manifold-outlier + two-sided chroma) ──────────
+# The single-point lightness-deemphasised delta-E test above misses two real
+# classes of stone: (a) stones whose colour sits CLOSE to the gold in delta-E
+# yet clearly off the gold's own a*/b* chromaticity cloud (champagne/near-gold
+# gems), and (b) colourless stones (diamond) that read low-chroma rather than
+# "differently coloured". We OR in two extra recall paths so neither is lost:
+#   - manifold outlier: a pixel that is NOT a member of the item's own gold
+#     chromaticity manifold (the same Lab a*/b* Mahalanobis ellipse used for
+#     gold-vs-gems, L* excluded so shadows on the same gold don't trigger it).
+#   - two-sided chroma: a pixel whose chroma is clearly ABOVE the gold's own
+#     chroma band (coloured gems) OR clearly BELOW it (colourless stones).
+# The delta-E path is still OR'd in unchanged, so nothing previously detected
+# regresses; the confidence gate + CV-uniformity rejection downstream still
+# decide what is actually drawn, so widening recall here does not by itself
+# add drawn false positives.
+STONE_CHROMA_HI_K       = float(os.getenv("STONE_CHROMA_HI_K", "1.6"))    # gold_mean + k*std
+STONE_CHROMA_LO_ABS     = float(os.getenv("STONE_CHROMA_LO_ABS", "12.0")) # absolute low-chroma floor
+# Specular glints (very bright, near-neutral) are dropped before a region's
+# colour is classified — a white facet flash must not drag a ruby toward
+# "colourless".
+STONE_SPECULAR_L      = float(os.getenv("STONE_SPECULAR_L", "225"))
+STONE_SPECULAR_CHROMA = float(os.getenv("STONE_SPECULAR_CHROMA", "18"))
 
 ELLIPSE_3 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
 ELLIPSE_5 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
@@ -140,6 +200,47 @@ CLASS_COLOURS_RGB = {
     3: (217, 119, 6),    # brightest→ specular facets (gold)
 }
 CLASS_NAMES = {0: "gemstone", 1: "joint", 2: "metal", 3: "facet"}
+
+# ── Gold vs gems pixel map (additive stage — does not affect fusion) ────
+# Warm gold / vivid gem / cool "other" — kept in sync with XRayView.jsx
+# GOLD_GEM_LEGEND. Classification: kept stone regions = gem; remaining item
+# pixels that match the item's own measured gold (Lab ΔE + HSV gold band)
+# = gold; everything else on the item = other (solder, rhodium, unexplained).
+GOLD_GEM_COLOURS_BGR = {
+    "gold":  (40, 170, 230),   # warm Canara gold
+    "gem":   (90, 40, 220),    # jewel magenta-red (fallback when no hue)
+    "other": (110, 100, 90),   # cool slate
+}
+# Soft Lab match to the item's own metal colour (stones excluded from the
+# reference so a large centre stone doesn't pull "gold" toward itself).
+GOLD_LAB_MATCH_MAX = float(os.getenv("GOLD_LAB_MATCH_MAX", "24"))
+# OpenCV HSV gold band (H is 0–179): yellow–amber jewellery metal.
+GOLD_HSV_H_LO = int(os.getenv("GOLD_HSV_H_LO", "8"))
+GOLD_HSV_H_HI = int(os.getenv("GOLD_HSV_H_HI", "38"))
+GOLD_HSV_S_MIN = int(os.getenv("GOLD_HSV_S_MIN", "40"))
+GOLD_HSV_V_MIN = int(os.getenv("GOLD_HSV_V_MIN", "45"))
+# ── Robust gold chromaticity manifold ───────────────────────────────────
+# Gold's LIGHTNESS swings from deep shadow to blown specular highlight, but
+# its CHROMATICITY (Lab a*/b*) stays in a tight band. We fit that band from
+# the item's OWN metal pixels and classify by Mahalanobis distance in a*/b*
+# ONLY — L* excluded — so shadowed/over-lit gold still reads as gold. This
+# replaces the single-median + fixed-ΔE test that inflated the "other"
+# bucket with mis-lit gold (see _gold_gem_map).
+GOLD_MANIFOLD_MAHALANOBIS_MAX = float(os.getenv("GOLD_MANIFOLD_MAHA_MAX", "3.0"))
+GOLD_MIN_METAL_PIXELS = int(os.getenv("GOLD_MIN_METAL_PIXELS", "500"))
+# Specular-highlight rescue: a near-white, low-chroma pixel on the metal is a
+# reflection of the gold, not a stone. High L* + low chroma → gold. A lit
+# ruby/sapphire is bright but HIGH chroma, so it is NOT rescued and stays gem.
+GOLD_SPECULAR_L_MIN = float(os.getenv("GOLD_SPECULAR_L_MIN", "205"))
+GOLD_SPECULAR_CHROMA_MAX = float(os.getenv("GOLD_SPECULAR_CHROMA_MAX", "22"))
+# Per-hue gem paint colours (BGR) for the gold_gem stage overlay.
+GEM_PAINT_BGR = {
+    "red":        (50, 40, 210),
+    "green":      (60, 140, 30),
+    "blue":       (200, 90, 40),
+    "other":      (160, 80, 180),
+    "colourless": (210, 210, 220),
+}
 
 
 def _clip01(x: float) -> float:
@@ -358,8 +459,19 @@ def _classify_stone_color(bgr_pixels: np.ndarray) -> tuple[str, str, float]:
     median the way it would a mean).
     Returns (stone_name, legacy_bucket, match_confidence 0-1).
     """
+    # Defence in depth: an empty pixel sample (a zero-pixel region slipping
+    # through) would crash cv2.cvtColor with an "empty src" assertion.
+    if bgr_pixels is None or bgr_pixels.size == 0:
+        return "unidentified", "other", 0.0
     lab_pixels = cv2.cvtColor(bgr_pixels.reshape(1, -1, 3), cv2.COLOR_BGR2LAB)[0].astype(np.float32)
-    median_lab = np.median(lab_pixels, axis=0)
+    # Drop specular glints (very bright, near-neutral) before taking the
+    # region's colour — a white facet flash must not drag a ruby/emerald
+    # toward "colourless". If a region is ALL glare, keep everything (fall
+    # back to the raw median rather than emptying the sample).
+    chroma = np.sqrt((lab_pixels[:, 1] - 128.0) ** 2 + (lab_pixels[:, 2] - 128.0) ** 2)
+    keep = ~((lab_pixels[:, 0] > STONE_SPECULAR_L) & (chroma < STONE_SPECULAR_CHROMA))
+    lab_use = lab_pixels[keep] if bool(keep.any()) else lab_pixels
+    median_lab = np.median(lab_use, axis=0)
     best_name, best_bucket, best_dist = "unidentified", "other", float("inf")
     for name, bucket, ref_lab in _STONE_REF_LAB:
         d = float(np.linalg.norm(median_lab - ref_lab))
@@ -381,22 +493,49 @@ CONFIRMED_COLOURLESS_BGR = (170, 140, 20)   # teal — confirmed, not a hue-colo
 UNCERTAIN_OUTLINE_BGR    = (0, 165, 255)    # amber — officer confirmation needed
 
 
-def _candidate_mask(bgr: np.ndarray, item: np.ndarray, metal_lab: np.ndarray) -> np.ndarray:
+def _candidate_mask(bgr: np.ndarray, item: np.ndarray, metal_lab: np.ndarray,
+                    gold_manifold: Optional[np.ndarray] = None) -> np.ndarray:
     """
     The human-eye rule, in code: a stone is whatever differs clearly in
-    COLOUR from the item's own measured gold — see the module-level comment
-    by STONE_DELTA_E_MIN for why this uses lightness-deemphasised CIE Lab
-    distance rather than a hard-coded hue/brightness band. One threshold,
-    one candidate pool — no separate "coloured" vs "pale" buckets to fall
-    between.
+    COLOUR from the item's own measured gold. Three complementary recall
+    paths are OR'd so no real class of stone is lost (see the STONE_CHROMA_*
+    / manifold comments above):
+      1. lightness-deemphasised CIE Lab delta-E from the median gold — the
+         original test, kept intact so nothing previously found regresses;
+      2. manifold outlier — pixels NOT belonging to the item's own gold a*/b*
+         chromaticity ellipse (recovers near-gold stones whose delta-E is
+         small yet whose hue is clearly off the gold cloud);
+      3. two-sided chroma — pixels clearly more chromatic than gold (coloured
+         gems) OR clearly less (colourless/diamond).
+    `gold_manifold` is the precomputed membership mask from _gold_membership;
+    when None it is computed here (kept optional for backward-compatible calls
+    and standalone testing). Recall is widened here on purpose — the
+    confidence gate and CV-uniformity rejection downstream decide what is
+    actually drawn, so this does not by itself add drawn false positives.
     """
-    item_area = max(1, int((item > 0).sum()))
+    item_bool = item > 0
+    item_area = max(1, int(item_bool.sum()))
     lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
+    # (1) lightness-deemphasised delta-E from the median gold (original path)
     dL = lab[..., 0] - metal_lab[0]
     da = lab[..., 1] - metal_lab[1]
     db = lab[..., 2] - metal_lab[2]
     delta_e = np.sqrt(LAB_LIGHTNESS_WEIGHT * dL ** 2 + da ** 2 + db ** 2)
-    cand = ((delta_e > STONE_DELTA_E_MIN) & (item > 0)).astype(np.uint8) * 255
+    de_hit = delta_e > STONE_DELTA_E_MIN
+    # (2) manifold outlier — not a member of the gold chromaticity ellipse
+    manifold = gold_manifold if gold_manifold is not None else _gold_membership(lab, item_bool)
+    maha_hit = (~manifold) if manifold is not None else np.zeros_like(de_hit)
+    # (3) two-sided chroma test around the gold's own chroma band
+    chroma = np.sqrt((lab[..., 1] - 128.0) ** 2 + (lab[..., 2] - 128.0) ** 2)
+    if item_bool.any():
+        g_mean = float(chroma[item_bool].mean())
+        g_std = float(chroma[item_bool].std()) or 1.0
+    else:
+        g_mean, g_std = 0.0, 1.0
+    chroma_hi = chroma > (g_mean + STONE_CHROMA_HI_K * g_std)
+    chroma_lo = chroma < min(STONE_CHROMA_LO_ABS, max(0.0, g_mean - STONE_CHROMA_HI_K * g_std))
+    chroma_hit = chroma_hi | chroma_lo
+    cand = ((de_hit | maha_hit | chroma_hit) & item_bool).astype(np.uint8) * 255
 
     # A real stone is uniformly coloured; a residual lighting/compression
     # artefact that still clears the distance threshold isn't. Reject
@@ -425,6 +564,109 @@ def _candidate_mask(bgr: np.ndarray, item: np.ndarray, metal_lab: np.ndarray) ->
     return cand
 
 
+def _is_enamel_region(hsv_pixels: np.ndarray, edge_pixels: np.ndarray) -> bool:
+    """Meenakari enamel vs a faceted gemstone (P1-2).
+
+    Vitreous enamel is a smooth, flat, opaque fill: uniform hue, uniform
+    saturation, NO specular sparkle, and low internal edge density. A faceted
+    stone fails at least one of these — facets sparkle (specular flashes),
+    split light into hue/saturation variation, and pack the interior with
+    micro-edges. Enamel must pass ALL four; a stone fails most.
+
+    hsv_pixels: (N,3) H,S,V samples of the region. edge_pixels: (N,) edge
+    magnitude at those pixels."""
+    hsv = np.asarray(hsv_pixels, dtype=np.float32)
+    if hsv.ndim != 2 or hsv.shape[0] < 8:
+        return False
+    h, s, v = hsv[:, 0], hsv[:, 1], hsv[:, 2]
+    edges = np.asarray(edge_pixels, dtype=np.float32).ravel()
+
+    hue_uniform  = float(np.std(h)) < 8.0
+    sat_uniform  = float(np.std(s)) < 20.0
+    no_specular  = float(np.mean(v > 240)) < 0.02          # no facet flashes
+    edge_density = float(np.mean(edges > 30)) if edges.size else 0.0
+    low_edges    = edge_density < 0.10                     # smooth, not faceted
+    return bool(hue_uniform and sat_uniform and no_specular and low_edges)
+
+
+def _detect_filigree(mask: np.ndarray) -> dict:
+    """Filigree / Tarakashi openwork detection (P1-3).
+
+    Openwork is thin metal wire enclosing many small gaps (jali). It shows up
+    as a LOT of enclosed holes plus a low fill ratio (mostly air). A plain
+    solitaire ring is also mostly-hollow (one big open centre) but has only ONE
+    enclosed gap — low fill ratio ALONE must not trigger this, so both a high
+    enclosed-gap count AND a low fill ratio are required."""
+    mask_u8 = (np.asarray(mask) > 0).astype(np.uint8) * 255
+    total_area = float((mask_u8 > 0).sum())
+    if total_area < 1:
+        return {"is_filigree": False, "enclosed_gap_count": 0, "fill_ratio": 1.0}
+
+    # Enclosed holes = inner contours (those with a parent) in the hierarchy.
+    contours, hierarchy = cv2.findContours(mask_u8, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    holes = 0
+    if hierarchy is not None:
+        min_hole = max(4.0, 0.0004 * total_area)   # ignore pinhole noise
+        for i, hci in enumerate(hierarchy[0]):
+            if hci[3] != -1 and cv2.contourArea(contours[i]) >= min_hole:
+                holes += 1
+
+    # Fill ratio = material area / solid silhouette area (holes filled).
+    ff = mask_u8.copy()
+    fmask = np.zeros((ff.shape[0] + 2, ff.shape[1] + 2), np.uint8)
+    cv2.floodFill(ff, fmask, (0, 0), 255)
+    filled = mask_u8 | cv2.bitwise_not(ff)
+    filled_area = float((filled > 0).sum()) or total_area
+    fill_ratio = total_area / filled_area
+
+    is_filigree = holes >= 4 and fill_ratio < 0.85
+    return {"is_filigree": bool(is_filigree), "enclosed_gap_count": int(holes),
+            "fill_ratio": round(fill_ratio, 3)}
+
+
+def _detect_multiple_items(mask: np.ndarray) -> dict:
+    """Flag when the frame contains more than one separate item (e.g. an
+    earring pair) — each needs its own valuation, and a single blended weight
+    across two pieces is a common intake error."""
+    mask_u8 = (np.asarray(mask) > 0).astype(np.uint8) * 255
+    total = float((mask_u8 > 0).sum())
+    n, _labels, stats, _cents = cv2.connectedComponentsWithStats(mask_u8, connectivity=8)
+    min_area = max(50.0, 0.02 * total)
+    comps = sorted((int(stats[i, cv2.CC_STAT_AREA]) for i in range(1, n)
+                    if stats[i, cv2.CC_STAT_AREA] >= min_area), reverse=True)
+    count = len(comps)
+    likely_pair = bool(count == 2 and comps[1] / max(comps[0], 1) >= 0.6)
+    return {"multiple_items_detected": bool(count >= 2), "component_count": int(count),
+            "likely_pair": likely_pair}
+
+
+def _watershed_split_touching(cand: np.ndarray) -> np.ndarray:
+    """Split touching-but-not-merged stones (pavé / channel settings) via a
+    distance-transform watershed, so a chain of adjacent stones isn't
+    under-counted as one blob. A single isolated blob is returned untouched."""
+    cand_bin = (np.asarray(cand) > 0).astype(np.uint8)
+    if cand_bin.sum() == 0:
+        return (cand_bin * 255).astype(np.uint8)
+
+    dist = cv2.distanceTransform(cand_bin, cv2.DIST_L2, 5)
+    if dist.max() <= 0:
+        return (cand_bin * 255).astype(np.uint8)
+    _, sure_fg = cv2.threshold(dist, 0.5 * dist.max(), 255, 0)
+    sure_fg = sure_fg.astype(np.uint8)
+    n_fg, markers = cv2.connectedComponents(sure_fg)
+    if n_fg <= 2:                       # 0 or 1 peak → nothing to split
+        return (cand_bin * 255).astype(np.uint8)
+
+    markers = markers + 1
+    unknown = cv2.subtract(cand_bin * 255, sure_fg)
+    markers[unknown == 255] = 0
+    color = cv2.cvtColor(cand_bin * 255, cv2.COLOR_GRAY2BGR)
+    cv2.watershed(color, markers)
+    out = (cand_bin * 255).copy()
+    out[markers == -1] = 0              # carve the watershed ridge lines
+    return out
+
+
 def _region_confidence(
     region: np.ndarray, hsv: np.ndarray, edge_mag: np.ndarray, lap_mag: np.ndarray,
     item: np.ndarray, metal_ref: np.ndarray, area: int, med_area: float,
@@ -442,7 +684,7 @@ def _region_confidence(
     ring = (cv2.dilate(region_u8, ELLIPSE_5) > 0) & ~region
     boundary_grad = float(edge_mag[ring].mean()) if ring.any() else 0.0
     interior_grad = float(edge_mag[region].mean()) if region.any() else 0.0
-    edge_score = _clip01((boundary_grad - interior_grad) / 55.0)
+    edge_score = _clip01((boundary_grad - interior_grad) / STONE_EDGE_NORM)
 
     # 2. Local colour/brightness contrast against the immediate surrounding
     #    metal (sampled from a ring just outside the region, not the whole
@@ -532,11 +774,15 @@ def _detect_stones(
     item_area = max(1, int(item_bool.sum()))
     metal_ref = (np.median(hsv[item_bool], axis=0) if item_bool.any()
                  else np.array([20.0, 80.0, 150.0]))
+    # Backdrop colour reference (from the frame border) — used to tell a
+    # backdrop-coloured GAP or specular GLARE apart from a real stone (P1-4).
+    backdrop_bgr = np.median(_border_patch(bgr).astype(np.float32), axis=0)
     lab_full = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
     metal_lab = (np.median(lab_full[item_bool], axis=0) if item_bool.any()
                  else np.array([180.0, 128.0, 128.0], dtype=np.float32))
 
-    cand = _candidate_mask(bgr, eligible, metal_lab)
+    gold_manifold = _gold_membership(lab_full, item_bool)
+    cand = _candidate_mask(bgr, eligible, metal_lab, gold_manifold)
     n, labels, cc_stats, cents = cv2.connectedComponentsWithStats(cand, connectivity=8)
     detection_mode = "classical"
 
@@ -567,12 +813,60 @@ def _detect_stones(
     stones = []
     for i, area in sized:
         region = labels == i
-        confidence, feats = _region_confidence(region, hsv, edge_mag, lap_mag, item, metal_ref, area, med_area)
-        if confidence < UNCERTAIN_THRESHOLD:
+        # A component can carry a positive cc_stats area yet map to zero pixels
+        # in `labels` when the SAM/CC stats and label array disagree (seen on a
+        # multi-item earring-pair frame). An empty region crashes the downstream
+        # colour classifier (cv2.cvtColor on an empty array) and triggers
+        # mean-of-empty-slice warnings — skip it outright.
+        if not region.any():
             continue
+        # Hard gap-artifact rejection (P1-4): a negative-space gap (split-shank
+        # opening, openwork gap) is concave/ragged, so its convex-hull solidity
+        # is low. Reject it OUTRIGHT here rather than only down-weighting it via
+        # the soft shape score, so a gap can't survive by scoring well on the
+        # other signals. Real stones are convex (solidity ≫ threshold).
+        region_u8 = (region.astype(np.uint8)) * 255
+        gcontours, _ = cv2.findContours(region_u8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if gcontours:
+            gc = max(gcontours, key=cv2.contourArea)
+            ghull = cv2.contourArea(cv2.convexHull(gc)) or 1.0
+            if (cv2.contourArea(gc) / ghull) < GAP_SOLIDITY_MIN:
+                continue
+
+        # Backdrop-colour signal (P1-4): a convex triangular split-shank wedge
+        # slips past the solidity filter (a triangle is convex), and a small
+        # specular highlight can look like a colourless stone. Both are the
+        # BACKDROP colour. Discriminate by their surroundings:
+        #   • surroundings open onto the exterior backdrop  → it's a GAP  → reject
+        #   • surroundings are (almost) all metal           → it's GLARE → cap to uncertain
+        cand_bgr = bgr[region].astype(np.float32).mean(axis=0)
+        backdrop_dist = float(np.linalg.norm(cand_bgr - backdrop_bgr))
+        force_uncertain = False
+        if backdrop_dist < BACKDROP_STONE_DIST:
+            (grw, grh) = cv2.minAreaRect(gc)[1] if gcontours else (1.0, 1.0)
+            gap_aspect = max(grw, grh) / max(1.0, min(grw, grh))
+            surround = (cv2.dilate(region_u8, ELLIPSE_9) > 0) & ~region
+            surround_n = int(surround.sum())
+            metal_frac = float((surround & item_bool).sum()) / max(surround_n, 1)
+            # Elongated backdrop-coloured sliver (split-shank wedge, scratch) OR
+            # one that opens onto the exterior backdrop → it's a gap → reject.
+            if gap_aspect > BACKDROP_GAP_ASPECT or metal_frac < BACKDROP_GAP_METAL_FRAC:
+                continue
+            force_uncertain = True       # compact backdrop-coloured spot on metal — glare
+
+        confidence, feats = _region_confidence(region, hsv, edge_mag, lap_mag, item, metal_ref, area, med_area)
         # Identify the stone by nearest-reference colour match, not a hard-
         # coded hue band — see _classify_stone_color.
         stone_name, hue_class, match_conf = _classify_stone_color(bgr[region])
+        # Meenakari enamel vs a real set stone: a flat, uniform, non-sparkling
+        # coloured fill is enamel (painted metal), not a gemstone — tag it so it
+        # is excluded from the stone count and weight deduction (P1-2). Only
+        # considered for clearly-coloured regions; colourless/faceted stones
+        # keep their facet edges and fail the enamel test.
+        material = "gemstone"
+        if hue_class != "colourless" and _is_enamel_region(
+                hsv[region].astype(np.float32), edge_mag[region].astype(np.float32)):
+            material = "enamel"
         colourless_ceiling = (
             MAX_COLOURLESS_AREA_FRAC_HIGH_CONTRAST
             if feats["local_contrast_score"] >= HIGH_CONTRAST_FLOOR
@@ -580,16 +874,32 @@ def _detect_stones(
         )
         if hue_class == "colourless" and area > colourless_ceiling * item_area:
             continue   # too large, AND blends into its own setting — glare, not a stone
-        status = "confirmed" if confidence >= CONFIDENT_THRESHOLD else "uncertain"
+        # Below UNCERTAIN_THRESHOLD candidates are NO LONGER discarded: they are
+        # retained tagged status="candidate" so the AI cross-confirmation step
+        # (app/utils/stone_fusion.py) can promote or reject them. Layer A never
+        # draws or counts a "candidate" on its own (see _run_pipeline, which
+        # filters to confirmed+uncertain) — so keeping them changes NO
+        # ML-only output; it only stops silently destroying evidence the AI
+        # could rescue, which is the real fix for under-counting.
+        below_uncertain = confidence < UNCERTAIN_THRESHOLD
+        if below_uncertain:
+            status = "candidate"
+        else:
+            status = "confirmed" if confidence >= CONFIDENT_THRESHOLD else "uncertain"
+        # A backdrop-coloured spot on metal is glare — never assert it confirmed.
+        if force_uncertain and status == "confirmed":
+            status = "uncertain"
         x  = int(cc_stats[i, cv2.CC_STAT_LEFT]); y  = int(cc_stats[i, cv2.CC_STAT_TOP])
         bw = int(cc_stats[i, cv2.CC_STAT_WIDTH]); bh = int(cc_stats[i, cv2.CC_STAT_HEIGHT])
         stones.append({
             "area_pct":     round(area / item_area * 100, 2),
             "hue_class":    hue_class,
+            "material":     material,
             "stone_name":   stone_name,
             "match_confidence": match_conf,
             "confidence":   round(confidence, 3),
             "status":       status,
+            "below_uncertain": below_uncertain,
             "bbox":         [x, y, bw, bh],
             "centroid":     [round(float(cents[i][0]), 1), round(float(cents[i][1]), 1)],
             "_label":       i,
@@ -722,6 +1032,163 @@ def _hue_map(hsv: np.ndarray, item_bool: np.ndarray) -> np.ndarray:
     return bgr_pure
 
 
+def _gold_membership(lab: np.ndarray, metal_bool: np.ndarray) -> Optional[np.ndarray]:
+    """Robust gold classification via a chromaticity manifold.
+
+    Fit a robust ellipse to the item's own metal pixels in Lab a*/b* space
+    (lightness deliberately excluded), then classify every frame pixel by
+    Mahalanobis distance to that ellipse. Returns a full-frame boolean mask,
+    or None when there are too few metal pixels to fit a stable covariance
+    (caller falls back to the legacy ΔE test — never a hard failure).
+    """
+    ab = lab[..., 1:3].astype(np.float32)          # a*, b* only
+    samp = ab[metal_bool]
+    if samp.shape[0] < GOLD_MIN_METAL_PIXELS:
+        return None
+    center = np.median(samp, axis=0)
+    d = samp - center
+    cov = np.cov(d, rowvar=False) + np.eye(2, dtype=np.float32) * 1e-3
+    try:
+        inv = np.linalg.inv(cov).astype(np.float32)
+    except np.linalg.LinAlgError:
+        return None
+    diff = ab - center
+    m2 = np.einsum("...i,ij,...j->...", diff, inv, diff)   # Mahalanobis²
+    return m2 <= GOLD_MANIFOLD_MAHALANOBIS_MAX ** 2
+
+
+def _gold_gem_map(
+    bgr: np.ndarray,
+    hsv: np.ndarray,
+    item: np.ndarray,
+    stone_mask: np.ndarray,
+    stones: list[dict],
+    stone_labels: np.ndarray,
+) -> tuple[np.ndarray, dict]:
+    """
+    Officer-facing gold-vs-gems segmentation map.
+
+    Additive visualisation only — does NOT feed fusion / risk scoring.
+    Reuses the already-detected stone regions as the gem class, then
+    classifies the remaining item pixels as gold vs other via:
+      1. Lightness-deemphasised CIE Lab distance to the item's own metal
+         colour (median Lab over non-stone item pixels), and
+      2. An HSV gold-hue band as a secondary accept (yellow–amber metal
+         that Lab may undershoot under strong speculars).
+
+    Returns (BGR visualisation, gold_gem_split stats).
+    """
+    item_bool = item > 0
+    item_area = max(1, int(item_bool.sum()))
+    gem_bool = (stone_mask > 0) & item_bool
+    metal_bool = item_bool & ~gem_bool
+
+    lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
+    if metal_bool.any():
+        metal_lab = np.median(lab[metal_bool], axis=0)
+    elif item_bool.any():
+        metal_lab = np.median(lab[item_bool], axis=0)
+    else:
+        metal_lab = np.array([180.0, 128.0, 128.0], dtype=np.float32)
+
+    # Legacy ΔE test — retained as the fallback when the manifold can't fit.
+    dL = lab[..., 0] - metal_lab[0]
+    da = lab[..., 1] - metal_lab[1]
+    db = lab[..., 2] - metal_lab[2]
+    delta_e = np.sqrt(LAB_LIGHTNESS_WEIGHT * dL ** 2 + da ** 2 + db ** 2)
+    lab_gold = delta_e <= GOLD_LAB_MATCH_MAX
+
+    h, s, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
+    hsv_gold = (
+        (h >= GOLD_HSV_H_LO) & (h <= GOLD_HSV_H_HI)
+        & (s >= GOLD_HSV_S_MIN) & (v >= GOLD_HSV_V_MIN)
+    )
+
+    # Primary: robust chromaticity manifold. L* excluded, so mis-lit gold
+    # stays gold; specular highlights rescued explicitly below.
+    manifold = _gold_membership(lab, metal_bool)
+    if manifold is not None:
+        L = lab[..., 0]
+        chroma = np.sqrt((lab[..., 1] - 128.0) ** 2 + (lab[..., 2] - 128.0) ** 2)
+        specular = (L >= GOLD_SPECULAR_L_MIN) & (chroma <= GOLD_SPECULAR_CHROMA_MAX)
+        gold_bool = metal_bool & (manifold | specular | hsv_gold)
+        gold_method = "manifold"
+    else:
+        gold_bool = metal_bool & (lab_gold | hsv_gold)
+        gold_method = "delta_e_fallback"
+    other_bool = metal_bool & ~gold_bool
+
+    # Soften gold/other masks slightly so the paint doesn't look speckled.
+    gold_u8 = (gold_bool.astype(np.uint8) * 255)
+    other_u8 = (other_bool.astype(np.uint8) * 255)
+    gold_u8 = cv2.morphologyEx(gold_u8, cv2.MORPH_CLOSE, ELLIPSE_3)
+    other_u8 = cv2.morphologyEx(other_u8, cv2.MORPH_OPEN, ELLIPSE_3)
+    gold_bool = (gold_u8 > 0) & metal_bool
+    other_bool = (other_u8 > 0) & metal_bool & ~gold_bool
+
+    # Visualisation: dimmed original + class paints + gem outlines.
+    base = (bgr.astype(np.float32) * 0.35).astype(np.uint8)
+    base[~item_bool] = (base[~item_bool].astype(np.float32) * 0.35).astype(np.uint8)
+    out = base.copy()
+
+    gold_c = np.array(GOLD_GEM_COLOURS_BGR["gold"], dtype=np.float32)
+    other_c = np.array(GOLD_GEM_COLOURS_BGR["other"], dtype=np.float32)
+
+    if gold_bool.any():
+        # Keep some of the photo's texture under a warm gold wash.
+        blend = bgr[gold_bool].astype(np.float32) * 0.45 + gold_c * 0.55
+        out[gold_bool] = np.clip(blend, 0, 255).astype(np.uint8)
+
+    if other_bool.any():
+        blend = bgr[other_bool].astype(np.float32) * 0.40 + other_c * 0.60
+        out[other_bool] = np.clip(blend, 0, 255).astype(np.uint8)
+
+    # Paint each kept stone in its hue-class colour (or saturated original).
+    for s in stones:
+        region = (stone_labels == s["_label"]) & item_bool
+        if not region.any():
+            continue
+        paint = np.array(
+            GEM_PAINT_BGR.get(s.get("hue_class"), GOLD_GEM_COLOURS_BGR["gem"]),
+            dtype=np.float32,
+        )
+        # Colourless stones: keep brighter photo texture so diamonds/pearls
+        # still read as clear rather than opaque paint.
+        if s.get("hue_class") == "colourless":
+            blend = bgr[region].astype(np.float32) * 0.70 + paint * 0.30
+        else:
+            blend = bgr[region].astype(np.float32) * 0.30 + paint * 0.70
+        out[region] = np.clip(blend, 0, 255).astype(np.uint8)
+
+        region_u8 = region.astype(np.uint8) * 255
+        contours, _ = cv2.findContours(region_u8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        edge = (0, 255, 255) if s.get("status") == "uncertain" else (255, 255, 255)
+        cv2.drawContours(out, contours, -1, edge, 2, cv2.LINE_AA)
+
+    gold_pct = round(float(gold_bool.sum()) / item_area * 100, 1)
+    gem_pct = round(float(gem_bool.sum()) / item_area * 100, 1)
+    other_pct = round(max(0.0, 100.0 - gold_pct - gem_pct), 1)
+    # Re-normalise from actual other pixels if morphology drifted counts.
+    other_pct = round(float(other_bool.sum()) / item_area * 100, 1)
+    # Tiny float drift — force sum ≈ 100 on the three reported buckets.
+    reported = gold_pct + gem_pct + other_pct
+    if reported > 0 and abs(reported - 100.0) > 0.2:
+        scale = 100.0 / reported
+        gold_pct = round(gold_pct * scale, 1)
+        gem_pct = round(gem_pct * scale, 1)
+        other_pct = round(max(0.0, 100.0 - gold_pct - gem_pct), 1)
+
+    split = {
+        "gold_pct": gold_pct,
+        "gem_pct": gem_pct,
+        "other_pct": other_pct,
+        "method": "lab_delta_e+hsv_gold_band+stone_mask",
+        "gold_method": gold_method,
+        "stones_used": len(stones),
+    }
+    return out, split
+
+
 def _run_pipeline(
     bgr: np.ndarray,
     t1: Optional[int] = None,
@@ -762,8 +1229,14 @@ def _run_pipeline(
     sobel = _sobel_magnitude(grey)
     laplacian = np.abs(cv2.Laplacian(grey, cv2.CV_64F))
 
-    stones, stone_labels, stone_detection_mode = _detect_stones(
+    all_stones, stone_labels, stone_detection_mode = _detect_stones(
         norm, hsv, sobel.astype(np.float32), laplacian, item, stone_eligible)
+    # Layer-A surfaces only DRAWN stones (confirmed + uncertain). "candidate"
+    # regions (below UNCERTAIN_THRESHOLD) are retained in `all_stones` for the
+    # optional AI cross-confirmation step only, and are excluded from every
+    # ML-only output below — so this file's external result is unchanged when
+    # no AI fusion runs. The full labelled set travels to the route via `ctx`.
+    stones = [s for s in all_stones if s.get("status") != "candidate"]
     gems = [{"area_pct": s["area_pct"], "hue_class": s["hue_class"], "confidence": s["confidence"],
              "stone_name": s["stone_name"], "match_confidence": s["match_confidence"]}
             for s in stones if s["hue_class"] != "colourless"]
@@ -827,6 +1300,8 @@ def _run_pipeline(
     }
 
     gems_overlay = _stones_overlay(norm, item, stone_labels, stones)
+    gold_gem_img, gold_gem_split = _gold_gem_map(
+        norm, hsv, item, stone_mask, stones, stone_labels)
     item_bbox = _item_bbox(item_bool)
     stages = {
         "original":  bgr,
@@ -836,6 +1311,7 @@ def _run_pipeline(
         "sobel":     cv2.cvtColor(sobel, cv2.COLOR_GRAY2BGR),
         "hsv":       _hue_map(hsv, item_bool),
         "material":  material,
+        "gold_gem":  gold_gem_img,
         "gems":      gems_overlay,
         "stones_grid": _draw_grid(gems_overlay, item_bbox, grid_n=4) if item_bbox else gems_overlay,
         "heatmap":   heatmap,
@@ -864,8 +1340,23 @@ def _run_pipeline(
         "inclusions_unexplained": unexplained,
         "unexplained_area_pct":   round(unexplained_px / item_area * 100, 1),
         "edge_density":           round(float(edges[item_bool].mean()) * 100, 1),
+        "gold_gem_split":         gold_gem_split,
+        # Openwork (filigree/Tarakashi) and multi-item detection — surfaced so
+        # downstream (tarnish/density/acoustic gating, officer UI) can react.
+        "filigree":               _detect_filigree(item_bool),
+        "multiple_items":         _detect_multiple_items(item_bool),
     }
-    return stages, stats
+    # Reconciliation context: the raw arrays + FULL labelled stone set (incl.
+    # below-uncertain "candidate" regions filtered out of `stats` above) that
+    # the async route needs to fuse in AI detections WITHOUT re-running the
+    # pipeline / SAM. Never persisted — the route pops it. See reconcile_stones.
+    ctx = {
+        "norm": norm, "item": item, "item_bool": item_bool, "hsv": hsv,
+        "stone_labels": stone_labels, "all_stones": all_stones,
+        "item_bbox": item_bbox, "item_area": item_area,
+        "detection_mode": stone_detection_mode,
+    }
+    return stages, stats, ctx
 
 
 def generate_xray(
@@ -881,7 +1372,7 @@ def generate_xray(
     repo root (same convention as the other saved case media).
     """
     bgr = _load_bgr(raw_bytes)
-    stages, stats = _run_pipeline(bgr, t1, t2, t3)
+    stages, stats, _ctx = _run_pipeline(bgr, t1, t2, t3)
 
     out_dir.mkdir(parents=True, exist_ok=True)
     paths = {}
@@ -893,32 +1384,172 @@ def generate_xray(
     return {"stages": paths, **stats}
 
 
+# Photographic stages compress far better as JPEG; synthetic flat-colour
+# stages (threshold classes, material map, histogram, gold_gem) stay PNG.
+_PNG_STAGES = {"threshold", "material", "histogram", "hsv", "gold_gem"}
+
+
+def _encode_stage(name: str, img: np.ndarray) -> str:
+    """Encode one BGR stage image as a base64 data URI (JPEG unless synthetic)."""
+    if name in _PNG_STAGES:
+        ok, buf = cv2.imencode(".png", img)
+        mime = "image/png"
+    else:
+        ok, buf = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 82])
+        mime = "image/jpeg"
+    if not ok:
+        raise RuntimeError(f"Failed to encode stage '{name}'")
+    return f"data:{mime};base64," + base64.b64encode(buf).decode()
+
+
 def xray_preview(
     raw_bytes: bytes,
     t1: Optional[int] = None,
     t2: Optional[int] = None,
     t3: Optional[int] = None,
-) -> dict:
-    """Run the pipeline and return stages as base64 PNG data URIs (no disk I/O).
+    _return_ctx: bool = False,
+):
+    """Run the pipeline and return stages as base64 data URIs (no disk I/O).
 
-    Used by POST /api/xray for interactive threshold tuning.
+    Used by POST /api/xray for interactive threshold tuning. When
+    `_return_ctx` is True, also returns the reconciliation context dict so the
+    async analysis route can fuse in AI stone detections; default False keeps
+    the original single-dict return for every existing caller.
     """
     bgr = _load_bgr(raw_bytes)
-    stages, stats = _run_pipeline(bgr, t1, t2, t3)
+    stages, stats, ctx = _run_pipeline(bgr, t1, t2, t3)
 
-    # Photographic stages compress far better as JPEG; synthetic flat-colour
-    # stages (threshold classes, material map, histogram) stay PNG.
-    PNG_STAGES = {"threshold", "material", "histogram", "hsv"}
-    encoded = {}
-    for name, img in stages.items():
-        if name in PNG_STAGES:
-            ok, buf = cv2.imencode(".png", img)
-            mime = "image/png"
-        else:
-            ok, buf = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 82])
-            mime = "image/jpeg"
-        if not ok:
-            raise RuntimeError(f"Failed to encode stage '{name}'")
-        encoded[name] = f"data:{mime};base64," + base64.b64encode(buf).decode()
+    encoded = {name: _encode_stage(name, img) for name, img in stages.items()}
 
-    return {"stages": encoded, **stats}
+    result = {"stages": encoded, **stats}
+    if _return_ctx:
+        # Stash the FULL-RESOLUTION source alongside the (MAX_SIDE-capped) norm so
+        # the AI stone-vision layer can crop small items from real pixels instead
+        # of the downscaled frame — the normalisation cap (640px) blurs the few-
+        # pixel accent/pavé stones a catalogue photo carries, and no upscaling
+        # recovers detail that was thrown away before the crop. `source_to_norm`
+        # maps a source-pixel coordinate back into norm space so fused detections
+        # stay in the same coordinate frame as the ML result. Best-effort only.
+        try:
+            full = cv2.imdecode(np.frombuffer(raw_bytes, np.uint8), cv2.IMREAD_COLOR)
+            if full is not None and full.shape[1] > ctx["norm"].shape[1]:
+                ctx["source_bgr"] = full
+                ctx["source_to_norm"] = ctx["norm"].shape[1] / float(full.shape[1])
+        except Exception as e:  # noqa: BLE001 — optional detail boost, never fatal
+            logger.warning("Full-res source decode for AI vision failed (%s)", e)
+        return result, ctx
+    return result
+
+
+def reconcile_stones(ctx: dict, ai_stones) -> tuple[dict, dict]:
+    """Fuse AI vision stone detections into the ML result and re-render the
+    stone overlays. Returns (stats_patch, stage_patch) the async analysis route
+    merges into the xray result and its encoded stages.
+
+    `ai_stones` is None when the AI layer is off/failed -> ML-only passthrough
+    (the drawn set is unchanged; only agreement tags + a `stone_agreement`
+    summary are added). Guarded — on any error returns empty patches so the
+    caller keeps the untouched ML result.
+    """
+    try:
+        from app.utils import stone_fusion
+        norm = ctx["norm"]; item = ctx["item"]; item_bool = ctx["item_bool"]
+        labels = ctx["stone_labels"]; all_stones = ctx["all_stones"]
+        item_bbox = ctx["item_bbox"]; item_area = max(1, int(ctx["item_area"]))
+
+        # Envelope = the ornament silhouette INCLUDING openwork gaps (convex
+        # hull of the metal mask). AI-only stones are validated against this, not
+        # item_bool, so a stone floated in an openwork gap (pavé kite frame,
+        # prong-set cluster) — which sits in a HOLE of the metal mask — is not
+        # dropped. Falls back to item_bool if the hull can't be built.
+        item_envelope = item_bool
+        try:
+            ys_e, xs_e = np.where(item_bool)
+            if len(xs_e) >= 3:
+                hull = cv2.convexHull(np.column_stack([xs_e, ys_e]).astype(np.int32))
+                env = np.zeros(item_bool.shape, dtype=np.uint8)
+                cv2.fillConvexPoly(env, hull, 1)
+                # Dilate by a small margin so pavé stones flush to the ornament's
+                # edge (and the vision model's slightly-approximate centres) are
+                # not clipped by a hull that hugs the outermost metal pixel.
+                # Tunable — larger recovers more edge stones at some risk of
+                # accepting an off-item reflection the AI called a stone.
+                Hh, Ww = item_bool.shape
+                margin = max(4, int(STONE_AI_ENVELOPE_MARGIN_FRAC * min(Hh, Ww)))
+                k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (margin, margin))
+                item_envelope = (cv2.dilate(env, k) > 0)
+        except Exception as e:  # noqa: BLE001 — geometry only, never fatal
+            logger.warning("Item envelope (hull) failed (%s) — using metal mask", e)
+
+        ai_mask_fn = None
+        if ai_stones:
+            def ai_mask_fn(ai):   # SAM-precise boundary for AI-only stones
+                return ml_stone_detection.sam_mask_at_point(norm, ai["centroid"], item_envelope)
+
+        stones, labels_out, meta = stone_fusion.reconcile(
+            all_stones, labels, ai_stones, item_bool, ai_mask_fn, item_envelope=item_envelope)
+
+        # Re-render overlays from the fused label map + stones.
+        gems_overlay = _stones_overlay(norm, item, labels_out, stones)
+        grid = _draw_grid(gems_overlay, item_bbox, grid_n=4) if item_bbox else gems_overlay
+        stage_patch = {
+            "gems": _encode_stage("gems", gems_overlay),
+            "stones_grid": _encode_stage("stones_grid", grid),
+        }
+
+        # The gold-vs-gems split reuses the stone regions as its gem class, so
+        # it MUST be recomputed from the fused set. _run_pipeline computed it
+        # from the ML-only mask, before the AI layer had contributed anything —
+        # leaving a diamond-set ring reading ~97% gold / ~2% gems even though
+        # the AI had found every stone. Rebuild the gem mask from the fused
+        # label map so the split, and its stage image, match the stone list the
+        # officer is actually shown.
+        gold_gem_split = None
+        try:
+            hsv = ctx.get("hsv")
+            if hsv is not None:
+                fused_stone_mask = (labels_out > 0).astype(np.uint8) * 255
+                gold_gem_img, gold_gem_split = _gold_gem_map(
+                    norm, hsv, item, fused_stone_mask, stones, labels_out)
+                stage_patch["gold_gem"] = _encode_stage("gold_gem", gold_gem_img)
+        except Exception as e:  # noqa: BLE001 — visualisation only, never fatal
+            logger.warning("Gold/gem split recompute failed (%s) — keeping ML-only split", e)
+            gold_gem_split = None
+
+        # Recompute the gems/colourless summaries over the fused drawn set —
+        # same shapes as _run_pipeline, plus the agreement fields.
+        gems = [{"area_pct": s["area_pct"], "hue_class": s["hue_class"],
+                 "confidence": s["confidence"], "stone_name": s["stone_name"],
+                 "match_confidence": s.get("match_confidence", 0.0),
+                 "agreement": s.get("agreement", "ml_only"),
+                 "gem_type": s.get("gem_type", ""), "colour": s.get("colour", ""),
+                 "ai_confidence": s.get("ai_confidence", 0.0)}
+                for s in stones if s["hue_class"] != "colourless"]
+        colourless = [{"area_pct": s["area_pct"], "confidence": s["confidence"],
+                       "kind": s["status"], "stone_name": s["stone_name"],
+                       "match_confidence": s.get("match_confidence", 0.0),
+                       "agreement": s.get("agreement", "ml_only"),
+                       "ai_confidence": s.get("ai_confidence", 0.0)}
+                      for s in stones if s["hue_class"] == "colourless"]
+        stones_public = [{k: v for k, v in s.items() if k != "_label"} for s in stones]
+
+        detection_mode = "ml_ai" if meta.get("ai_used") else ctx.get("detection_mode", "classical")
+        stats_patch = {
+            "stones": stones_public,
+            "gem_regions": len(gems),
+            "gems": gems,
+            "gem_area_pct": round(sum(g["area_pct"] for g in gems), 2),
+            "colourless": colourless,
+            "colourless_regions": len(colourless),
+            "colourless_area_pct": round(sum(c["area_pct"] for c in colourless), 2),
+            "stones_confirmed": sum(1 for s in stones if s["status"] == "confirmed"),
+            "stones_uncertain": sum(1 for s in stones if s["status"] == "uncertain"),
+            "stone_detection_mode": detection_mode,
+            "stone_agreement": meta,
+        }
+        if gold_gem_split is not None:
+            stats_patch["gold_gem_split"] = gold_gem_split
+        return stats_patch, stage_patch
+    except Exception as e:  # noqa: BLE001 — never break the request path
+        logger.warning("Stone AI reconciliation failed (%s) — keeping ML-only result", e)
+        return {}, {}

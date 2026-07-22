@@ -114,7 +114,7 @@ def visual_risk_from_photo(path: Path, description: str) -> float:
     raw = path.read_bytes()
     image_risk = analyze_image([raw])["risk_score"]
     try:
-        _, stats = _run_pipeline(_load_bgr(raw))
+        _, stats, _ = _run_pipeline(_load_bgr(raw))
         xray_risk = analyze_xray(stats, description)["risk_score"]
     except Exception:
         return image_risk

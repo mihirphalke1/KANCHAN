@@ -41,3 +41,10 @@
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(1, 129, 194, 0.3);
 }
+
+/* 4th (Admin) tab makes the pill too wide for narrow phones (360-412px) —
+   drop to icon-only there; aria-label keeps the accessible name. */
+@media (max-width: 420px) {
+  .compact .tab { padding: 10px 12px; gap: 0; }
+  .compact .tab span { display: none; }
+}

@@ -142,5 +142,4514 @@
     "role": "assessment_officer",
     "login_time": "2026-07-14T23:35:10.112270+05:30",
     "selfie_path": "data/sessions/6fc90d67fa4d43c72ab2e471a366e9671d9655b9cb392f05/selfie.jpg"
+  },
+  "a2e7237440276d95fe08fefb76905e6cdee565bf717c86bf": {
+    "token": "a2e7237440276d95fe08fefb76905e6cdee565bf717c86bf",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-16T21:51:34.535991+05:30",
+    "selfie_path": "data\\sessions\\a2e7237440276d95fe08fefb76905e6cdee565bf717c86bf\\selfie.jpg"
+  },
+  "94eb71ecd463e48fcbb10b355bff51bc8a035347357eb739": {
+    "token": "94eb71ecd463e48fcbb10b355bff51bc8a035347357eb739",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-16T22:26:29.785660+05:30",
+    "selfie_path": null
+  },
+  "1747b5f53e9cbd7dc2f4e6edfe09b4e47f4a4a24fa116091": {
+    "token": "1747b5f53e9cbd7dc2f4e6edfe09b4e47f4a4a24fa116091",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-16T22:26:46.722472+05:30",
+    "selfie_path": null
+  },
+  "de3120061c8260f3d7614ddbf819f3a620386f06cafa9e06": {
+    "token": "de3120061c8260f3d7614ddbf819f3a620386f06cafa9e06",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-16T22:27:17.022048+05:30",
+    "selfie_path": null
+  },
+  "b8f1a056e26ffecff2abca0371ee3f0d893a634d1bf21f3c": {
+    "token": "b8f1a056e26ffecff2abca0371ee3f0d893a634d1bf21f3c",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-16T22:28:36.022325+05:30",
+    "selfie_path": null
+  },
+  "9431a77dd9adeff8b75da92970647178e49a63fee05c3460": {
+    "token": "9431a77dd9adeff8b75da92970647178e49a63fee05c3460",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-16T22:29:05.554308+05:30",
+    "selfie_path": null
+  },
+  "4ba8786dcfa6f8263405e4c9f261dd79a6960ac59e217b47": {
+    "token": "4ba8786dcfa6f8263405e4c9f261dd79a6960ac59e217b47",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-17T20:41:04.902031+05:30",
+    "selfie_path": null
+  },
+  "1ee1d22cb262f11b4e3d6b76c8dc1eaf4293e2e9da7365f4": {
+    "token": "1ee1d22cb262f11b4e3d6b76c8dc1eaf4293e2e9da7365f4",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-17T20:47:03.045282+05:30",
+    "selfie_path": null
+  },
+  "f889e974bc1b1d9dcda85c407ad3b471925528e2b91326ad": {
+    "token": "f889e974bc1b1d9dcda85c407ad3b471925528e2b91326ad",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-17T20:47:46.067372+05:30",
+    "selfie_path": null
+  },
+  "7f075ae7dc65a9c18037ee09d606a418fb1b106efa3cf90e": {
+    "token": "7f075ae7dc65a9c18037ee09d606a418fb1b106efa3cf90e",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-17T20:48:22.098044+05:30",
+    "selfie_path": null
+  },
+  "0e301498ea7a94dcf9da2b58471c249e30063609b583e871": {
+    "token": "0e301498ea7a94dcf9da2b58471c249e30063609b583e871",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-17T21:47:44.342513+05:30",
+    "selfie_path": null
+  },
+  "66e953e0d7b8e358ec09515e165a613f453d6c680163f38d": {
+    "token": "66e953e0d7b8e358ec09515e165a613f453d6c680163f38d",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-17T22:11:51.312378+05:30",
+    "selfie_path": null
+  },
+  "2bcfc562d40b06796ee4b4ee91a1c808c1a89552eb53f680": {
+    "token": "2bcfc562d40b06796ee4b4ee91a1c808c1a89552eb53f680",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-17T22:37:11.153512+05:30",
+    "selfie_path": null
+  },
+  "756974ad21d235702b47f282d5fa2fec5b9c70571fdef3ad": {
+    "token": "756974ad21d235702b47f282d5fa2fec5b9c70571fdef3ad",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-17T22:56:47.602858+05:30",
+    "selfie_path": null
+  },
+  "92c8ec88ea0fa5093bf676049199d767da36b7d020704ffe": {
+    "token": "92c8ec88ea0fa5093bf676049199d767da36b7d020704ffe",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-17T23:37:04.116795+05:30",
+    "selfie_path": null
+  },
+  "e7bc3e77e7de3377da5879605546522ef5d9e991345777e2": {
+    "token": "e7bc3e77e7de3377da5879605546522ef5d9e991345777e2",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-17T23:37:26.556702+05:30",
+    "selfie_path": "data\\sessions\\e7bc3e77e7de3377da5879605546522ef5d9e991345777e2\\selfie.jpg"
+  },
+  "d8ca3b753cf7c921dbc4e4e1a66f17596a353ccc957361cc": {
+    "token": "d8ca3b753cf7c921dbc4e4e1a66f17596a353ccc957361cc",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-18T02:17:40.212407+05:30",
+    "selfie_path": "data\\sessions\\d8ca3b753cf7c921dbc4e4e1a66f17596a353ccc957361cc\\selfie.jpg"
+  },
+  "fab91eb85b399f26d96f5c8c26ca57ee3110c0e3eca92026": {
+    "token": "fab91eb85b399f26d96f5c8c26ca57ee3110c0e3eca92026",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-18T02:18:04.573949+05:30",
+    "selfie_path": "data\\sessions\\fab91eb85b399f26d96f5c8c26ca57ee3110c0e3eca92026\\selfie.jpg"
+  },
+  "8934370056898ae1a61f280c2228fa0eb4b6a909d163a493": {
+    "token": "8934370056898ae1a61f280c2228fa0eb4b6a909d163a493",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-18T02:20:31.941724+05:30",
+    "selfie_path": "data\\sessions\\8934370056898ae1a61f280c2228fa0eb4b6a909d163a493\\selfie.jpg"
+  },
+  "9debd403bcbc829fa48412b6083d571797c301c71776ce57": {
+    "token": "9debd403bcbc829fa48412b6083d571797c301c71776ce57",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-18T05:25:17.286778+05:30",
+    "selfie_path": "data\\sessions\\9debd403bcbc829fa48412b6083d571797c301c71776ce57\\selfie.jpg"
+  },
+  "f41f43d7b9bdd6789b7374443de435f513fb0895e829a7f0": {
+    "token": "f41f43d7b9bdd6789b7374443de435f513fb0895e829a7f0",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-18T05:46:27.559410+05:30",
+    "selfie_path": "data\\sessions\\f41f43d7b9bdd6789b7374443de435f513fb0895e829a7f0\\selfie.jpg"
+  },
+  "3b21efa549fe67a2f2d80fcff4b8afb379194fd4442d659c": {
+    "token": "3b21efa549fe67a2f2d80fcff4b8afb379194fd4442d659c",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-18T16:27:20.788498+05:30",
+    "selfie_path": "data\\sessions\\3b21efa549fe67a2f2d80fcff4b8afb379194fd4442d659c\\selfie.jpg"
+  },
+  "efd4f7dd8cc6dd1c81dfef17de1ff15ee6272e2e82652739": {
+    "token": "efd4f7dd8cc6dd1c81dfef17de1ff15ee6272e2e82652739",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-18T22:04:37.392285+05:30",
+    "selfie_path": "data\\sessions\\efd4f7dd8cc6dd1c81dfef17de1ff15ee6272e2e82652739\\selfie.jpg"
+  },
+  "f3c9ecb6e524011f3a0b196497c1b171c7379988c0aaae38": {
+    "token": "f3c9ecb6e524011f3a0b196497c1b171c7379988c0aaae38",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-19T17:00:45.819667+05:30",
+    "selfie_path": "data\\sessions\\f3c9ecb6e524011f3a0b196497c1b171c7379988c0aaae38\\selfie.jpg"
+  },
+  "c52221cf863b8556b938bb29ada0497c87b53fe5c19d1743": {
+    "token": "c52221cf863b8556b938bb29ada0497c87b53fe5c19d1743",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-19T17:16:00.540536+05:30",
+    "selfie_path": "data\\sessions\\c52221cf863b8556b938bb29ada0497c87b53fe5c19d1743\\selfie.jpg"
+  },
+  "d72a0360ec81cc9b8f9be53a9a86f845c8aef757397e4266": {
+    "token": "d72a0360ec81cc9b8f9be53a9a86f845c8aef757397e4266",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-19T22:28:20.907282+05:30",
+    "selfie_path": "data\\sessions\\d72a0360ec81cc9b8f9be53a9a86f845c8aef757397e4266\\selfie.jpg"
+  },
+  "fa45483377bc99329c3aa8e565ebc92be5de76202b1b0054": {
+    "token": "fa45483377bc99329c3aa8e565ebc92be5de76202b1b0054",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T13:12:51.066826+05:30",
+    "selfie_path": null
+  },
+  "db3dab4cf44ce7859091a6dbaab5d0135373cf556c229f0b": {
+    "token": "db3dab4cf44ce7859091a6dbaab5d0135373cf556c229f0b",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T13:13:23.609313+05:30",
+    "selfie_path": null
+  },
+  "afadf6d2008dc49f082b3f5a3fe66f9e2972a1eeb1ce24d0": {
+    "token": "afadf6d2008dc49f082b3f5a3fe66f9e2972a1eeb1ce24d0",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T13:14:17.220623+05:30",
+    "selfie_path": "data/sessions/afadf6d2008dc49f082b3f5a3fe66f9e2972a1eeb1ce24d0/selfie.jpg"
+  },
+  "cce9a554d1ab2f5095e7164509f4f42f2ecbc4e81acb25fb": {
+    "token": "cce9a554d1ab2f5095e7164509f4f42f2ecbc4e81acb25fb",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T13:14:33.729207+05:30",
+    "selfie_path": "data/sessions/cce9a554d1ab2f5095e7164509f4f42f2ecbc4e81acb25fb/selfie.jpg"
+  },
+  "de3b1ff7ad7e8e6c51aba7f8fd7ad0b1df47ddf5a862c7f0": {
+    "token": "de3b1ff7ad7e8e6c51aba7f8fd7ad0b1df47ddf5a862c7f0",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T13:16:15.726564+05:30",
+    "selfie_path": "data/sessions/de3b1ff7ad7e8e6c51aba7f8fd7ad0b1df47ddf5a862c7f0/selfie.jpg"
+  },
+  "9f0df2a7e842ef5aa88fbee2ebfbb296b8e3241d3742a9ea": {
+    "token": "9f0df2a7e842ef5aa88fbee2ebfbb296b8e3241d3742a9ea",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T15:24:44.006207+05:30",
+    "selfie_path": null
+  },
+  "460108413948336daac3ce5070c68cf6d82ce2ab32d12e60": {
+    "token": "460108413948336daac3ce5070c68cf6d82ce2ab32d12e60",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T16:30:19.489343+05:30",
+    "selfie_path": null
+  },
+  "9a9d1c364ad1443f5c615258f0f006e93926ac7bc3168d98": {
+    "token": "9a9d1c364ad1443f5c615258f0f006e93926ac7bc3168d98",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T16:34:05.104105+05:30",
+    "selfie_path": null
+  },
+  "7a805561309b248639df231a1c8a6eba2d02d17d8f06d6ff": {
+    "token": "7a805561309b248639df231a1c8a6eba2d02d17d8f06d6ff",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T16:34:21.445968+05:30",
+    "selfie_path": null
+  },
+  "87854b1b195f2ed4c754215f3493df35ec1582827a9d6bc8": {
+    "token": "87854b1b195f2ed4c754215f3493df35ec1582827a9d6bc8",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T16:35:58.069086+05:30",
+    "selfie_path": "data/sessions/87854b1b195f2ed4c754215f3493df35ec1582827a9d6bc8/selfie.jpg"
+  },
+  "6228053c6eb99d136943a6c605a7982edbe8050b3514926d": {
+    "token": "6228053c6eb99d136943a6c605a7982edbe8050b3514926d",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T16:36:38.367698+05:30",
+    "selfie_path": "data/sessions/6228053c6eb99d136943a6c605a7982edbe8050b3514926d/selfie.jpg"
+  },
+  "317a7f3eb33c38ba564484df075703b4fd453225d37af039": {
+    "token": "317a7f3eb33c38ba564484df075703b4fd453225d37af039",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T16:38:30.249477+05:30",
+    "selfie_path": "data/sessions/317a7f3eb33c38ba564484df075703b4fd453225d37af039/selfie.jpg"
+  },
+  "3082d589c6bb123b87703aff03c6904c8b80645f31ebcee1": {
+    "token": "3082d589c6bb123b87703aff03c6904c8b80645f31ebcee1",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T16:57:47.258829+05:30",
+    "selfie_path": "data/sessions/3082d589c6bb123b87703aff03c6904c8b80645f31ebcee1/selfie.jpg"
+  },
+  "193960be56626db0df95c46f1d547b3a07ba5fa5cd818340": {
+    "token": "193960be56626db0df95c46f1d547b3a07ba5fa5cd818340",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T17:01:41.082141+05:30",
+    "selfie_path": "data/sessions/193960be56626db0df95c46f1d547b3a07ba5fa5cd818340/selfie.jpg"
+  },
+  "f6392e69ed350e9701a6a8772a9df57fb169829adbb6f791": {
+    "token": "f6392e69ed350e9701a6a8772a9df57fb169829adbb6f791",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T17:19:04.086360+05:30",
+    "selfie_path": "data/sessions/f6392e69ed350e9701a6a8772a9df57fb169829adbb6f791/selfie.jpg"
+  },
+  "5dd41228c665f1c0619749cd033b097579c4334f8df156c3": {
+    "token": "5dd41228c665f1c0619749cd033b097579c4334f8df156c3",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-20T17:55:31.831977+05:30",
+    "selfie_path": "data/sessions/5dd41228c665f1c0619749cd033b097579c4334f8df156c3/selfie.jpg"
+  },
+  "c1c0854bf2a876edff12a2c4d74c857feca4cd7c89defde0": {
+    "token": "c1c0854bf2a876edff12a2c4d74c857feca4cd7c89defde0",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T20:10:35.599312+05:30",
+    "selfie_path": "data/sessions/c1c0854bf2a876edff12a2c4d74c857feca4cd7c89defde0/selfie.jpg"
+  },
+  "09b766efc3ebf627cc0c79316899ffeedc27eeba3d175c58": {
+    "token": "09b766efc3ebf627cc0c79316899ffeedc27eeba3d175c58",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T21:31:42.944163+05:30",
+    "selfie_path": "data/sessions/09b766efc3ebf627cc0c79316899ffeedc27eeba3d175c58/selfie.jpg"
+  },
+  "a01addfede88209822c9b3a3b85efef29dc39c7c9907cf77": {
+    "token": "a01addfede88209822c9b3a3b85efef29dc39c7c9907cf77",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:14:31.623964+05:30",
+    "selfie_path": null
+  },
+  "5cefa6b910ba06504fff4b6b4eac90e9c357909b920e2a20": {
+    "token": "5cefa6b910ba06504fff4b6b4eac90e9c357909b920e2a20",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:35:23.472402+05:30",
+    "selfie_path": "x"
+  },
+  "397bf0f06449aeeedc019d25e436a65e9e3e4c59fe4670c3": {
+    "token": "397bf0f06449aeeedc019d25e436a65e9e3e4c59fe4670c3",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:35:23.473455+05:30",
+    "selfie_path": "x"
+  },
+  "f2fccae6a484f23accaae6e2421b353b65ac3e8c7a1b4a41": {
+    "token": "f2fccae6a484f23accaae6e2421b353b65ac3e8c7a1b4a41",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:35:23.478428+05:30",
+    "selfie_path": "x"
+  },
+  "7244701b5c3b65102c99636aacddf66c6e107cc5bf1bed3e": {
+    "token": "7244701b5c3b65102c99636aacddf66c6e107cc5bf1bed3e",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:35:23.479071+05:30",
+    "selfie_path": "x"
+  },
+  "d2824ddd4e072c8c70891953005146cb7a4378e9754449cb": {
+    "token": "d2824ddd4e072c8c70891953005146cb7a4378e9754449cb",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:35:23.481380+05:30",
+    "selfie_path": "x"
+  },
+  "59e6c575b17213ef48c21cfecfb54c12f1bd309e1e60aba7": {
+    "token": "59e6c575b17213ef48c21cfecfb54c12f1bd309e1e60aba7",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:35:23.482272+05:30",
+    "selfie_path": "x"
+  },
+  "8299e5327c2eefaf152971fba4f61c25d340e08079ad09b5": {
+    "token": "8299e5327c2eefaf152971fba4f61c25d340e08079ad09b5",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:35:23.486320+05:30",
+    "selfie_path": "x"
+  },
+  "8862caefecd0161e7f98bbf3300d57ea746894b238e7017e": {
+    "token": "8862caefecd0161e7f98bbf3300d57ea746894b238e7017e",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:35:23.486983+05:30",
+    "selfie_path": "x"
+  },
+  "29daf3acaca57946e38a1a34b60b879da7507757587c7b4e": {
+    "token": "29daf3acaca57946e38a1a34b60b879da7507757587c7b4e",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:35:23.491347+05:30",
+    "selfie_path": "x"
+  },
+  "023fce94e5aff885adbb6a821c3a294fc0789ff3a39cefae": {
+    "token": "023fce94e5aff885adbb6a821c3a294fc0789ff3a39cefae",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:35:23.492036+05:30",
+    "selfie_path": "x"
+  },
+  "5bcc703a79d39e919c5acb9ccefe29b8dc5c65f3cdb68c75": {
+    "token": "5bcc703a79d39e919c5acb9ccefe29b8dc5c65f3cdb68c75",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:35:55.862653+05:30",
+    "selfie_path": "x"
+  },
+  "3f74c47d4fa92fe241002f2ad036486c7824e6818f93dd7f": {
+    "token": "3f74c47d4fa92fe241002f2ad036486c7824e6818f93dd7f",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:35:55.863596+05:30",
+    "selfie_path": "x"
+  },
+  "7210d591924d391b80fea419d8a11f6af613a030e89588c2": {
+    "token": "7210d591924d391b80fea419d8a11f6af613a030e89588c2",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:35:55.868128+05:30",
+    "selfie_path": "x"
+  },
+  "00a890e7880133912fd6f6a4b35ea4ac29203840b3b45441": {
+    "token": "00a890e7880133912fd6f6a4b35ea4ac29203840b3b45441",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:35:55.870422+05:30",
+    "selfie_path": "x"
+  },
+  "f5a4465833f46a36e53b3c4fc903a599e2de7fb3e6c54ca1": {
+    "token": "f5a4465833f46a36e53b3c4fc903a599e2de7fb3e6c54ca1",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:35:55.873514+05:30",
+    "selfie_path": "x"
+  },
+  "17d1b94708131be87adff398568f6ac826c3540800febce4": {
+    "token": "17d1b94708131be87adff398568f6ac826c3540800febce4",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:35:55.874239+05:30",
+    "selfie_path": "x"
+  },
+  "e25ee2893a83595ed9a0d2e9b38833653a5fa2fb6c028e02": {
+    "token": "e25ee2893a83595ed9a0d2e9b38833653a5fa2fb6c028e02",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:35:55.878666+05:30",
+    "selfie_path": "x"
+  },
+  "e0247f61dbeeab017a50334f2ffa8e0dd4bd4b3670d0e884": {
+    "token": "e0247f61dbeeab017a50334f2ffa8e0dd4bd4b3670d0e884",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:35:55.879413+05:30",
+    "selfie_path": "x"
+  },
+  "55100a022e2a7f227533c4d7777e826742965ef055bef279": {
+    "token": "55100a022e2a7f227533c4d7777e826742965ef055bef279",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:35:55.882833+05:30",
+    "selfie_path": "x"
+  },
+  "7165c97725fd07eaa0591a63fea4994202227b06e0cd237a": {
+    "token": "7165c97725fd07eaa0591a63fea4994202227b06e0cd237a",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:35:55.883649+05:30",
+    "selfie_path": "x"
+  },
+  "c59919fb94c0ae44d6acdcfa28181277a7f0acf82b1898a9": {
+    "token": "c59919fb94c0ae44d6acdcfa28181277a7f0acf82b1898a9",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:51:04.562114+05:30",
+    "selfie_path": "x"
+  },
+  "6241366dbb94182b0238cb594ba880238cd63d7d0ad70a07": {
+    "token": "6241366dbb94182b0238cb594ba880238cd63d7d0ad70a07",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:51:04.563407+05:30",
+    "selfie_path": "x"
+  },
+  "913279ce58af6e168c1f37eaaf74699a4a0411fad52125db": {
+    "token": "913279ce58af6e168c1f37eaaf74699a4a0411fad52125db",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:51:04.567506+05:30",
+    "selfie_path": "x"
+  },
+  "a9ab44cf6331e1726197565fa826ec47d0f44b91c2bea27b": {
+    "token": "a9ab44cf6331e1726197565fa826ec47d0f44b91c2bea27b",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:51:04.568257+05:30",
+    "selfie_path": "x"
+  },
+  "9cba966dbf639bbafc744d234d451dd094d9b1db9931ad2c": {
+    "token": "9cba966dbf639bbafc744d234d451dd094d9b1db9931ad2c",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:51:04.570895+05:30",
+    "selfie_path": "x"
+  },
+  "7acd4da6989d34a51074b3efe95d9348fab9fdba548f3d9e": {
+    "token": "7acd4da6989d34a51074b3efe95d9348fab9fdba548f3d9e",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:51:04.571835+05:30",
+    "selfie_path": "x"
+  },
+  "b5ecdd6c0a892f14a05318bb4597992a7e71714baec35d1d": {
+    "token": "b5ecdd6c0a892f14a05318bb4597992a7e71714baec35d1d",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:51:04.575901+05:30",
+    "selfie_path": "x"
+  },
+  "ed311f8ac0fbd6556865734287da6bde3250b87cd477663b": {
+    "token": "ed311f8ac0fbd6556865734287da6bde3250b87cd477663b",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:51:04.577559+05:30",
+    "selfie_path": "x"
+  },
+  "ab233eef43ba1b9815da0c722653f8c48c46c0f7c57f0e64": {
+    "token": "ab233eef43ba1b9815da0c722653f8c48c46c0f7c57f0e64",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:51:04.581307+05:30",
+    "selfie_path": "x"
+  },
+  "bda588045ecbf311418b04e956bdb3e5142ef3c4dd75e6d5": {
+    "token": "bda588045ecbf311418b04e956bdb3e5142ef3c4dd75e6d5",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:51:04.582076+05:30",
+    "selfie_path": "x"
+  },
+  "69ca57652941f94bbb157279fcddd0a8e0483ca2b4b98131": {
+    "token": "69ca57652941f94bbb157279fcddd0a8e0483ca2b4b98131",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:59:27.032519+05:30",
+    "selfie_path": "x"
+  },
+  "f1faec1d0732e4634f50f7230eb74bbb7f57c93a5e643b33": {
+    "token": "f1faec1d0732e4634f50f7230eb74bbb7f57c93a5e643b33",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:59:27.033918+05:30",
+    "selfie_path": "x"
+  },
+  "02b9f78de599fcd40e96f70db52797d83f814e2618676bb9": {
+    "token": "02b9f78de599fcd40e96f70db52797d83f814e2618676bb9",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:59:27.039469+05:30",
+    "selfie_path": "x"
+  },
+  "c7d9f1167141370454af951da77ac66065e0510959bb2b47": {
+    "token": "c7d9f1167141370454af951da77ac66065e0510959bb2b47",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:59:27.040291+05:30",
+    "selfie_path": "x"
+  },
+  "c20e9ba665cde646a045485dff82aca209a970f67a46c532": {
+    "token": "c20e9ba665cde646a045485dff82aca209a970f67a46c532",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:59:27.042537+05:30",
+    "selfie_path": "x"
+  },
+  "50b206ffd4b8814ddf461513a12d5b6605b72e0d9e876487": {
+    "token": "50b206ffd4b8814ddf461513a12d5b6605b72e0d9e876487",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:59:27.043356+05:30",
+    "selfie_path": "x"
+  },
+  "fdba4d09fb9a18ede4bcc4339b1ecaf09e99ab6c2b89f38d": {
+    "token": "fdba4d09fb9a18ede4bcc4339b1ecaf09e99ab6c2b89f38d",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:59:27.048363+05:30",
+    "selfie_path": "x"
+  },
+  "b8aa79e08aae5ddc62c6ea941c99a51f48f1c4f2aa3f1cf5": {
+    "token": "b8aa79e08aae5ddc62c6ea941c99a51f48f1c4f2aa3f1cf5",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:59:27.049248+05:30",
+    "selfie_path": "x"
+  },
+  "2857778f35c530770caa38301bbd46b608a1b386a6b00100": {
+    "token": "2857778f35c530770caa38301bbd46b608a1b386a6b00100",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T22:59:27.053567+05:30",
+    "selfie_path": "x"
+  },
+  "6885565246651beaec8626a9ce20fbaeadc9f2711ba5b7d9": {
+    "token": "6885565246651beaec8626a9ce20fbaeadc9f2711ba5b7d9",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T22:59:27.054453+05:30",
+    "selfie_path": "x"
+  },
+  "68d25357993e7b13e926d23ae1ee5606a0f32dd1e5196a04": {
+    "token": "68d25357993e7b13e926d23ae1ee5606a0f32dd1e5196a04",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:02:35.511705+05:30",
+    "selfie_path": "x"
+  },
+  "c4427dd82bc9402d76f02a506a72c1ba718486e36540ef49": {
+    "token": "c4427dd82bc9402d76f02a506a72c1ba718486e36540ef49",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:02:35.512764+05:30",
+    "selfie_path": "x"
+  },
+  "8f761780ad908de8bcc4ae624d0bca80d4a5b813bca41a96": {
+    "token": "8f761780ad908de8bcc4ae624d0bca80d4a5b813bca41a96",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:02:35.518246+05:30",
+    "selfie_path": "x"
+  },
+  "96bc3103f4f0d04628b3c6450f00ecbdf28b15992fffcf8c": {
+    "token": "96bc3103f4f0d04628b3c6450f00ecbdf28b15992fffcf8c",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:02:35.519170+05:30",
+    "selfie_path": "x"
+  },
+  "60e9b79b2ae7d32eca17cb50ed84ae446a07ed9fdc368af5": {
+    "token": "60e9b79b2ae7d32eca17cb50ed84ae446a07ed9fdc368af5",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:02:35.521435+05:30",
+    "selfie_path": "x"
+  },
+  "da059bc41ac9e7708fe602e8dc23f8f4f6b4edad52ebad08": {
+    "token": "da059bc41ac9e7708fe602e8dc23f8f4f6b4edad52ebad08",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:02:35.522319+05:30",
+    "selfie_path": "x"
+  },
+  "c15c3f58d3f7efba596d7ece1aaaf5c3f5d043ff9d6b8645": {
+    "token": "c15c3f58d3f7efba596d7ece1aaaf5c3f5d043ff9d6b8645",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:02:35.527129+05:30",
+    "selfie_path": "x"
+  },
+  "c9e62defd3e98a88f3b13d01d2fcc6646150e73d6b298d9a": {
+    "token": "c9e62defd3e98a88f3b13d01d2fcc6646150e73d6b298d9a",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:02:35.528037+05:30",
+    "selfie_path": "x"
+  },
+  "368f08a3dc1f435fd4d033d679fe98f4f149f600e277b3c8": {
+    "token": "368f08a3dc1f435fd4d033d679fe98f4f149f600e277b3c8",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:02:35.532519+05:30",
+    "selfie_path": "x"
+  },
+  "884bb2c396456df6104ab939682fd003804c4a47b1b2dae3": {
+    "token": "884bb2c396456df6104ab939682fd003804c4a47b1b2dae3",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:02:35.533508+05:30",
+    "selfie_path": "x"
+  },
+  "26cd3a2f731d845e765c07e1074cc4b3bbb257e9badcf77f": {
+    "token": "26cd3a2f731d845e765c07e1074cc4b3bbb257e9badcf77f",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:06:37.015119+05:30",
+    "selfie_path": "x"
+  },
+  "1a3fafbb4370d32ea66207353715125fa1625cac2fe057b7": {
+    "token": "1a3fafbb4370d32ea66207353715125fa1625cac2fe057b7",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:06:37.016610+05:30",
+    "selfie_path": "x"
+  },
+  "3a5ae14b1594c185156a79f2063a1f2a0507ad00d5ea744a": {
+    "token": "3a5ae14b1594c185156a79f2063a1f2a0507ad00d5ea744a",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:06:37.022354+05:30",
+    "selfie_path": "x"
+  },
+  "fceabc1e81730f0c4aeaf795b48db7cb9f14fe67ebc33270": {
+    "token": "fceabc1e81730f0c4aeaf795b48db7cb9f14fe67ebc33270",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:06:37.023560+05:30",
+    "selfie_path": "x"
+  },
+  "3f8ce96c47e7aa388f32eb0a02a1c45b6e7dcfdf4ae8c142": {
+    "token": "3f8ce96c47e7aa388f32eb0a02a1c45b6e7dcfdf4ae8c142",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:06:37.025861+05:30",
+    "selfie_path": "x"
+  },
+  "9435fa0403c540020c257fd0fa1cb9f5b7c6e0575a742e70": {
+    "token": "9435fa0403c540020c257fd0fa1cb9f5b7c6e0575a742e70",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:06:37.026796+05:30",
+    "selfie_path": "x"
+  },
+  "17a2f930ccc721797d2deef1f1b0ab3c950d6826b9467da2": {
+    "token": "17a2f930ccc721797d2deef1f1b0ab3c950d6826b9467da2",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:06:37.031705+05:30",
+    "selfie_path": "x"
+  },
+  "b2a1f28d9df5a88326f626687407c5dccedd1b0611074d77": {
+    "token": "b2a1f28d9df5a88326f626687407c5dccedd1b0611074d77",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:06:37.032662+05:30",
+    "selfie_path": "x"
+  },
+  "9de1ba8e7b99a2d157b77cc94fab0fb8e1811f6d07c9f578": {
+    "token": "9de1ba8e7b99a2d157b77cc94fab0fb8e1811f6d07c9f578",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:06:37.037340+05:30",
+    "selfie_path": "x"
+  },
+  "a0f7c7ef5f579466887db4a90c610e5962533e2c277c6b55": {
+    "token": "a0f7c7ef5f579466887db4a90c610e5962533e2c277c6b55",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:06:37.038512+05:30",
+    "selfie_path": "x"
+  },
+  "4850d170f68bde56396b8aedf5a73989d1b50aeaa3ca6b11": {
+    "token": "4850d170f68bde56396b8aedf5a73989d1b50aeaa3ca6b11",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:14:04.222656+05:30",
+    "selfie_path": "x"
+  },
+  "d9ebc0eab73c84603647e37bfe444167a2af1fac4dab4b54": {
+    "token": "d9ebc0eab73c84603647e37bfe444167a2af1fac4dab4b54",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:14:04.227772+05:30",
+    "selfie_path": "x"
+  },
+  "91d8673bc4a2ee66948034c3a6770a60a673bba5eb95ded7": {
+    "token": "91d8673bc4a2ee66948034c3a6770a60a673bba5eb95ded7",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:14:04.235632+05:30",
+    "selfie_path": "x"
+  },
+  "919305c9592ea6f878b0d8b683c7a05c8e64abfb43bea60e": {
+    "token": "919305c9592ea6f878b0d8b683c7a05c8e64abfb43bea60e",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:14:04.236704+05:30",
+    "selfie_path": "x"
+  },
+  "63beffff379091fd27330edd70cff9fa80aab11006109fec": {
+    "token": "63beffff379091fd27330edd70cff9fa80aab11006109fec",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:14:04.239186+05:30",
+    "selfie_path": "x"
+  },
+  "aa565363b43f4b733b3a5eefd2e9460b0ae077df5fc2ed4b": {
+    "token": "aa565363b43f4b733b3a5eefd2e9460b0ae077df5fc2ed4b",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:14:04.240188+05:30",
+    "selfie_path": "x"
+  },
+  "68f36354b7adce7eab5c3ad459a2280153d1cc50de9cd9bf": {
+    "token": "68f36354b7adce7eab5c3ad459a2280153d1cc50de9cd9bf",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:14:04.250439+05:30",
+    "selfie_path": "x"
+  },
+  "cb8336c78d6895d828e69b3ed766cbc7885f6f1ce70f4692": {
+    "token": "cb8336c78d6895d828e69b3ed766cbc7885f6f1ce70f4692",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:14:04.252023+05:30",
+    "selfie_path": "x"
+  },
+  "a4b16e316b78848275faa198ef76eef967615eeace167262": {
+    "token": "a4b16e316b78848275faa198ef76eef967615eeace167262",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:14:04.261504+05:30",
+    "selfie_path": "x"
+  },
+  "cc2c350421d23a6a0304de110e0d139b7d98b8057201387b": {
+    "token": "cc2c350421d23a6a0304de110e0d139b7d98b8057201387b",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:14:04.262600+05:30",
+    "selfie_path": "x"
+  },
+  "b2564ed8196b61807e36333f8587ea7154f102805ba3d595": {
+    "token": "b2564ed8196b61807e36333f8587ea7154f102805ba3d595",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:16:06.032776+05:30",
+    "selfie_path": "x"
+  },
+  "11477515b279a911b3deaf2eeb90c18fad31448c5a6bc50a": {
+    "token": "11477515b279a911b3deaf2eeb90c18fad31448c5a6bc50a",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:16:06.034920+05:30",
+    "selfie_path": "x"
+  },
+  "769b6bb7949c276dd074886e569f050bafea2757ceaf6cc8": {
+    "token": "769b6bb7949c276dd074886e569f050bafea2757ceaf6cc8",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:16:48.698060+05:30",
+    "selfie_path": "x"
+  },
+  "86a66744099aff80cfde6d6aa957c428ecc5a8a157d2cb4b": {
+    "token": "86a66744099aff80cfde6d6aa957c428ecc5a8a157d2cb4b",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:16:48.699549+05:30",
+    "selfie_path": "x"
+  },
+  "e25584dab0d6f8fdf8d7078b73704f4d62922549af2905fc": {
+    "token": "e25584dab0d6f8fdf8d7078b73704f4d62922549af2905fc",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:16:48.704740+05:30",
+    "selfie_path": "x"
+  },
+  "7d7ffabac7684fb0ab942648f3c7cfc235391b59203d19d0": {
+    "token": "7d7ffabac7684fb0ab942648f3c7cfc235391b59203d19d0",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:16:48.706175+05:30",
+    "selfie_path": "x"
+  },
+  "f633d677a88f6b3f6e3edd12238dc9e183e0ec8d7c74439c": {
+    "token": "f633d677a88f6b3f6e3edd12238dc9e183e0ec8d7c74439c",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:16:48.709034+05:30",
+    "selfie_path": "x"
+  },
+  "22579967e111da4cab581596caca31000e7eb57380f52265": {
+    "token": "22579967e111da4cab581596caca31000e7eb57380f52265",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:16:48.710117+05:30",
+    "selfie_path": "x"
+  },
+  "d0fd620d6024acc6a2fb7a04ea7b8b299c91033348a39339": {
+    "token": "d0fd620d6024acc6a2fb7a04ea7b8b299c91033348a39339",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:16:48.715156+05:30",
+    "selfie_path": "x"
+  },
+  "c860d5e39574c659b4c8265b253edf04b07469b5774363ba": {
+    "token": "c860d5e39574c659b4c8265b253edf04b07469b5774363ba",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:16:48.716285+05:30",
+    "selfie_path": "x"
+  },
+  "1ff04f78770a9f44c4bd1907a53eb7303036b632783105cc": {
+    "token": "1ff04f78770a9f44c4bd1907a53eb7303036b632783105cc",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:16:48.720586+05:30",
+    "selfie_path": "x"
+  },
+  "63ec575e7fe9a9abdf3ccb84531ecdc7e8539d2e87b9db8b": {
+    "token": "63ec575e7fe9a9abdf3ccb84531ecdc7e8539d2e87b9db8b",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:16:48.721686+05:30",
+    "selfie_path": "x"
+  },
+  "ab4a986b9ba1040e6e4c1130176e6bea3d8348a941ac6ae9": {
+    "token": "ab4a986b9ba1040e6e4c1130176e6bea3d8348a941ac6ae9",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:31:33.663414+05:30",
+    "selfie_path": "x"
+  },
+  "54ec6ed8f98a6a43ca7d16ca7ffef9738f387181d8916f2c": {
+    "token": "54ec6ed8f98a6a43ca7d16ca7ffef9738f387181d8916f2c",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:31:33.665166+05:30",
+    "selfie_path": "x"
+  },
+  "0bcca1aff167bcb8282acf2b5586475699d8faad43099ae8": {
+    "token": "0bcca1aff167bcb8282acf2b5586475699d8faad43099ae8",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:31:33.670615+05:30",
+    "selfie_path": "x"
+  },
+  "47eac67cf52804e7a817b268a5fda39e451299daf516a6da": {
+    "token": "47eac67cf52804e7a817b268a5fda39e451299daf516a6da",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:31:33.671757+05:30",
+    "selfie_path": "x"
+  },
+  "9e0bf6b69205407f950d2d4e565667c15d89ba353d2f6ccd": {
+    "token": "9e0bf6b69205407f950d2d4e565667c15d89ba353d2f6ccd",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:31:33.674329+05:30",
+    "selfie_path": "x"
+  },
+  "96e2396f6f4d0330bfb4d6c99718db4fb6c852b73a8490f5": {
+    "token": "96e2396f6f4d0330bfb4d6c99718db4fb6c852b73a8490f5",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:31:33.675808+05:30",
+    "selfie_path": "x"
+  },
+  "4f39fe5a3a621599bae6b9322cd642d5f11c71c7b38662dd": {
+    "token": "4f39fe5a3a621599bae6b9322cd642d5f11c71c7b38662dd",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:31:33.681037+05:30",
+    "selfie_path": "x"
+  },
+  "c643fa6ea565f0f4dad05ce96b6c41fc2e8245d8592c241e": {
+    "token": "c643fa6ea565f0f4dad05ce96b6c41fc2e8245d8592c241e",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:31:33.682193+05:30",
+    "selfie_path": "x"
+  },
+  "b1dbe4c81321c738f591f0031a78df53f5ebc3c7eec2a7ab": {
+    "token": "b1dbe4c81321c738f591f0031a78df53f5ebc3c7eec2a7ab",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:31:33.687132+05:30",
+    "selfie_path": "x"
+  },
+  "9152049e5542c373535a330b2278abc49d4746b7a85d4275": {
+    "token": "9152049e5542c373535a330b2278abc49d4746b7a85d4275",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:31:33.688581+05:30",
+    "selfie_path": "x"
+  },
+  "9e17cdffc4a5f0d4e950399c8e74a47e421a4880274702f3": {
+    "token": "9e17cdffc4a5f0d4e950399c8e74a47e421a4880274702f3",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:32:02.954279+05:30",
+    "selfie_path": "x"
+  },
+  "a59023beaab2f77339960a6a5362cd9311fffcf647e88513": {
+    "token": "a59023beaab2f77339960a6a5362cd9311fffcf647e88513",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:32:02.955759+05:30",
+    "selfie_path": "x"
+  },
+  "6f7ae1faf0de53dd0bad362efd4f3b982e1ac36b87d552d9": {
+    "token": "6f7ae1faf0de53dd0bad362efd4f3b982e1ac36b87d552d9",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:32:02.961324+05:30",
+    "selfie_path": "x"
+  },
+  "b016db321a4a2ff2f525d5da82b46c0097547c9ef0a327d1": {
+    "token": "b016db321a4a2ff2f525d5da82b46c0097547c9ef0a327d1",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:32:02.962506+05:30",
+    "selfie_path": "x"
+  },
+  "cc23869e02244381a2be489cdf4e922ed40544dc389b7fc8": {
+    "token": "cc23869e02244381a2be489cdf4e922ed40544dc389b7fc8",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:32:02.965203+05:30",
+    "selfie_path": "x"
+  },
+  "cff2c677a399a1ded7613895e95aa3cfe905d32ca1d66285": {
+    "token": "cff2c677a399a1ded7613895e95aa3cfe905d32ca1d66285",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:32:02.966746+05:30",
+    "selfie_path": "x"
+  },
+  "3c7694bb4a9f32ad38429976a0fc23641f95b6ebfd192bff": {
+    "token": "3c7694bb4a9f32ad38429976a0fc23641f95b6ebfd192bff",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:32:02.972028+05:30",
+    "selfie_path": "x"
+  },
+  "cd61da257b2d18fd3f817124fbc71637e4d64053e15ac026": {
+    "token": "cd61da257b2d18fd3f817124fbc71637e4d64053e15ac026",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:32:02.973202+05:30",
+    "selfie_path": "x"
+  },
+  "7430bb44b604ded6535dc308cb96e6888c311051f647a3be": {
+    "token": "7430bb44b604ded6535dc308cb96e6888c311051f647a3be",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:32:02.977914+05:30",
+    "selfie_path": "x"
+  },
+  "e232f99768b2e888a3b6b232014e98e6f1c9a57584a4bf40": {
+    "token": "e232f99768b2e888a3b6b232014e98e6f1c9a57584a4bf40",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:32:02.979137+05:30",
+    "selfie_path": "x"
+  },
+  "6b0bc26c5e02d8dbd495d39efec4a3331b5d0c3ae98401a0": {
+    "token": "6b0bc26c5e02d8dbd495d39efec4a3331b5d0c3ae98401a0",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:32:21.916501+05:30",
+    "selfie_path": "x"
+  },
+  "29f543daed28fd93f72567884e01e31418194b467f8e8524": {
+    "token": "29f543daed28fd93f72567884e01e31418194b467f8e8524",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:32:21.918160+05:30",
+    "selfie_path": "x"
+  },
+  "5a5f08436d95fc794d341d04f69aded59e2236c5e33c89fe": {
+    "token": "5a5f08436d95fc794d341d04f69aded59e2236c5e33c89fe",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:32:21.923568+05:30",
+    "selfie_path": "x"
+  },
+  "46608591e8e076102dd5d1dcf70f5cf555f096e3c072b8a5": {
+    "token": "46608591e8e076102dd5d1dcf70f5cf555f096e3c072b8a5",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:32:21.925183+05:30",
+    "selfie_path": "x"
+  },
+  "018ad212ad5ed288761d8422ecf0689c6325c783bedd574f": {
+    "token": "018ad212ad5ed288761d8422ecf0689c6325c783bedd574f",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:32:21.928145+05:30",
+    "selfie_path": "x"
+  },
+  "792ec0d940573adbc76d0121e47930a05e29aa5a903481b6": {
+    "token": "792ec0d940573adbc76d0121e47930a05e29aa5a903481b6",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:32:21.929416+05:30",
+    "selfie_path": "x"
+  },
+  "edfcef7256435387f8d35577afc1c9317b5cfe7c0c32550d": {
+    "token": "edfcef7256435387f8d35577afc1c9317b5cfe7c0c32550d",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:32:21.934717+05:30",
+    "selfie_path": "x"
+  },
+  "7d46fdad8b445f006179ab6f2a2dd50a5c7a2c2014f33f38": {
+    "token": "7d46fdad8b445f006179ab6f2a2dd50a5c7a2c2014f33f38",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:32:21.936020+05:30",
+    "selfie_path": "x"
+  },
+  "4b8980f34fe06d859e3ab49d15083a7a25b50a6f3a48bab8": {
+    "token": "4b8980f34fe06d859e3ab49d15083a7a25b50a6f3a48bab8",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-21T23:32:21.940604+05:30",
+    "selfie_path": "x"
+  },
+  "c8e7a0308d2839e24022358b50a53fa04484439d5bda46b4": {
+    "token": "c8e7a0308d2839e24022358b50a53fa04484439d5bda46b4",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-21T23:32:21.941995+05:30",
+    "selfie_path": "x"
+  },
+  "48a68686fd85dd1d60e1d797a4532f04ffcb49d36a1e6746": {
+    "token": "48a68686fd85dd1d60e1d797a4532f04ffcb49d36a1e6746",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:03.606752+05:30",
+    "selfie_path": "x"
+  },
+  "18079833973bd5cb13d9a0eefb12e47795b70c80d153d742": {
+    "token": "18079833973bd5cb13d9a0eefb12e47795b70c80d153d742",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:03.609302+05:30",
+    "selfie_path": "x"
+  },
+  "268b0d126ca8d1caa03738d1d5bb7fee378a6eff7929fc5d": {
+    "token": "268b0d126ca8d1caa03738d1d5bb7fee378a6eff7929fc5d",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:03.615639+05:30",
+    "selfie_path": "x"
+  },
+  "8a4ffd7612386f171ad151633d112d42fa1393fa2d132b49": {
+    "token": "8a4ffd7612386f171ad151633d112d42fa1393fa2d132b49",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:03.616993+05:30",
+    "selfie_path": "x"
+  },
+  "41e1290a1f892b41bb26776e0c838000fca8bec023aecf3a": {
+    "token": "41e1290a1f892b41bb26776e0c838000fca8bec023aecf3a",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:03.619720+05:30",
+    "selfie_path": "x"
+  },
+  "0c600156a42231b0d71cfa535ebe765506a2e5ffd956f020": {
+    "token": "0c600156a42231b0d71cfa535ebe765506a2e5ffd956f020",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:03.621008+05:30",
+    "selfie_path": "x"
+  },
+  "6b7e99a6c6b9b91693d2d6172dd40366cd7314f402b1f50b": {
+    "token": "6b7e99a6c6b9b91693d2d6172dd40366cd7314f402b1f50b",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:03.626096+05:30",
+    "selfie_path": "x"
+  },
+  "95b455fa44fbb30ab7b6fa06f2a41a086021fec5b29238de": {
+    "token": "95b455fa44fbb30ab7b6fa06f2a41a086021fec5b29238de",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:03.627457+05:30",
+    "selfie_path": "x"
+  },
+  "e16df508e18d58d0544e7a868e2f378ce7b10773cd43060f": {
+    "token": "e16df508e18d58d0544e7a868e2f378ce7b10773cd43060f",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:03.632781+05:30",
+    "selfie_path": "x"
+  },
+  "0ba6db7006dec203aefb1c36bdd8eb2bcafb88458ef7a654": {
+    "token": "0ba6db7006dec203aefb1c36bdd8eb2bcafb88458ef7a654",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:03.634458+05:30",
+    "selfie_path": "x"
+  },
+  "cfa26cb94362a75f641cdbf7d6d5881791693085c8b92977": {
+    "token": "cfa26cb94362a75f641cdbf7d6d5881791693085c8b92977",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:12.425395+05:30",
+    "selfie_path": "x"
+  },
+  "b7dceb6b59182b28a7d6130793de054e0f48216b5b93772c": {
+    "token": "b7dceb6b59182b28a7d6130793de054e0f48216b5b93772c",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:12.427459+05:30",
+    "selfie_path": "x"
+  },
+  "50d4aceb5669719f9af58f530e4d3d897649a20a153ea56e": {
+    "token": "50d4aceb5669719f9af58f530e4d3d897649a20a153ea56e",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:12.433517+05:30",
+    "selfie_path": "x"
+  },
+  "7670197deb8179bd65f0de3f1d1c0338bd6e8413d0a139ed": {
+    "token": "7670197deb8179bd65f0de3f1d1c0338bd6e8413d0a139ed",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:12.435306+05:30",
+    "selfie_path": "x"
+  },
+  "56c756410bd03dad64d8476ba333deecb0b337cb0678d187": {
+    "token": "56c756410bd03dad64d8476ba333deecb0b337cb0678d187",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:12.438182+05:30",
+    "selfie_path": "x"
+  },
+  "dfa718cf65c76797b0190f3eae97686fe921a4eef051dc10": {
+    "token": "dfa718cf65c76797b0190f3eae97686fe921a4eef051dc10",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:12.439522+05:30",
+    "selfie_path": "x"
+  },
+  "1798e9158bbff4d24a69ae62be83e9649e843c7004e58268": {
+    "token": "1798e9158bbff4d24a69ae62be83e9649e843c7004e58268",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:12.444973+05:30",
+    "selfie_path": "x"
+  },
+  "2a73af59044ef2c857b94e4cfa458c8692b7a1242f7349d3": {
+    "token": "2a73af59044ef2c857b94e4cfa458c8692b7a1242f7349d3",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:12.446330+05:30",
+    "selfie_path": "x"
+  },
+  "1d25008085539be09db548de0694c22975a79ade164658c7": {
+    "token": "1d25008085539be09db548de0694c22975a79ade164658c7",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:12.451242+05:30",
+    "selfie_path": "x"
+  },
+  "70f7fa6db5c4a4fcceef8aa6705f6ac2f68e162efbf0ac07": {
+    "token": "70f7fa6db5c4a4fcceef8aa6705f6ac2f68e162efbf0ac07",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:12.452888+05:30",
+    "selfie_path": "x"
+  },
+  "84fa227d621fd4020690af400083063456e5b8394c0c477e": {
+    "token": "84fa227d621fd4020690af400083063456e5b8394c0c477e",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:45.936986+05:30",
+    "selfie_path": "x"
+  },
+  "2dddf270f55ba2b98f193413d10a19f854f1fec7ee0fccb0": {
+    "token": "2dddf270f55ba2b98f193413d10a19f854f1fec7ee0fccb0",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:45.939284+05:30",
+    "selfie_path": "x"
+  },
+  "812f68503c4a22d10a66352287e4dda8dbae33261410850f": {
+    "token": "812f68503c4a22d10a66352287e4dda8dbae33261410850f",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:45.946573+05:30",
+    "selfie_path": "x"
+  },
+  "61ede3a4843bf2506075be1583d35c59f3f1fc0ac0cba8b6": {
+    "token": "61ede3a4843bf2506075be1583d35c59f3f1fc0ac0cba8b6",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:45.949353+05:30",
+    "selfie_path": "x"
+  },
+  "7e37717b5c9cddc533c4c27aa2a7be21f0cf2a8312850c0d": {
+    "token": "7e37717b5c9cddc533c4c27aa2a7be21f0cf2a8312850c0d",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:45.953382+05:30",
+    "selfie_path": "x"
+  },
+  "90dfe64b9faa30a0db219aa669225da2b2b7c1e1750da01f": {
+    "token": "90dfe64b9faa30a0db219aa669225da2b2b7c1e1750da01f",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:45.955321+05:30",
+    "selfie_path": "x"
+  },
+  "13dc5e584f7a2d7f08477e4f0e44a84e6785727eb6bf0a42": {
+    "token": "13dc5e584f7a2d7f08477e4f0e44a84e6785727eb6bf0a42",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:45.962996+05:30",
+    "selfie_path": "x"
+  },
+  "61708d90357f9f9e9f9e124e0bd57a01dc536b160040bca3": {
+    "token": "61708d90357f9f9e9f9e124e0bd57a01dc536b160040bca3",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:45.964870+05:30",
+    "selfie_path": "x"
+  },
+  "a7d377ef6de563762002161c62d108a58e9e87713dd4714d": {
+    "token": "a7d377ef6de563762002161c62d108a58e9e87713dd4714d",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T00:08:45.970670+05:30",
+    "selfie_path": "x"
+  },
+  "b7a5ea60c816cbdc81bd4dc0ae2c81d54fb5604b1973f1e1": {
+    "token": "b7a5ea60c816cbdc81bd4dc0ae2c81d54fb5604b1973f1e1",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T00:08:45.972482+05:30",
+    "selfie_path": "x"
+  },
+  "16966913f1d61122941c13cc7a3aa73422e940799cf4db38": {
+    "token": "16966913f1d61122941c13cc7a3aa73422e940799cf4db38",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:06:14.369808+05:30",
+    "selfie_path": "x"
+  },
+  "4b535bbfaba1dc6f239df1b9abfa71606121d30ea2b0bec4": {
+    "token": "4b535bbfaba1dc6f239df1b9abfa71606121d30ea2b0bec4",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:06:14.371951+05:30",
+    "selfie_path": "x"
+  },
+  "589ddbaf02c3549b3fb9c4dbedc315dd0c60a8a2fb6f71e6": {
+    "token": "589ddbaf02c3549b3fb9c4dbedc315dd0c60a8a2fb6f71e6",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:06:14.377730+05:30",
+    "selfie_path": "x"
+  },
+  "d14192ae79389abdc7d843a39cbc99aa6c4157f57b0e153c": {
+    "token": "d14192ae79389abdc7d843a39cbc99aa6c4157f57b0e153c",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:06:14.379642+05:30",
+    "selfie_path": "x"
+  },
+  "fc23223d2625b1b7ec525c2fee7572ee587782255f8d948d": {
+    "token": "fc23223d2625b1b7ec525c2fee7572ee587782255f8d948d",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:06:14.382664+05:30",
+    "selfie_path": "x"
+  },
+  "dd7e1b240315bea537fc179a7b8902681001cb78114bab13": {
+    "token": "dd7e1b240315bea537fc179a7b8902681001cb78114bab13",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:06:14.384089+05:30",
+    "selfie_path": "x"
+  },
+  "c89c916414acbbbe5d8ab3da3deaa828214c570fa9ca51cf": {
+    "token": "c89c916414acbbbe5d8ab3da3deaa828214c570fa9ca51cf",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:06:14.389694+05:30",
+    "selfie_path": "x"
+  },
+  "3381fb87115d6eb4f651cf160a4f6843193cab3cbd6b205e": {
+    "token": "3381fb87115d6eb4f651cf160a4f6843193cab3cbd6b205e",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:06:14.391312+05:30",
+    "selfie_path": "x"
+  },
+  "a42e7720ddb643007583da743683e9301efb16b702fc664a": {
+    "token": "a42e7720ddb643007583da743683e9301efb16b702fc664a",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:06:14.396191+05:30",
+    "selfie_path": "x"
+  },
+  "af52ac3dbcd15b20b183a2ae6948bff40eed780c774de421": {
+    "token": "af52ac3dbcd15b20b183a2ae6948bff40eed780c774de421",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:06:14.397891+05:30",
+    "selfie_path": "x"
+  },
+  "1da5ce3dfe15f07d93932136809fbf11cf41c4819f77973a": {
+    "token": "1da5ce3dfe15f07d93932136809fbf11cf41c4819f77973a",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:29:36.339456+05:30",
+    "selfie_path": "x"
+  },
+  "d54bdf80ed6ee90995e20bdbfade9b74979e954e47d17510": {
+    "token": "d54bdf80ed6ee90995e20bdbfade9b74979e954e47d17510",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:29:36.341347+05:30",
+    "selfie_path": "x"
+  },
+  "e2fe0b314207026e01c5dbfbd1bd1f27dba7b66474bffaf0": {
+    "token": "e2fe0b314207026e01c5dbfbd1bd1f27dba7b66474bffaf0",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:29:36.347722+05:30",
+    "selfie_path": "x"
+  },
+  "d8e572ea57475d53dcbc62c70f319d88d19892324fb8294c": {
+    "token": "d8e572ea57475d53dcbc62c70f319d88d19892324fb8294c",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:29:36.349275+05:30",
+    "selfie_path": "x"
+  },
+  "ad525cb0ad8ac9fe294855456652069fc2f8b83553ee8d6e": {
+    "token": "ad525cb0ad8ac9fe294855456652069fc2f8b83553ee8d6e",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:29:36.353210+05:30",
+    "selfie_path": "x"
+  },
+  "719d739c572faf9586f0244684f4a2bbcea18a9a530c4878": {
+    "token": "719d739c572faf9586f0244684f4a2bbcea18a9a530c4878",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:29:36.355177+05:30",
+    "selfie_path": "x"
+  },
+  "6cdaabeaf669272137e87f9b60a58fbce1dd400664ced588": {
+    "token": "6cdaabeaf669272137e87f9b60a58fbce1dd400664ced588",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:29:36.360398+05:30",
+    "selfie_path": "x"
+  },
+  "995436320bbb7c142021d156ae7264dca63c4adde4139d30": {
+    "token": "995436320bbb7c142021d156ae7264dca63c4adde4139d30",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:29:36.362615+05:30",
+    "selfie_path": "x"
+  },
+  "8db16414c63f276ba41b593a1e383ed91c5bac43c9240e9d": {
+    "token": "8db16414c63f276ba41b593a1e383ed91c5bac43c9240e9d",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:29:36.368039+05:30",
+    "selfie_path": "x"
+  },
+  "634668b866b6bee6f75f1b29ff021e521921c9c11a2ace66": {
+    "token": "634668b866b6bee6f75f1b29ff021e521921c9c11a2ace66",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:29:36.369860+05:30",
+    "selfie_path": "x"
+  },
+  "4ef9aa433750b9e71b0ac22c6776c17ed8b8a850e80058e7": {
+    "token": "4ef9aa433750b9e71b0ac22c6776c17ed8b8a850e80058e7",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:35:01.036786+05:30",
+    "selfie_path": "x"
+  },
+  "29a5173977a1f1518b523b21ef88b08838925a11d7c911f6": {
+    "token": "29a5173977a1f1518b523b21ef88b08838925a11d7c911f6",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:35:01.039807+05:30",
+    "selfie_path": "x"
+  },
+  "7eacffbff1ac3956510e7c7e1fddf5c5402554c905cf5f11": {
+    "token": "7eacffbff1ac3956510e7c7e1fddf5c5402554c905cf5f11",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:35:01.045711+05:30",
+    "selfie_path": "x"
+  },
+  "7f30a0b204ce1ebc01611714ec0967458d1f5a844e94b7b4": {
+    "token": "7f30a0b204ce1ebc01611714ec0967458d1f5a844e94b7b4",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:35:01.047697+05:30",
+    "selfie_path": "x"
+  },
+  "0aa9171c9267b8a7c2a79d6f54a76c31c5d1d51a90e86f60": {
+    "token": "0aa9171c9267b8a7c2a79d6f54a76c31c5d1d51a90e86f60",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:35:01.050926+05:30",
+    "selfie_path": "x"
+  },
+  "1800f06e8720ff7ef9abbb41cafab48029eb8ee3fcd569a1": {
+    "token": "1800f06e8720ff7ef9abbb41cafab48029eb8ee3fcd569a1",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:35:01.053255+05:30",
+    "selfie_path": "x"
+  },
+  "aae9a3d6cc85f79a846d73dd2f5cccc3758b579649ddea5f": {
+    "token": "aae9a3d6cc85f79a846d73dd2f5cccc3758b579649ddea5f",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:35:01.058909+05:30",
+    "selfie_path": "x"
+  },
+  "41de4447e557a736da2cf9c9749dcef105a1f308f7834e7d": {
+    "token": "41de4447e557a736da2cf9c9749dcef105a1f308f7834e7d",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:35:01.060932+05:30",
+    "selfie_path": "x"
+  },
+  "8cc2ac59c51a7f8d3407fb441542b2969aadfb30b0bae399": {
+    "token": "8cc2ac59c51a7f8d3407fb441542b2969aadfb30b0bae399",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:35:01.066419+05:30",
+    "selfie_path": "x"
+  },
+  "2dc937679b7ef717c6fb943ca2161c64d3a00bdc326eabb2": {
+    "token": "2dc937679b7ef717c6fb943ca2161c64d3a00bdc326eabb2",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:35:01.068403+05:30",
+    "selfie_path": "x"
+  },
+  "1bf6b684dac0d0b23f64a4f0857d6e4955547a653fd9969f": {
+    "token": "1bf6b684dac0d0b23f64a4f0857d6e4955547a653fd9969f",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:37:59.210488+05:30",
+    "selfie_path": "x"
+  },
+  "a6459829a0a71060c72fbe15d80694d2da4ebe7ae5450182": {
+    "token": "a6459829a0a71060c72fbe15d80694d2da4ebe7ae5450182",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:37:59.213254+05:30",
+    "selfie_path": "x"
+  },
+  "f5169a3a38adc2051d2f75d4816473674da6d85e9ce2ff77": {
+    "token": "f5169a3a38adc2051d2f75d4816473674da6d85e9ce2ff77",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:37:59.218857+05:30",
+    "selfie_path": "x"
+  },
+  "b3c1d2a85c1749ee8efcb62082d96014703023b1c3d99d7b": {
+    "token": "b3c1d2a85c1749ee8efcb62082d96014703023b1c3d99d7b",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:37:59.220682+05:30",
+    "selfie_path": "x"
+  },
+  "25840fcbd17e876acfd0da2938cd58d584adbab2fc2ec572": {
+    "token": "25840fcbd17e876acfd0da2938cd58d584adbab2fc2ec572",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:37:59.224529+05:30",
+    "selfie_path": "x"
+  },
+  "4fef8aec211484feff2547901d8b3b1024a1eaddd599cd08": {
+    "token": "4fef8aec211484feff2547901d8b3b1024a1eaddd599cd08",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:37:59.226309+05:30",
+    "selfie_path": "x"
+  },
+  "a371c02c6ac7f7c1f0347e330d95f31d02b888f2965d8838": {
+    "token": "a371c02c6ac7f7c1f0347e330d95f31d02b888f2965d8838",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:37:59.232534+05:30",
+    "selfie_path": "x"
+  },
+  "ccb0bb1fe63a7362ecd9c6ecab7f28c1eba09148ac67be55": {
+    "token": "ccb0bb1fe63a7362ecd9c6ecab7f28c1eba09148ac67be55",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:37:59.234282+05:30",
+    "selfie_path": "x"
+  },
+  "cb72e8a9203b789c2c2136b8f3dcd1a639c98d1473381bc2": {
+    "token": "cb72e8a9203b789c2c2136b8f3dcd1a639c98d1473381bc2",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:37:59.240004+05:30",
+    "selfie_path": "x"
+  },
+  "942da69c98a892fd3b58afb8396af3c2396c78747615c4e0": {
+    "token": "942da69c98a892fd3b58afb8396af3c2396c78747615c4e0",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:37:59.242078+05:30",
+    "selfie_path": "x"
+  },
+  "ef6665e878e509ed7d60eb39714f21ad8f1cf6ad1ed398cf": {
+    "token": "ef6665e878e509ed7d60eb39714f21ad8f1cf6ad1ed398cf",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:27.344239+05:30",
+    "selfie_path": "x"
+  },
+  "ab6a813e8b12f9158bd137757421144e43a571517e98fd02": {
+    "token": "ab6a813e8b12f9158bd137757421144e43a571517e98fd02",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:27.347251+05:30",
+    "selfie_path": "x"
+  },
+  "89a4d4f6de8ea9ef2e5945f7431026de69179aad6ef89b86": {
+    "token": "89a4d4f6de8ea9ef2e5945f7431026de69179aad6ef89b86",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:27.352420+05:30",
+    "selfie_path": "x"
+  },
+  "be37be1443959ff55c37881f1813fafe04f1adcc15c609e8": {
+    "token": "be37be1443959ff55c37881f1813fafe04f1adcc15c609e8",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:27.354503+05:30",
+    "selfie_path": "x"
+  },
+  "9754a98cf5d003687f130c383dc6f394de9b2fec6ec6fc5f": {
+    "token": "9754a98cf5d003687f130c383dc6f394de9b2fec6ec6fc5f",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:27.358512+05:30",
+    "selfie_path": "x"
+  },
+  "506f6e09d21a8c9297e10db127b5237b1b2d9f2d3378a0e2": {
+    "token": "506f6e09d21a8c9297e10db127b5237b1b2d9f2d3378a0e2",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:27.360404+05:30",
+    "selfie_path": "x"
+  },
+  "6c57ff7d9008d5c41b9c21bc609026dfb75700967095924e": {
+    "token": "6c57ff7d9008d5c41b9c21bc609026dfb75700967095924e",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:27.366224+05:30",
+    "selfie_path": "x"
+  },
+  "c0ca775abe942c6a0c4515dabf296f4e0f208f8634fa4457": {
+    "token": "c0ca775abe942c6a0c4515dabf296f4e0f208f8634fa4457",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:27.368030+05:30",
+    "selfie_path": "x"
+  },
+  "edcf93d69a9ee613b2a639745b5c4ef908f443811f9c83f4": {
+    "token": "edcf93d69a9ee613b2a639745b5c4ef908f443811f9c83f4",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:27.373682+05:30",
+    "selfie_path": "x"
+  },
+  "342bcfc82c6a0f84f0fa5b587415c391ee90938889cda943": {
+    "token": "342bcfc82c6a0f84f0fa5b587415c391ee90938889cda943",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:27.375653+05:30",
+    "selfie_path": "x"
+  },
+  "735761790454915b54d2f1f301bbffe9bb69ffb8d333dfed": {
+    "token": "735761790454915b54d2f1f301bbffe9bb69ffb8d333dfed",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:27.381264+05:30",
+    "selfie_path": "x"
+  },
+  "747acd91637bae4468af0932698d66abf8c195f9b78e17ef": {
+    "token": "747acd91637bae4468af0932698d66abf8c195f9b78e17ef",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:27.383489+05:30",
+    "selfie_path": "x"
+  },
+  "7f6267615fc3e6a715058337d8c853efcce8139c5c7dc5ad": {
+    "token": "7f6267615fc3e6a715058337d8c853efcce8139c5c7dc5ad",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:27.387241+05:30",
+    "selfie_path": "x"
+  },
+  "7d0e62a22f98e453ccd22a794087121733b25a397f87d095": {
+    "token": "7d0e62a22f98e453ccd22a794087121733b25a397f87d095",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:27.389134+05:30",
+    "selfie_path": "x"
+  },
+  "770217a8ccf008d5259ba9806af29b9ece5524a13216cf68": {
+    "token": "770217a8ccf008d5259ba9806af29b9ece5524a13216cf68",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:27.392510+05:30",
+    "selfie_path": "x"
+  },
+  "572e83a66f5b75747154f5751af56d3a5411c769e043db26": {
+    "token": "572e83a66f5b75747154f5751af56d3a5411c769e043db26",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:27.394362+05:30",
+    "selfie_path": "x"
+  },
+  "7344248a2c9d2c6eea5fb9d0dfa8e2a16a4e181b392d542c": {
+    "token": "7344248a2c9d2c6eea5fb9d0dfa8e2a16a4e181b392d542c",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:27.397934+05:30",
+    "selfie_path": "x"
+  },
+  "a6faf4a18508777a4d82b055c221c7509cd98908bebc6312": {
+    "token": "a6faf4a18508777a4d82b055c221c7509cd98908bebc6312",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:27.400029+05:30",
+    "selfie_path": "x"
+  },
+  "757ae7832851eb71a325914e294205dfc5cdb4cf1c13f2bf": {
+    "token": "757ae7832851eb71a325914e294205dfc5cdb4cf1c13f2bf",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:35.183625+05:30",
+    "selfie_path": "x"
+  },
+  "722204e00ecddf572cd52ceaf63ff7ad6c45438fa3c09263": {
+    "token": "722204e00ecddf572cd52ceaf63ff7ad6c45438fa3c09263",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:35.186412+05:30",
+    "selfie_path": "x"
+  },
+  "77f45a843d99af6e19593c48e905ce7d09cceabb25df42ff": {
+    "token": "77f45a843d99af6e19593c48e905ce7d09cceabb25df42ff",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:35.192151+05:30",
+    "selfie_path": "x"
+  },
+  "ab76c1b9d2ee4234e962adedddbac9e600fe2f246385e6b5": {
+    "token": "ab76c1b9d2ee4234e962adedddbac9e600fe2f246385e6b5",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:35.194099+05:30",
+    "selfie_path": "x"
+  },
+  "1d142749a62abff76506d33c53d8340316e7789e94f7b720": {
+    "token": "1d142749a62abff76506d33c53d8340316e7789e94f7b720",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:35.198382+05:30",
+    "selfie_path": "x"
+  },
+  "4dcbc5728873a61336e82a01802c4a60ec8d0bfb743420af": {
+    "token": "4dcbc5728873a61336e82a01802c4a60ec8d0bfb743420af",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:35.200557+05:30",
+    "selfie_path": "x"
+  },
+  "02024b5f711e7447c659eebb63a3a2e58f06ec7f1c26ed6d": {
+    "token": "02024b5f711e7447c659eebb63a3a2e58f06ec7f1c26ed6d",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:35.206946+05:30",
+    "selfie_path": "x"
+  },
+  "711551acee5454672ba42c3462605198c5c0bc084fae6737": {
+    "token": "711551acee5454672ba42c3462605198c5c0bc084fae6737",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:35.209255+05:30",
+    "selfie_path": "x"
+  },
+  "19abe07863b17186481aac1313a217f8ec7c90b13057976f": {
+    "token": "19abe07863b17186481aac1313a217f8ec7c90b13057976f",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:35.215619+05:30",
+    "selfie_path": "x"
+  },
+  "bf3d8b46f461c2e4f1b4c6167ffc20566bb067dcb26f61d0": {
+    "token": "bf3d8b46f461c2e4f1b4c6167ffc20566bb067dcb26f61d0",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:35.217602+05:30",
+    "selfie_path": "x"
+  },
+  "cd38ae471e04e02a42f51a24ce35546aa2312f19581090c1": {
+    "token": "cd38ae471e04e02a42f51a24ce35546aa2312f19581090c1",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:35.248037+05:30",
+    "selfie_path": "x"
+  },
+  "2fc2afc76b2ca452d8e9d6d53ca2b7649428cff3cfb80acc": {
+    "token": "2fc2afc76b2ca452d8e9d6d53ca2b7649428cff3cfb80acc",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:35.263256+05:30",
+    "selfie_path": "x"
+  },
+  "d6fc5af0c61c42938fe3c77feaf1b80ff8b012f6f93bd9f1": {
+    "token": "d6fc5af0c61c42938fe3c77feaf1b80ff8b012f6f93bd9f1",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:35.328045+05:30",
+    "selfie_path": "x"
+  },
+  "31501759f19ba8e4a056f9be58a3d193da657d7814e57ef5": {
+    "token": "31501759f19ba8e4a056f9be58a3d193da657d7814e57ef5",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:35.355727+05:30",
+    "selfie_path": "x"
+  },
+  "3127e0c378e1c750cf3f0736c2385c6471d75fe7faa2a3c8": {
+    "token": "3127e0c378e1c750cf3f0736c2385c6471d75fe7faa2a3c8",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:35.407782+05:30",
+    "selfie_path": "x"
+  },
+  "fb50c82dc804153fdbf62d8d6af607a7ae2e1705e753d8f1": {
+    "token": "fb50c82dc804153fdbf62d8d6af607a7ae2e1705e753d8f1",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:35.410474+05:30",
+    "selfie_path": "x"
+  },
+  "0b6ec8461ef3df9ba55a076aa95f272f2859861ef237c2f5": {
+    "token": "0b6ec8461ef3df9ba55a076aa95f272f2859861ef237c2f5",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:41:35.414997+05:30",
+    "selfie_path": "x"
+  },
+  "546b162b9b62a626a06de31eb418cccd6745a8f4e6e00def": {
+    "token": "546b162b9b62a626a06de31eb418cccd6745a8f4e6e00def",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T01:41:35.416991+05:30",
+    "selfie_path": "x"
+  },
+  "b86830f8fc988de361951426e515226ca5ff8918ef205cc7": {
+    "token": "b86830f8fc988de361951426e515226ca5ff8918ef205cc7",
+    "evaluator_id": "EMP-1001",
+    "name": "Ramesh Kulkarni",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T01:50:38.801338+05:30",
+    "selfie_path": "data/sessions/b86830f8fc988de361951426e515226ca5ff8918ef205cc7/selfie.jpg"
+  },
+  "5e9de639a6c2404db1a83ee2ba7a0cfad284f3fcf37044ec": {
+    "token": "5e9de639a6c2404db1a83ee2ba7a0cfad284f3fcf37044ec",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:11:38.637666+05:30",
+    "selfie_path": null
+  },
+  "d8a447fc65cdd7139205c53b2eb7d19183eb044b4089d9c5": {
+    "token": "d8a447fc65cdd7139205c53b2eb7d19183eb044b4089d9c5",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:14:35.598377+05:30",
+    "selfie_path": "data/cases/acdb196d/img_0.jpg"
+  },
+  "719272a31c29d8f453de4ba17951809f59681494f04479c0": {
+    "token": "719272a31c29d8f453de4ba17951809f59681494f04479c0",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:22:03.235689+05:30",
+    "selfie_path": "data/sessions/719272a31c29d8f453de4ba17951809f59681494f04479c0/selfie.jpg"
+  },
+  "2ca7532402d640e168aa71b6e76ef40c21a0f20753f9412d": {
+    "token": "2ca7532402d640e168aa71b6e76ef40c21a0f20753f9412d",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:35:06.095355+05:30",
+    "selfie_path": "x"
+  },
+  "6ca24ff835341f9c5ad56e098c8c3cf6406b1da8744cc3bf": {
+    "token": "6ca24ff835341f9c5ad56e098c8c3cf6406b1da8744cc3bf",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:35:06.104113+05:30",
+    "selfie_path": "x"
+  },
+  "c335f2000a5f6dd164d4f2be9300388594477864cddd7452": {
+    "token": "c335f2000a5f6dd164d4f2be9300388594477864cddd7452",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:35:06.114703+05:30",
+    "selfie_path": "x"
+  },
+  "0e874e26c4b946b252a1051bae8029accc21492e4a56812d": {
+    "token": "0e874e26c4b946b252a1051bae8029accc21492e4a56812d",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:35:06.117315+05:30",
+    "selfie_path": "x"
+  },
+  "b0b10b884e7794b0a48b1ebb7736ce989cd28305f1dc2426": {
+    "token": "b0b10b884e7794b0a48b1ebb7736ce989cd28305f1dc2426",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:35:06.121219+05:30",
+    "selfie_path": "x"
+  },
+  "5ec929b385cb9725da6c4c3a08cd1fdc59fe7cee9e415304": {
+    "token": "5ec929b385cb9725da6c4c3a08cd1fdc59fe7cee9e415304",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:35:06.126900+05:30",
+    "selfie_path": "x"
+  },
+  "7782f58434af6111836e5b6e1eac2c115fefda81121c92a6": {
+    "token": "7782f58434af6111836e5b6e1eac2c115fefda81121c92a6",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:35:06.134567+05:30",
+    "selfie_path": "x"
+  },
+  "e835ec77d7c60b5d42c2e0ce24a072b4fa321b25bad7e112": {
+    "token": "e835ec77d7c60b5d42c2e0ce24a072b4fa321b25bad7e112",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:35:06.136892+05:30",
+    "selfie_path": "x"
+  },
+  "545418b9faff375f8eeb8ec02a6a0b237d673f00e408b1bf": {
+    "token": "545418b9faff375f8eeb8ec02a6a0b237d673f00e408b1bf",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:35:06.143085+05:30",
+    "selfie_path": "x"
+  },
+  "2d8dc7b11bbfd88eb1c1954dbdcf2bf61aaf99b069138b71": {
+    "token": "2d8dc7b11bbfd88eb1c1954dbdcf2bf61aaf99b069138b71",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:35:06.145084+05:30",
+    "selfie_path": "x"
+  },
+  "d9227ce4eb14976798f2044a9f55ddced0c9106b040d9d49": {
+    "token": "d9227ce4eb14976798f2044a9f55ddced0c9106b040d9d49",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:35:06.150657+05:30",
+    "selfie_path": "x"
+  },
+  "a66c73669b5396ad036644f2cd0e9d457793b4385701c926": {
+    "token": "a66c73669b5396ad036644f2cd0e9d457793b4385701c926",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:35:06.153252+05:30",
+    "selfie_path": "x"
+  },
+  "980401e71a58c527fa8bf92fe69f6efdd3a2981771a365a4": {
+    "token": "980401e71a58c527fa8bf92fe69f6efdd3a2981771a365a4",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:35:06.157381+05:30",
+    "selfie_path": "x"
+  },
+  "42e03ea379f41d60671dd407eb7403b6c6bd960eda6b40d8": {
+    "token": "42e03ea379f41d60671dd407eb7403b6c6bd960eda6b40d8",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:35:06.159444+05:30",
+    "selfie_path": "x"
+  },
+  "85c12ef8b33f6842aaa6353d2b908536d3775b1ca513a116": {
+    "token": "85c12ef8b33f6842aaa6353d2b908536d3775b1ca513a116",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:35:06.163335+05:30",
+    "selfie_path": "x"
+  },
+  "ca2df847b9de8d8c927f9fdccdb50bd52e91a58a66797c4b": {
+    "token": "ca2df847b9de8d8c927f9fdccdb50bd52e91a58a66797c4b",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:35:06.165319+05:30",
+    "selfie_path": "x"
+  },
+  "6932e7081038cc4dc58bace5840685e30e107d90b44fe4fa": {
+    "token": "6932e7081038cc4dc58bace5840685e30e107d90b44fe4fa",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:35:06.168822+05:30",
+    "selfie_path": "x"
+  },
+  "4f9f5b207d2d57fef12930b0c4198a0c132de6c48c23927d": {
+    "token": "4f9f5b207d2d57fef12930b0c4198a0c132de6c48c23927d",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:35:06.170968+05:30",
+    "selfie_path": "x"
+  },
+  "9e9e3642c1815cde4ffaafc5587fe605fa41c676164d8957": {
+    "token": "9e9e3642c1815cde4ffaafc5587fe605fa41c676164d8957",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:40:03.076751+05:30",
+    "selfie_path": "x"
+  },
+  "a965f869cc25ff090672526661a76bcf9ec8c8d18d103abd": {
+    "token": "a965f869cc25ff090672526661a76bcf9ec8c8d18d103abd",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:40:03.080319+05:30",
+    "selfie_path": "x"
+  },
+  "0ca7da9b82746e2968663387f13d52d4325c1e87913111fc": {
+    "token": "0ca7da9b82746e2968663387f13d52d4325c1e87913111fc",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:40:03.085976+05:30",
+    "selfie_path": "x"
+  },
+  "ec4dc248e7c596de2b7adf76cd765c43f4b1e9f6dab16307": {
+    "token": "ec4dc248e7c596de2b7adf76cd765c43f4b1e9f6dab16307",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:40:03.088585+05:30",
+    "selfie_path": "x"
+  },
+  "ece7594d48a599cd29ef38315f4084b2e7d799a2294f32eb": {
+    "token": "ece7594d48a599cd29ef38315f4084b2e7d799a2294f32eb",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:40:03.092190+05:30",
+    "selfie_path": "x"
+  },
+  "f80a7b4754befc3ac52b5ac0b6b161c88ddc23a493fbc130": {
+    "token": "f80a7b4754befc3ac52b5ac0b6b161c88ddc23a493fbc130",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:40:03.094426+05:30",
+    "selfie_path": "x"
+  },
+  "9b667e07b1400a623818b15b0f96ff18b6694bdc10c09298": {
+    "token": "9b667e07b1400a623818b15b0f96ff18b6694bdc10c09298",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:40:03.100285+05:30",
+    "selfie_path": "x"
+  },
+  "2b0e28aeb50492a446b574af4b02f16bfbc50876e4a58bbf": {
+    "token": "2b0e28aeb50492a446b574af4b02f16bfbc50876e4a58bbf",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:40:03.102344+05:30",
+    "selfie_path": "x"
+  },
+  "0f57bf7388cc897cd8c213533ec44df29af0dea2d62679aa": {
+    "token": "0f57bf7388cc897cd8c213533ec44df29af0dea2d62679aa",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:40:03.107861+05:30",
+    "selfie_path": "x"
+  },
+  "a64091cffc89636ea4f9c012167cae008f50ba0a1be5a610": {
+    "token": "a64091cffc89636ea4f9c012167cae008f50ba0a1be5a610",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:40:03.109928+05:30",
+    "selfie_path": "x"
+  },
+  "3943c0b703cef230e9f062aa24822909da7009d19148c2f1": {
+    "token": "3943c0b703cef230e9f062aa24822909da7009d19148c2f1",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:40:03.114840+05:30",
+    "selfie_path": "x"
+  },
+  "7b980a9158d17328bc6435e0bfe6489b3d869ced393bff3b": {
+    "token": "7b980a9158d17328bc6435e0bfe6489b3d869ced393bff3b",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:40:03.116956+05:30",
+    "selfie_path": "x"
+  },
+  "978b8492f36c3b02bdc814ed3e77f800a8c8cc3b7df5e7e6": {
+    "token": "978b8492f36c3b02bdc814ed3e77f800a8c8cc3b7df5e7e6",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:40:03.120561+05:30",
+    "selfie_path": "x"
+  },
+  "ea6b4c6e9a75580f1901445f1ce413e72f3cca414fcd5408": {
+    "token": "ea6b4c6e9a75580f1901445f1ce413e72f3cca414fcd5408",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:40:03.122863+05:30",
+    "selfie_path": "x"
+  },
+  "290da49615de0bcd2a3ada45140c2837c29733f4fc8a787b": {
+    "token": "290da49615de0bcd2a3ada45140c2837c29733f4fc8a787b",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:40:03.126158+05:30",
+    "selfie_path": "x"
+  },
+  "23cbc4d9b69c50ba06572c9718351926f585d8fc63053eeb": {
+    "token": "23cbc4d9b69c50ba06572c9718351926f585d8fc63053eeb",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:40:03.128202+05:30",
+    "selfie_path": "x"
+  },
+  "00e2e864f3f2428f69719f37e529395a7d7e34d5cc05c13e": {
+    "token": "00e2e864f3f2428f69719f37e529395a7d7e34d5cc05c13e",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:40:03.131800+05:30",
+    "selfie_path": "x"
+  },
+  "566151070d80a4cccf436508f664480faa5cb21d8fd9853d": {
+    "token": "566151070d80a4cccf436508f664480faa5cb21d8fd9853d",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:40:03.134300+05:30",
+    "selfie_path": "x"
+  },
+  "bf10bb0887ae64caccab9b1bb98752791c58af028343c2b3": {
+    "token": "bf10bb0887ae64caccab9b1bb98752791c58af028343c2b3",
+    "evaluator_id": "EMP-9999",
+    "name": "Head Office Admin (Demo)",
+    "branch_id": "HO-000",
+    "role": "admin",
+    "login_time": "2026-07-22T02:40:14.985114+05:30",
+    "selfie_path": null
+  },
+  "d0cc192120816995b66ae81ae4679de8b890a15ee5680114": {
+    "token": "d0cc192120816995b66ae81ae4679de8b890a15ee5680114",
+    "evaluator_id": "EMP-9999",
+    "name": "Head Office Admin (Demo)",
+    "branch_id": "HO-000",
+    "role": "admin",
+    "login_time": "2026-07-22T02:40:20.311178+05:30",
+    "selfie_path": null
+  },
+  "f1dc96e714d407a34c4fc9e5efb8638ea25184b6d5755b23": {
+    "token": "f1dc96e714d407a34c4fc9e5efb8638ea25184b6d5755b23",
+    "evaluator_id": "EMP-9999",
+    "name": "Head Office Admin (Demo)",
+    "branch_id": "HO-000",
+    "role": "admin",
+    "login_time": "2026-07-22T02:40:57.266931+05:30",
+    "selfie_path": null
+  },
+  "3dba9c21113aeda08c4ed977d9d38fa71e8a3f7092540270": {
+    "token": "3dba9c21113aeda08c4ed977d9d38fa71e8a3f7092540270",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T02:41:13.878916+05:30",
+    "selfie_path": null
+  },
+  "2bd3ac671f80f1c9422faf1d5f8dc5e934e6426867f57463": {
+    "token": "2bd3ac671f80f1c9422faf1d5f8dc5e934e6426867f57463",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T02:41:13.942653+05:30",
+    "selfie_path": null
+  },
+  "7282f599187cb90a035e8451f1aa332352eabe9f6e627072": {
+    "token": "7282f599187cb90a035e8451f1aa332352eabe9f6e627072",
+    "evaluator_id": "EMP-9999",
+    "name": "Head Office Admin (Demo)",
+    "branch_id": "HO-000",
+    "role": "admin",
+    "login_time": "2026-07-22T02:41:13.982757+05:30",
+    "selfie_path": null
+  },
+  "3ea7f363f7c5fcafc92a1a428816d1a23416fd2953304682": {
+    "token": "3ea7f363f7c5fcafc92a1a428816d1a23416fd2953304682",
+    "evaluator_id": "EMP-9999",
+    "name": "Head Office Admin (Demo)",
+    "branch_id": "HO-000",
+    "role": "admin",
+    "login_time": "2026-07-22T11:39:36.515224+05:30",
+    "selfie_path": null
+  },
+  "d4e98db0b1f498cac395522473fe91004de6dfc7b9fe4cf0": {
+    "token": "d4e98db0b1f498cac395522473fe91004de6dfc7b9fe4cf0",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T11:47:08.243555+05:30",
+    "selfie_path": "x"
+  },
+  "6cd1de026df0f65518c512d81c18b92409c42d3b05c8bc1a": {
+    "token": "6cd1de026df0f65518c512d81c18b92409c42d3b05c8bc1a",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T11:47:08.246383+05:30",
+    "selfie_path": "x"
+  },
+  "edceec36d2c0400b949fdab0bb228029cc2911e7ac4583bb": {
+    "token": "edceec36d2c0400b949fdab0bb228029cc2911e7ac4583bb",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T11:47:08.251851+05:30",
+    "selfie_path": "x"
+  },
+  "30befc20ce6fb42a37b24012a6ea147e2e219c031ac400f4": {
+    "token": "30befc20ce6fb42a37b24012a6ea147e2e219c031ac400f4",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T11:47:08.254008+05:30",
+    "selfie_path": "x"
+  },
+  "dc515ac272d13907b0bfc6eb0cbb6b72099936afc6132bff": {
+    "token": "dc515ac272d13907b0bfc6eb0cbb6b72099936afc6132bff",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T11:47:08.257584+05:30",
+    "selfie_path": "x"
+  },
+  "a2da20a3bbcd99746f847d69aff1f292505fdcb9289bf382": {
+    "token": "a2da20a3bbcd99746f847d69aff1f292505fdcb9289bf382",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T11:47:08.260071+05:30",
+    "selfie_path": "x"
+  },
+  "135247fd503fdb419e251fc8947c5ea5e7ad7d861182fed4": {
+    "token": "135247fd503fdb419e251fc8947c5ea5e7ad7d861182fed4",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T11:47:08.266223+05:30",
+    "selfie_path": "x"
+  },
+  "6a65a5ed7e4ab49ad1bd59c48c519f3cebadb689e1b6932c": {
+    "token": "6a65a5ed7e4ab49ad1bd59c48c519f3cebadb689e1b6932c",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T11:47:08.268641+05:30",
+    "selfie_path": "x"
+  },
+  "fdb532cbe32745a98ad5e92aa1f3e7fd313a10de078540d3": {
+    "token": "fdb532cbe32745a98ad5e92aa1f3e7fd313a10de078540d3",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T11:47:08.274063+05:30",
+    "selfie_path": "x"
+  },
+  "e6652928268f56324ab95ea037852c63e63c970d5be2bad2": {
+    "token": "e6652928268f56324ab95ea037852c63e63c970d5be2bad2",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T11:47:08.276370+05:30",
+    "selfie_path": "x"
+  },
+  "abe061832781c7640dc1d45c355ac3f854dfaa5e09d67d98": {
+    "token": "abe061832781c7640dc1d45c355ac3f854dfaa5e09d67d98",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T11:47:08.281371+05:30",
+    "selfie_path": "x"
+  },
+  "3714d2530d2b213d590f47d1c4406ec32d3ad5dfea409710": {
+    "token": "3714d2530d2b213d590f47d1c4406ec32d3ad5dfea409710",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T11:47:08.284027+05:30",
+    "selfie_path": "x"
+  },
+  "786cf11de06571fe7d72cacb8455bedb50297a86e6f58164": {
+    "token": "786cf11de06571fe7d72cacb8455bedb50297a86e6f58164",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T11:47:08.287465+05:30",
+    "selfie_path": "x"
+  },
+  "c3113204643255ea3d97cf7a6e14551c46208c4d6c13ea18": {
+    "token": "c3113204643255ea3d97cf7a6e14551c46208c4d6c13ea18",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T11:47:08.290410+05:30",
+    "selfie_path": "x"
+  },
+  "6cc059b85bb59e599ed33d54e7b8ce93f769e1b5b107a7ea": {
+    "token": "6cc059b85bb59e599ed33d54e7b8ce93f769e1b5b107a7ea",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T11:47:08.293867+05:30",
+    "selfie_path": "x"
+  },
+  "3eb4a05f8d5e1031cd252f892366fe8f386d4d5667d7b761": {
+    "token": "3eb4a05f8d5e1031cd252f892366fe8f386d4d5667d7b761",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T11:47:08.296295+05:30",
+    "selfie_path": "x"
+  },
+  "ab6b931deda08812949faa256161bd4527b0b0616c90f7f8": {
+    "token": "ab6b931deda08812949faa256161bd4527b0b0616c90f7f8",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T11:47:08.299403+05:30",
+    "selfie_path": "x"
+  },
+  "31fee6b7ef4dbae57cf741bec0570394ab55e83e77b11f68": {
+    "token": "31fee6b7ef4dbae57cf741bec0570394ab55e83e77b11f68",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T11:47:08.301858+05:30",
+    "selfie_path": "x"
+  },
+  "d4956fc7a3eb18c010bfd1b1e1699aee81485786c5a8d91e": {
+    "token": "d4956fc7a3eb18c010bfd1b1e1699aee81485786c5a8d91e",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T12:01:03.762038+05:30",
+    "selfie_path": "data/sessions/d4956fc7a3eb18c010bfd1b1e1699aee81485786c5a8d91e/selfie.jpg"
+  },
+  "611d33d010dd2937a8a88f983dcc659fc7dc004ebd77949f": {
+    "token": "611d33d010dd2937a8a88f983dcc659fc7dc004ebd77949f",
+    "evaluator_id": "EMP-9999",
+    "name": "Head Office Admin (Demo)",
+    "branch_id": "HO-000",
+    "role": "admin",
+    "login_time": "2026-07-22T12:01:26.098871+05:30",
+    "selfie_path": "data/sessions/611d33d010dd2937a8a88f983dcc659fc7dc004ebd77949f/selfie.jpg"
+  },
+  "1c1fef1741e7c0b76f619ad197197d42a9aa72c71bd3fee4": {
+    "token": "1c1fef1741e7c0b76f619ad197197d42a9aa72c71bd3fee4",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T12:02:05.708071+05:30",
+    "selfie_path": "data/sessions/1c1fef1741e7c0b76f619ad197197d42a9aa72c71bd3fee4/selfie.jpg"
+  },
+  "adfcd3a06aed102e19a6c3231acf76c2e680333f5957ff06": {
+    "token": "adfcd3a06aed102e19a6c3231acf76c2e680333f5957ff06",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T12:33:18.722192+05:30",
+    "selfie_path": "x"
+  },
+  "ed383e5cc053d5ae88b6a9283ceb0f15cabed2509a340878": {
+    "token": "ed383e5cc053d5ae88b6a9283ceb0f15cabed2509a340878",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T12:33:18.726024+05:30",
+    "selfie_path": "x"
+  },
+  "a2c354d40f83612d2a4a79b3e5b58bd3b47db934642a7517": {
+    "token": "a2c354d40f83612d2a4a79b3e5b58bd3b47db934642a7517",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T12:33:18.735264+05:30",
+    "selfie_path": "x"
+  },
+  "35af3d97e4bab0e93ba94dee249d9863f9eae05500a4bda6": {
+    "token": "35af3d97e4bab0e93ba94dee249d9863f9eae05500a4bda6",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T12:33:18.738149+05:30",
+    "selfie_path": "x"
+  },
+  "d64052b57c4ff523df2bea47b21c3f6c51e07772c6884e1a": {
+    "token": "d64052b57c4ff523df2bea47b21c3f6c51e07772c6884e1a",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T12:33:18.743378+05:30",
+    "selfie_path": "x"
+  },
+  "8a80683fdbfcb61ff3e9c664405040b0bb1f053e5d5bed24": {
+    "token": "8a80683fdbfcb61ff3e9c664405040b0bb1f053e5d5bed24",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T12:33:18.746151+05:30",
+    "selfie_path": "x"
+  },
+  "7238430043b8afb1a15aceff7677ca654575168af7baf112": {
+    "token": "7238430043b8afb1a15aceff7677ca654575168af7baf112",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T12:33:18.753661+05:30",
+    "selfie_path": "x"
+  },
+  "7b471222bb3a2635dcb49fc9d9ec110a3098886ccd7e1728": {
+    "token": "7b471222bb3a2635dcb49fc9d9ec110a3098886ccd7e1728",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T12:33:18.757281+05:30",
+    "selfie_path": "x"
+  },
+  "6efc2e37879fef49b1f065fc735cd22b617cb3e1a570ad0a": {
+    "token": "6efc2e37879fef49b1f065fc735cd22b617cb3e1a570ad0a",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T12:33:18.764913+05:30",
+    "selfie_path": "x"
+  },
+  "00f1d847b2bc7a00b2a4af37ca2b3314ab408271dc091b30": {
+    "token": "00f1d847b2bc7a00b2a4af37ca2b3314ab408271dc091b30",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T12:33:18.767742+05:30",
+    "selfie_path": "x"
+  },
+  "4d5a48de83d2488122bf6f4e9067a371ffdb494801bb5c2b": {
+    "token": "4d5a48de83d2488122bf6f4e9067a371ffdb494801bb5c2b",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T12:33:18.774719+05:30",
+    "selfie_path": "x"
+  },
+  "d062058f1a57d14c75d9ec5c29a7f04fd904bd14dc275d26": {
+    "token": "d062058f1a57d14c75d9ec5c29a7f04fd904bd14dc275d26",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T12:33:18.777777+05:30",
+    "selfie_path": "x"
+  },
+  "5a9f0923024567dfdb34dcacf7c78b0a43457c352d3e6875": {
+    "token": "5a9f0923024567dfdb34dcacf7c78b0a43457c352d3e6875",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T12:33:18.782674+05:30",
+    "selfie_path": "x"
+  },
+  "744ff04a4e1fa3eec2bb8cdeea7251731796568e43b668e8": {
+    "token": "744ff04a4e1fa3eec2bb8cdeea7251731796568e43b668e8",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T12:33:18.785754+05:30",
+    "selfie_path": "x"
+  },
+  "d3f3a9eb380f7622bc29e6c59936f5cfe220a5338b4d3926": {
+    "token": "d3f3a9eb380f7622bc29e6c59936f5cfe220a5338b4d3926",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T12:33:18.791173+05:30",
+    "selfie_path": "x"
+  },
+  "73b24176aba1d24c2667d92cc94cd0c3c034ff06fcba3250": {
+    "token": "73b24176aba1d24c2667d92cc94cd0c3c034ff06fcba3250",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T12:33:18.794178+05:30",
+    "selfie_path": "x"
+  },
+  "295588e3e578d901e3c2cbbf7efd1016925e6b3b0e26a28b": {
+    "token": "295588e3e578d901e3c2cbbf7efd1016925e6b3b0e26a28b",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T12:33:18.798863+05:30",
+    "selfie_path": "x"
+  },
+  "9279516cfb7a75ce2cbb42ed6276ed716e5ad1dc0c46f16e": {
+    "token": "9279516cfb7a75ce2cbb42ed6276ed716e5ad1dc0c46f16e",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T12:33:18.801981+05:30",
+    "selfie_path": "x"
+  },
+  "4edc4c9980be79f93b9eda04faa953d7370627cd06692962": {
+    "token": "4edc4c9980be79f93b9eda04faa953d7370627cd06692962",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T12:38:23.954960+05:30",
+    "selfie_path": "data/sessions/4edc4c9980be79f93b9eda04faa953d7370627cd06692962/selfie.jpg"
+  },
+  "c7631e9bdc1e494b6be41220d3bdf3c85615abfcabde2c10": {
+    "token": "c7631e9bdc1e494b6be41220d3bdf3c85615abfcabde2c10",
+    "evaluator_id": "EMP-9999",
+    "name": "Head Office Admin (Demo)",
+    "branch_id": "HO-000",
+    "role": "admin",
+    "login_time": "2026-07-22T12:42:05.797509+05:30",
+    "selfie_path": "data/sessions/c7631e9bdc1e494b6be41220d3bdf3c85615abfcabde2c10/selfie.jpg"
+  },
+  "220aa30565937435fb2f2463d680b69d6f28a1b69a90b03d": {
+    "token": "220aa30565937435fb2f2463d680b69d6f28a1b69a90b03d",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T12:44:00.467787+05:30",
+    "selfie_path": "data/sessions/220aa30565937435fb2f2463d680b69d6f28a1b69a90b03d/selfie.jpg"
+  },
+  "9ba63064d8effd168f02d5750ecc2155911167084d8ab917": {
+    "token": "9ba63064d8effd168f02d5750ecc2155911167084d8ab917",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T12:47:43.698348+05:30",
+    "selfie_path": "data/sessions/9ba63064d8effd168f02d5750ecc2155911167084d8ab917/selfie.jpg"
+  },
+  "4fb56bdce72217e9cdf92a51c7df4e1ab34047562ae22bdd": {
+    "token": "4fb56bdce72217e9cdf92a51c7df4e1ab34047562ae22bdd",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:00:01.226742+05:30",
+    "selfie_path": "x"
+  },
+  "94d33e6f3da7cd94fafd9d3630a11032ac66d0d278d796c0": {
+    "token": "94d33e6f3da7cd94fafd9d3630a11032ac66d0d278d796c0",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:00:01.230055+05:30",
+    "selfie_path": "x"
+  },
+  "18f45e49dd407b4be0c522341e1e4bc0b30b5bf9f1174a8b": {
+    "token": "18f45e49dd407b4be0c522341e1e4bc0b30b5bf9f1174a8b",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:00:01.236689+05:30",
+    "selfie_path": "x"
+  },
+  "8b41f86411a2438d7b0a9529802e953a669466e4d49b0470": {
+    "token": "8b41f86411a2438d7b0a9529802e953a669466e4d49b0470",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:00:01.239730+05:30",
+    "selfie_path": "x"
+  },
+  "20ea7bc2350b1868fe6d199210f2b97a4d63ad224face53c": {
+    "token": "20ea7bc2350b1868fe6d199210f2b97a4d63ad224face53c",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:00:01.244977+05:30",
+    "selfie_path": "x"
+  },
+  "8c812d6e4c4a35aa097b8d00e8e4b78372593de205ef14be": {
+    "token": "8c812d6e4c4a35aa097b8d00e8e4b78372593de205ef14be",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:00:01.248295+05:30",
+    "selfie_path": "x"
+  },
+  "c57f2c0fbf113b8f1876900480f2f5d3226d012f52451fc2": {
+    "token": "c57f2c0fbf113b8f1876900480f2f5d3226d012f52451fc2",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:00:01.255929+05:30",
+    "selfie_path": "x"
+  },
+  "2ef1b65b7d50a030329cc94fc1c57f391c31368799f0b6d8": {
+    "token": "2ef1b65b7d50a030329cc94fc1c57f391c31368799f0b6d8",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:00:01.258711+05:30",
+    "selfie_path": "x"
+  },
+  "35b3abac2ab867712e6c12db019ddbce0d08f20629b8602f": {
+    "token": "35b3abac2ab867712e6c12db019ddbce0d08f20629b8602f",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:00:01.286164+05:30",
+    "selfie_path": "x"
+  },
+  "936dc08c44e6020ac1391b3349660bfd7270535304f595eb": {
+    "token": "936dc08c44e6020ac1391b3349660bfd7270535304f595eb",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:00:01.289473+05:30",
+    "selfie_path": "x"
+  },
+  "abb55037642691ad5e3d7fae4df8ff017158088f16e1a209": {
+    "token": "abb55037642691ad5e3d7fae4df8ff017158088f16e1a209",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:00:01.296339+05:30",
+    "selfie_path": "x"
+  },
+  "1a21daba51ec6b98c97ba411904730e7f942509da887dea3": {
+    "token": "1a21daba51ec6b98c97ba411904730e7f942509da887dea3",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:00:01.299908+05:30",
+    "selfie_path": "x"
+  },
+  "da5d8e1d3e8eda3259c561ae10cd8f0ce96fec77466a0778": {
+    "token": "da5d8e1d3e8eda3259c561ae10cd8f0ce96fec77466a0778",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:00:01.305379+05:30",
+    "selfie_path": "x"
+  },
+  "498890a46b25f62aec90d05a02eeccf780f71dc043e4a02a": {
+    "token": "498890a46b25f62aec90d05a02eeccf780f71dc043e4a02a",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:00:01.308525+05:30",
+    "selfie_path": "x"
+  },
+  "7cb994f567a777519bdda1df798f93f1618d2bd161f5da35": {
+    "token": "7cb994f567a777519bdda1df798f93f1618d2bd161f5da35",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:00:01.313798+05:30",
+    "selfie_path": "x"
+  },
+  "5847ea3e714b592239be415a4b26582412c466b422abfdf9": {
+    "token": "5847ea3e714b592239be415a4b26582412c466b422abfdf9",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:00:01.316696+05:30",
+    "selfie_path": "x"
+  },
+  "174da35eb9ca64f9caa22a68083a2ec352e630834f885d04": {
+    "token": "174da35eb9ca64f9caa22a68083a2ec352e630834f885d04",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:00:01.321587+05:30",
+    "selfie_path": "x"
+  },
+  "3b816a33d56367ead2e7abbade1db26d11ee82b116631a54": {
+    "token": "3b816a33d56367ead2e7abbade1db26d11ee82b116631a54",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:00:01.324786+05:30",
+    "selfie_path": "x"
+  },
+  "615104d3f0148f4ebb82b08970ddd271046400d1816a8b5d": {
+    "token": "615104d3f0148f4ebb82b08970ddd271046400d1816a8b5d",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:06:13.931262+05:30",
+    "selfie_path": "x"
+  },
+  "0640a05ffaac8b02230822dfeda2382c875e6d69a505ac6f": {
+    "token": "0640a05ffaac8b02230822dfeda2382c875e6d69a505ac6f",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:06:13.934974+05:30",
+    "selfie_path": "x"
+  },
+  "9c97115fa2a92e95b8abdb6306debfc391fc8afb9f19ea96": {
+    "token": "9c97115fa2a92e95b8abdb6306debfc391fc8afb9f19ea96",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:06:13.941281+05:30",
+    "selfie_path": "x"
+  },
+  "da678fb802e7fec8097ef0bf3b726e6e353c7712bd7b1ba7": {
+    "token": "da678fb802e7fec8097ef0bf3b726e6e353c7712bd7b1ba7",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:06:13.944919+05:30",
+    "selfie_path": "x"
+  },
+  "f61a6292bcc8d75347c0c3975d958bdad3e03349c1ef5135": {
+    "token": "f61a6292bcc8d75347c0c3975d958bdad3e03349c1ef5135",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:06:13.949636+05:30",
+    "selfie_path": "x"
+  },
+  "12b50b58b1b85c2e413b7fd923847aea2d8d79eb8f902a00": {
+    "token": "12b50b58b1b85c2e413b7fd923847aea2d8d79eb8f902a00",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:06:13.952906+05:30",
+    "selfie_path": "x"
+  },
+  "9bb135cf56ca046ad4c9a7b48067f9b1aaff6aeafbd6392c": {
+    "token": "9bb135cf56ca046ad4c9a7b48067f9b1aaff6aeafbd6392c",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:06:13.959768+05:30",
+    "selfie_path": "x"
+  },
+  "0620e6dc8c6ae3990d6da54e137c9ef26b4fe6bbf3482774": {
+    "token": "0620e6dc8c6ae3990d6da54e137c9ef26b4fe6bbf3482774",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:06:13.963159+05:30",
+    "selfie_path": "x"
+  },
+  "b9b67d5975b8e5b8f662c7113e84dca839dff4621714d90d": {
+    "token": "b9b67d5975b8e5b8f662c7113e84dca839dff4621714d90d",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:06:13.969682+05:30",
+    "selfie_path": "x"
+  },
+  "a44a25672c2a415910474464c4ba24a57623b6d3484adc44": {
+    "token": "a44a25672c2a415910474464c4ba24a57623b6d3484adc44",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:06:13.972715+05:30",
+    "selfie_path": "x"
+  },
+  "da7cc002b05906c6c42aa9433dbc44fa40b31037e772d25d": {
+    "token": "da7cc002b05906c6c42aa9433dbc44fa40b31037e772d25d",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:06:13.978760+05:30",
+    "selfie_path": "x"
+  },
+  "cca9f5cedcea72c130584095b22796e226912caa2719e423": {
+    "token": "cca9f5cedcea72c130584095b22796e226912caa2719e423",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:06:13.981721+05:30",
+    "selfie_path": "x"
+  },
+  "dd52548841cff0652001cda043d06df0a55e79d11da7ca8e": {
+    "token": "dd52548841cff0652001cda043d06df0a55e79d11da7ca8e",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:06:13.986171+05:30",
+    "selfie_path": "x"
+  },
+  "7f472c943de71079b44aace265ff59995f981e3d6e414026": {
+    "token": "7f472c943de71079b44aace265ff59995f981e3d6e414026",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:06:13.989108+05:30",
+    "selfie_path": "x"
+  },
+  "1116e9bb8ded600afd114f975bf94bf3e615403349c8a56f": {
+    "token": "1116e9bb8ded600afd114f975bf94bf3e615403349c8a56f",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:06:13.994251+05:30",
+    "selfie_path": "x"
+  },
+  "aa14c3296b36479e3a66bd88e96c1088a18221fd5b55e899": {
+    "token": "aa14c3296b36479e3a66bd88e96c1088a18221fd5b55e899",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:06:13.997419+05:30",
+    "selfie_path": "x"
+  },
+  "483503fcf2ab7a045e56e36b756c1d360f4a2e105f9586e8": {
+    "token": "483503fcf2ab7a045e56e36b756c1d360f4a2e105f9586e8",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:06:14.001732+05:30",
+    "selfie_path": "x"
+  },
+  "a1c4197494c0cb1139b3dab78497c4880aaf0329e22b1f53": {
+    "token": "a1c4197494c0cb1139b3dab78497c4880aaf0329e22b1f53",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:06:14.004922+05:30",
+    "selfie_path": "x"
+  },
+  "ba65cfd9594c6a67d085e80f7f96aa2027873695f76f031e": {
+    "token": "ba65cfd9594c6a67d085e80f7f96aa2027873695f76f031e",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:36:18.813078+05:30",
+    "selfie_path": null
+  },
+  "4eee2b556224cc16f7f76e5a2abcff91b67a4bbd5596c6da": {
+    "token": "4eee2b556224cc16f7f76e5a2abcff91b67a4bbd5596c6da",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:39:43.045332+05:30",
+    "selfie_path": "x"
+  },
+  "7a96662b6443296b8be1388e5aef8f0e2a529d03f3f35e2d": {
+    "token": "7a96662b6443296b8be1388e5aef8f0e2a529d03f3f35e2d",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:39:43.049014+05:30",
+    "selfie_path": "x"
+  },
+  "15c53320ca8a9b24401eae3dde7cec89f08c12f083b517df": {
+    "token": "15c53320ca8a9b24401eae3dde7cec89f08c12f083b517df",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:39:43.055547+05:30",
+    "selfie_path": "x"
+  },
+  "4416c656d7555354be6bb89468e178cc60e7bf692aa46f89": {
+    "token": "4416c656d7555354be6bb89468e178cc60e7bf692aa46f89",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:39:43.059081+05:30",
+    "selfie_path": "x"
+  },
+  "bb42ee6c53dfebf2672b57877ef2535df65e7905085acca3": {
+    "token": "bb42ee6c53dfebf2672b57877ef2535df65e7905085acca3",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:39:43.063599+05:30",
+    "selfie_path": "x"
+  },
+  "0aaa446d7e22eb290cd3291a979a6d96fd1b7a9d2d3c9bd2": {
+    "token": "0aaa446d7e22eb290cd3291a979a6d96fd1b7a9d2d3c9bd2",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:39:43.066859+05:30",
+    "selfie_path": "x"
+  },
+  "22587b8e2f5a4e56811c26e670c402bd4d31b3b909ab7069": {
+    "token": "22587b8e2f5a4e56811c26e670c402bd4d31b3b909ab7069",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:39:43.073788+05:30",
+    "selfie_path": "x"
+  },
+  "5ffc15d5680e5c9b17b0605ad5dcf950371e2951a303da5a": {
+    "token": "5ffc15d5680e5c9b17b0605ad5dcf950371e2951a303da5a",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:39:43.076683+05:30",
+    "selfie_path": "x"
+  },
+  "7594b5c2c521369f1cd4563fae3a95f40244093ff8a2bd53": {
+    "token": "7594b5c2c521369f1cd4563fae3a95f40244093ff8a2bd53",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:39:43.083340+05:30",
+    "selfie_path": "x"
+  },
+  "63d762d7bb1751a93e0aa3bb4eb9e2e6b8d0c1ee6a5415a4": {
+    "token": "63d762d7bb1751a93e0aa3bb4eb9e2e6b8d0c1ee6a5415a4",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:39:43.086553+05:30",
+    "selfie_path": "x"
+  },
+  "21e5122ce6449bdd712beb1529a76c5d99ae3d7f2d23554c": {
+    "token": "21e5122ce6449bdd712beb1529a76c5d99ae3d7f2d23554c",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:39:43.093920+05:30",
+    "selfie_path": "x"
+  },
+  "a66e33e6df2b20bbaf59ee0d49cab133131c67d33890411d": {
+    "token": "a66e33e6df2b20bbaf59ee0d49cab133131c67d33890411d",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:39:43.097261+05:30",
+    "selfie_path": "x"
+  },
+  "6a39e053700d07a3af8a9cd99fbba0648e14ce30fd987776": {
+    "token": "6a39e053700d07a3af8a9cd99fbba0648e14ce30fd987776",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:39:43.101731+05:30",
+    "selfie_path": "x"
+  },
+  "54cce94bbfbda1ae397544cbc4cf2d9ac5a21ee022c84df4": {
+    "token": "54cce94bbfbda1ae397544cbc4cf2d9ac5a21ee022c84df4",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:39:43.105739+05:30",
+    "selfie_path": "x"
+  },
+  "d41dfdb2ba256b7919b8b76d9849423579542330cdb5b8f7": {
+    "token": "d41dfdb2ba256b7919b8b76d9849423579542330cdb5b8f7",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:39:43.109988+05:30",
+    "selfie_path": "x"
+  },
+  "c16f6d129cd56c4b0a5cbc4c1f708324d603105eaccab9c5": {
+    "token": "c16f6d129cd56c4b0a5cbc4c1f708324d603105eaccab9c5",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:39:43.113120+05:30",
+    "selfie_path": "x"
+  },
+  "3c4e7d308610aa830b34802fe2229d9d8705563ac880c574": {
+    "token": "3c4e7d308610aa830b34802fe2229d9d8705563ac880c574",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:39:43.117072+05:30",
+    "selfie_path": "x"
+  },
+  "c9b0084336aa60aec1f003367ff0f8b33d5522d5ec437a3c": {
+    "token": "c9b0084336aa60aec1f003367ff0f8b33d5522d5ec437a3c",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:39:43.120281+05:30",
+    "selfie_path": "x"
+  },
+  "32809f88302e11a201eed156fea0d7e7e5ea16ab7a229e0d": {
+    "token": "32809f88302e11a201eed156fea0d7e7e5ea16ab7a229e0d",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:41:42.636211+05:30",
+    "selfie_path": null
+  },
+  "86d2cab58ef4fdafc870d05458927874540d15fac646627b": {
+    "token": "86d2cab58ef4fdafc870d05458927874540d15fac646627b",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:50:54.014013+05:30",
+    "selfie_path": null
+  },
+  "da7cfad5652001683978c9adbbfa904d3fb1bb4119d1ded6": {
+    "token": "da7cfad5652001683978c9adbbfa904d3fb1bb4119d1ded6",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:53:22.300467+05:30",
+    "selfie_path": "x"
+  },
+  "2f9c9a7f1f6c45e1f22942edde49db50e49cada54358cf21": {
+    "token": "2f9c9a7f1f6c45e1f22942edde49db50e49cada54358cf21",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:53:22.305200+05:30",
+    "selfie_path": "x"
+  },
+  "598d6a4f058e2aba75316a155b2e72205585530c5228e5d4": {
+    "token": "598d6a4f058e2aba75316a155b2e72205585530c5228e5d4",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:53:22.311887+05:30",
+    "selfie_path": "x"
+  },
+  "1f05a143ccc8507114bffd513c93021d10b11605e7f3fb85": {
+    "token": "1f05a143ccc8507114bffd513c93021d10b11605e7f3fb85",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:53:22.315814+05:30",
+    "selfie_path": "x"
+  },
+  "da802fa65bdd212989b6db3f97385611cb07eea31e32f714": {
+    "token": "da802fa65bdd212989b6db3f97385611cb07eea31e32f714",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:53:22.320805+05:30",
+    "selfie_path": "x"
+  },
+  "4741d05714c3cd18906206db4c5926538393a381137d1deb": {
+    "token": "4741d05714c3cd18906206db4c5926538393a381137d1deb",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:53:22.323788+05:30",
+    "selfie_path": "x"
+  },
+  "397fcdaf171411ff9e7307b6d3102bfa8da1065732e6a1f1": {
+    "token": "397fcdaf171411ff9e7307b6d3102bfa8da1065732e6a1f1",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:53:22.330925+05:30",
+    "selfie_path": "x"
+  },
+  "e0b756e28a69ac50027da7896f406054e02a299ff62db955": {
+    "token": "e0b756e28a69ac50027da7896f406054e02a299ff62db955",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:53:22.334289+05:30",
+    "selfie_path": "x"
+  },
+  "8c23a99c828230ec9de5db27ff35f329ea1edb016101c527": {
+    "token": "8c23a99c828230ec9de5db27ff35f329ea1edb016101c527",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:53:22.341529+05:30",
+    "selfie_path": "x"
+  },
+  "69ab88548aab00ee6b99c84a7b6b11442e56073f8e06b3a8": {
+    "token": "69ab88548aab00ee6b99c84a7b6b11442e56073f8e06b3a8",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:53:22.344540+05:30",
+    "selfie_path": "x"
+  },
+  "c04fc8ae90297b695dd47b647c22cd96383fddd7fc2d47f1": {
+    "token": "c04fc8ae90297b695dd47b647c22cd96383fddd7fc2d47f1",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:53:22.350881+05:30",
+    "selfie_path": "x"
+  },
+  "7fe285a5fbafa45d30d75f3f4fd3986ef4730d4794fddb7e": {
+    "token": "7fe285a5fbafa45d30d75f3f4fd3986ef4730d4794fddb7e",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:53:22.354259+05:30",
+    "selfie_path": "x"
+  },
+  "b07642eaf7c3f99367b39efbff2a8eb3173df6cdc4a3f1dc": {
+    "token": "b07642eaf7c3f99367b39efbff2a8eb3173df6cdc4a3f1dc",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:53:22.359171+05:30",
+    "selfie_path": "x"
+  },
+  "13ba03f91187a64ae195f35a886735ed4cd3b0f2e92ce8f9": {
+    "token": "13ba03f91187a64ae195f35a886735ed4cd3b0f2e92ce8f9",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:53:22.362529+05:30",
+    "selfie_path": "x"
+  },
+  "58cdfca87216ba417a373f117995cd425031f651d4c00612": {
+    "token": "58cdfca87216ba417a373f117995cd425031f651d4c00612",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:53:22.367374+05:30",
+    "selfie_path": "x"
+  },
+  "069e9a295496ca0f672a6dff892ec0f16146024404070c14": {
+    "token": "069e9a295496ca0f672a6dff892ec0f16146024404070c14",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:53:22.370730+05:30",
+    "selfie_path": "x"
+  },
+  "d85943718bd8a0bb3f6984f78b58ef23ce08d90091a1613c": {
+    "token": "d85943718bd8a0bb3f6984f78b58ef23ce08d90091a1613c",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T13:53:22.374965+05:30",
+    "selfie_path": "x"
+  },
+  "f23919d65f5e3b4bcbd33f6ea418b754cc3112e12fc44b9f": {
+    "token": "f23919d65f5e3b4bcbd33f6ea418b754cc3112e12fc44b9f",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T13:53:22.378325+05:30",
+    "selfie_path": "x"
+  },
+  "674ade61d58c5718e46d7c0e31ba7c2d17190d6a838d2d50": {
+    "token": "674ade61d58c5718e46d7c0e31ba7c2d17190d6a838d2d50",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:35:08.876350+05:30",
+    "selfie_path": "x"
+  },
+  "ce9ca4938cafb2864227539ace771795e252c71e459a15d7": {
+    "token": "ce9ca4938cafb2864227539ace771795e252c71e459a15d7",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:35:08.880382+05:30",
+    "selfie_path": "x"
+  },
+  "8386719305dedc14114c0ea4b3623cf1557321b49bf3dfcd": {
+    "token": "8386719305dedc14114c0ea4b3623cf1557321b49bf3dfcd",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:35:08.887805+05:30",
+    "selfie_path": "x"
+  },
+  "85eda5ddde7482bdea8cf99fdbae601536c350b49b8f9521": {
+    "token": "85eda5ddde7482bdea8cf99fdbae601536c350b49b8f9521",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:35:08.892511+05:30",
+    "selfie_path": "x"
+  },
+  "2370f8aa4771fe1006603eabcb45490ab5adbb3fac615d07": {
+    "token": "2370f8aa4771fe1006603eabcb45490ab5adbb3fac615d07",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:35:08.897854+05:30",
+    "selfie_path": "x"
+  },
+  "6a4d6f0c2aebd6c144f88a4642825f74f6dd576589b0400d": {
+    "token": "6a4d6f0c2aebd6c144f88a4642825f74f6dd576589b0400d",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:35:08.901690+05:30",
+    "selfie_path": "x"
+  },
+  "cde9e523d00f071d591070485ce7a61c4b5626150992cb67": {
+    "token": "cde9e523d00f071d591070485ce7a61c4b5626150992cb67",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:35:08.910466+05:30",
+    "selfie_path": "x"
+  },
+  "ca02503d2a40c7325dd172501ae387338ab9ef00c1daab67": {
+    "token": "ca02503d2a40c7325dd172501ae387338ab9ef00c1daab67",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:35:08.913863+05:30",
+    "selfie_path": "x"
+  },
+  "000b6b2b428e9dd4221de8fca87471167f60181d354b97c7": {
+    "token": "000b6b2b428e9dd4221de8fca87471167f60181d354b97c7",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:35:08.921201+05:30",
+    "selfie_path": "x"
+  },
+  "05153e5f28ef956424044b201a09f03f18747b1777324dc1": {
+    "token": "05153e5f28ef956424044b201a09f03f18747b1777324dc1",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:35:08.924628+05:30",
+    "selfie_path": "x"
+  },
+  "93fb46981caeeb40d1879840b166042486dca1b642c7e24e": {
+    "token": "93fb46981caeeb40d1879840b166042486dca1b642c7e24e",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:35:08.932016+05:30",
+    "selfie_path": "x"
+  },
+  "f51286e8983f0f2954c64916bf163d1abbef8e237df7c5c4": {
+    "token": "f51286e8983f0f2954c64916bf163d1abbef8e237df7c5c4",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:35:08.935678+05:30",
+    "selfie_path": "x"
+  },
+  "cc2d6c58479a4b7fb3f95a508f68a8bfd1ae624467ac144e": {
+    "token": "cc2d6c58479a4b7fb3f95a508f68a8bfd1ae624467ac144e",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:35:08.940588+05:30",
+    "selfie_path": "x"
+  },
+  "497561cacaf423743c4c2d3b2e0eb0ff7659ba86cd47f480": {
+    "token": "497561cacaf423743c4c2d3b2e0eb0ff7659ba86cd47f480",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:35:08.944181+05:30",
+    "selfie_path": "x"
+  },
+  "8ebc7829357efc90e2e2f2ff5ec5aac6b54aaba2852eb6a3": {
+    "token": "8ebc7829357efc90e2e2f2ff5ec5aac6b54aaba2852eb6a3",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:35:08.949389+05:30",
+    "selfie_path": "x"
+  },
+  "2520aaf60712ec921a9417b238b9584b4daf445e51c97f2f": {
+    "token": "2520aaf60712ec921a9417b238b9584b4daf445e51c97f2f",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:35:08.953056+05:30",
+    "selfie_path": "x"
+  },
+  "7c52171ce5cca2a60455ddc02f3849cfaafd76be7ca8608c": {
+    "token": "7c52171ce5cca2a60455ddc02f3849cfaafd76be7ca8608c",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:35:08.957879+05:30",
+    "selfie_path": "x"
+  },
+  "e82c7e131a664633707fc43cb8519720c727facbab3deb42": {
+    "token": "e82c7e131a664633707fc43cb8519720c727facbab3deb42",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:35:08.961632+05:30",
+    "selfie_path": "x"
+  },
+  "d9a678f30df49e31cce8bf48739d85590fa54a462f2d8964": {
+    "token": "d9a678f30df49e31cce8bf48739d85590fa54a462f2d8964",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:46:09.942081+05:30",
+    "selfie_path": "x"
+  },
+  "3a28f90c05702ae63734351944be975a3e4e43c669078349": {
+    "token": "3a28f90c05702ae63734351944be975a3e4e43c669078349",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:46:09.946135+05:30",
+    "selfie_path": "x"
+  },
+  "4427fb53f4874c4337e147d1fb2d802be2e45faca1629a05": {
+    "token": "4427fb53f4874c4337e147d1fb2d802be2e45faca1629a05",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:46:09.953851+05:30",
+    "selfie_path": "x"
+  },
+  "8f09d5261517468b261470142b8d4ad56edbbf1bcddde05e": {
+    "token": "8f09d5261517468b261470142b8d4ad56edbbf1bcddde05e",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:46:09.958035+05:30",
+    "selfie_path": "x"
+  },
+  "815d343d12f56ca3d6dbed67a7aae3d96942830f7f6d3915": {
+    "token": "815d343d12f56ca3d6dbed67a7aae3d96942830f7f6d3915",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:46:09.963918+05:30",
+    "selfie_path": "x"
+  },
+  "ea76b7cd32391491c519f4f5748aa2adfa0641541930d0d4": {
+    "token": "ea76b7cd32391491c519f4f5748aa2adfa0641541930d0d4",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:46:09.967300+05:30",
+    "selfie_path": "x"
+  },
+  "7580e3147a96205f792860fb8791a82b6948cae07e9a8a3a": {
+    "token": "7580e3147a96205f792860fb8791a82b6948cae07e9a8a3a",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:46:09.975509+05:30",
+    "selfie_path": "x"
+  },
+  "520dfe5f2d26758113075c1b7ae434995f69d53e92895cfc": {
+    "token": "520dfe5f2d26758113075c1b7ae434995f69d53e92895cfc",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:46:09.979426+05:30",
+    "selfie_path": "x"
+  },
+  "02ce1e1667de4781c256bfad6210ba04faf51d1ef0473fbe": {
+    "token": "02ce1e1667de4781c256bfad6210ba04faf51d1ef0473fbe",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:46:09.987659+05:30",
+    "selfie_path": "x"
+  },
+  "371ef3d8cf5621c7bd05b0299427e2734110007c8de16404": {
+    "token": "371ef3d8cf5621c7bd05b0299427e2734110007c8de16404",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:46:09.990983+05:30",
+    "selfie_path": "x"
+  },
+  "8f4b31910ce7a8cc03d99268a868773d0c6bcc238e3cbc23": {
+    "token": "8f4b31910ce7a8cc03d99268a868773d0c6bcc238e3cbc23",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:46:09.998570+05:30",
+    "selfie_path": "x"
+  },
+  "f6081828ca23518d391bbde75d46feb1a83d52402fc85ac3": {
+    "token": "f6081828ca23518d391bbde75d46feb1a83d52402fc85ac3",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:46:10.002045+05:30",
+    "selfie_path": "x"
+  },
+  "e35cdeae42265bfdf2f046a9e56dfff469deb7f3a1c8337c": {
+    "token": "e35cdeae42265bfdf2f046a9e56dfff469deb7f3a1c8337c",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:46:10.008037+05:30",
+    "selfie_path": "x"
+  },
+  "1315de3c26ce5162ae7f8910ffabdd7daa776820f83a4b9a": {
+    "token": "1315de3c26ce5162ae7f8910ffabdd7daa776820f83a4b9a",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:46:10.011644+05:30",
+    "selfie_path": "x"
+  },
+  "08fa765ae519f3a1d2e3f9daaa87f6d5aaef8384ced44cc6": {
+    "token": "08fa765ae519f3a1d2e3f9daaa87f6d5aaef8384ced44cc6",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:46:10.017874+05:30",
+    "selfie_path": "x"
+  },
+  "a78ade1e873dce547ed8d3a0e672cda0fc53d90aa7f65a24": {
+    "token": "a78ade1e873dce547ed8d3a0e672cda0fc53d90aa7f65a24",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:46:10.021669+05:30",
+    "selfie_path": "x"
+  },
+  "5441a6c7656d778351b89e54557aa968402db87096843050": {
+    "token": "5441a6c7656d778351b89e54557aa968402db87096843050",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:46:10.026785+05:30",
+    "selfie_path": "x"
+  },
+  "89bed644e0c1de814db9293fd043c5ea2a655ac3f7c348a4": {
+    "token": "89bed644e0c1de814db9293fd043c5ea2a655ac3f7c348a4",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:46:10.030452+05:30",
+    "selfie_path": "x"
+  },
+  "3215130b07f44195f9eac37ac5a119caa87d25db7b68c528": {
+    "token": "3215130b07f44195f9eac37ac5a119caa87d25db7b68c528",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:50:12.036809+05:30",
+    "selfie_path": null
+  },
+  "03d6cb5fba487602c7b6912c2a3331c1099f73c9bfb37f8b": {
+    "token": "03d6cb5fba487602c7b6912c2a3331c1099f73c9bfb37f8b",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:58:54.672986+05:30",
+    "selfie_path": "x"
+  },
+  "47bcee8256f6d5c70810bbeca2bfd5c89d83ef3027ff4639": {
+    "token": "47bcee8256f6d5c70810bbeca2bfd5c89d83ef3027ff4639",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:58:54.676947+05:30",
+    "selfie_path": "x"
+  },
+  "ba0f7540d87b41fcc3775ea54978539e617effabfdb72ccc": {
+    "token": "ba0f7540d87b41fcc3775ea54978539e617effabfdb72ccc",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:58:54.684613+05:30",
+    "selfie_path": "x"
+  },
+  "3915e1eed1ce5e6791972771b3da8bf8b509c52fd0e88254": {
+    "token": "3915e1eed1ce5e6791972771b3da8bf8b509c52fd0e88254",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:58:54.688721+05:30",
+    "selfie_path": "x"
+  },
+  "bd0ccdbe72e6a06cd0d7596cae9e0d2a6d3a31db1b6a0c33": {
+    "token": "bd0ccdbe72e6a06cd0d7596cae9e0d2a6d3a31db1b6a0c33",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:58:54.693871+05:30",
+    "selfie_path": "x"
+  },
+  "172e91fe880b1c95e0a3e7970a66ca2a7c77a3620cfd0c44": {
+    "token": "172e91fe880b1c95e0a3e7970a66ca2a7c77a3620cfd0c44",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:58:54.697504+05:30",
+    "selfie_path": "x"
+  },
+  "5dbb4ee1813585de3f7eda0b3cf0673173131f405f11fc1f": {
+    "token": "5dbb4ee1813585de3f7eda0b3cf0673173131f405f11fc1f",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:58:54.705345+05:30",
+    "selfie_path": "x"
+  },
+  "c9017b0ea85ce197f1d2a1021267503e3ad996e9b8b5da67": {
+    "token": "c9017b0ea85ce197f1d2a1021267503e3ad996e9b8b5da67",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:58:54.708927+05:30",
+    "selfie_path": "x"
+  },
+  "09140138b14f9ac142aed453358d93f3a63a58c34bba4004": {
+    "token": "09140138b14f9ac142aed453358d93f3a63a58c34bba4004",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:58:54.716333+05:30",
+    "selfie_path": "x"
+  },
+  "024957af25295e548371659ab59ed75a3d812c7cbfb29bca": {
+    "token": "024957af25295e548371659ab59ed75a3d812c7cbfb29bca",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:58:54.719890+05:30",
+    "selfie_path": "x"
+  },
+  "6fb481840a0123d82bbf863c1b255491810fc01b71c136d9": {
+    "token": "6fb481840a0123d82bbf863c1b255491810fc01b71c136d9",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:58:54.727336+05:30",
+    "selfie_path": "x"
+  },
+  "767cf6189e24308888b7f9760600175d3c11237062865d4c": {
+    "token": "767cf6189e24308888b7f9760600175d3c11237062865d4c",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:58:54.731078+05:30",
+    "selfie_path": "x"
+  },
+  "19fb6bd466ebaebccb9cb8fcc78d0cf0f62cfad6fa6a2d8a": {
+    "token": "19fb6bd466ebaebccb9cb8fcc78d0cf0f62cfad6fa6a2d8a",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:58:54.736410+05:30",
+    "selfie_path": "x"
+  },
+  "4d03b7e9ab141b91500c77753f170e72aa2e17ca2fb37706": {
+    "token": "4d03b7e9ab141b91500c77753f170e72aa2e17ca2fb37706",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:58:54.740095+05:30",
+    "selfie_path": "x"
+  },
+  "b6f51a33e03d53de320a4556f8162c477704645feaf39500": {
+    "token": "b6f51a33e03d53de320a4556f8162c477704645feaf39500",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:58:54.745226+05:30",
+    "selfie_path": "x"
+  },
+  "0d462e481d1c007e1bd3c246e6cfe81bc8f165a504edd46a": {
+    "token": "0d462e481d1c007e1bd3c246e6cfe81bc8f165a504edd46a",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:58:54.749077+05:30",
+    "selfie_path": "x"
+  },
+  "7104ad2f07b03a9f0d30e7003bb9a907654b670fe3d8d2e0": {
+    "token": "7104ad2f07b03a9f0d30e7003bb9a907654b670fe3d8d2e0",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T14:58:54.753554+05:30",
+    "selfie_path": "x"
+  },
+  "83652d3711ffc2deb0c9ec84990e3f42a9c24869d491779b": {
+    "token": "83652d3711ffc2deb0c9ec84990e3f42a9c24869d491779b",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T14:58:54.757619+05:30",
+    "selfie_path": "x"
+  },
+  "de2168322cc01bffb6f572c918650340d75937ea00145be8": {
+    "token": "de2168322cc01bffb6f572c918650340d75937ea00145be8",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T15:16:46.563597+05:30",
+    "selfie_path": "x"
+  },
+  "361aed3d1cd493a6130e692b7984f8c784d95a9d8376efa2": {
+    "token": "361aed3d1cd493a6130e692b7984f8c784d95a9d8376efa2",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T15:16:46.568267+05:30",
+    "selfie_path": "x"
+  },
+  "92005d4ddecf493ee960a75f139ea0bb6aaec49426b900bf": {
+    "token": "92005d4ddecf493ee960a75f139ea0bb6aaec49426b900bf",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T15:16:46.575971+05:30",
+    "selfie_path": "x"
+  },
+  "1fd5182c51b750ce4bbab0d397d10dfd0930b0090755e95b": {
+    "token": "1fd5182c51b750ce4bbab0d397d10dfd0930b0090755e95b",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T15:16:46.580364+05:30",
+    "selfie_path": "x"
+  },
+  "922fa712332a4d977021e940cc516e10d30f5bfc690d8bf0": {
+    "token": "922fa712332a4d977021e940cc516e10d30f5bfc690d8bf0",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T15:16:46.586168+05:30",
+    "selfie_path": "x"
+  },
+  "d1bd2ca2e88039b5354bc2214ef09be4e97e5667cc8b1797": {
+    "token": "d1bd2ca2e88039b5354bc2214ef09be4e97e5667cc8b1797",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T15:16:46.590156+05:30",
+    "selfie_path": "x"
+  },
+  "3d708dbb4cf7f54c9e7a3dcc1dd3ebf8915e3e2b9fb83c3e": {
+    "token": "3d708dbb4cf7f54c9e7a3dcc1dd3ebf8915e3e2b9fb83c3e",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T15:16:46.600410+05:30",
+    "selfie_path": "x"
+  },
+  "d1884885ae591a7cef2d0e330c29938910b54b02c2d26a4e": {
+    "token": "d1884885ae591a7cef2d0e330c29938910b54b02c2d26a4e",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T15:16:46.604163+05:30",
+    "selfie_path": "x"
+  },
+  "3b7e4fcc7515898790105b75a52158c111c14aadb8070dae": {
+    "token": "3b7e4fcc7515898790105b75a52158c111c14aadb8070dae",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T15:16:46.611923+05:30",
+    "selfie_path": "x"
+  },
+  "d081abf9a73b45d992cdc466c5a6ef9323877349c30622b9": {
+    "token": "d081abf9a73b45d992cdc466c5a6ef9323877349c30622b9",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T15:16:46.615817+05:30",
+    "selfie_path": "x"
+  },
+  "9fe3fa5b8edc2261bed477517d6ac6c6cb26eaa8ccb2b762": {
+    "token": "9fe3fa5b8edc2261bed477517d6ac6c6cb26eaa8ccb2b762",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T15:16:46.623310+05:30",
+    "selfie_path": "x"
+  },
+  "51523ef315c01a04d9cf23f43a42be08f7f6897b7a2e9432": {
+    "token": "51523ef315c01a04d9cf23f43a42be08f7f6897b7a2e9432",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T15:16:46.627054+05:30",
+    "selfie_path": "x"
+  },
+  "b23e2cf0ea8eac337d63265123f82f7838619dd962a148d8": {
+    "token": "b23e2cf0ea8eac337d63265123f82f7838619dd962a148d8",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T15:16:46.632736+05:30",
+    "selfie_path": "x"
+  },
+  "902f109e3af1af6773a188d1b7a145e0a50e7fbb626c054f": {
+    "token": "902f109e3af1af6773a188d1b7a145e0a50e7fbb626c054f",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T15:16:46.636499+05:30",
+    "selfie_path": "x"
+  },
+  "9cb03a49077efd8c683bbdf08c775bbfaaf35f9692994629": {
+    "token": "9cb03a49077efd8c683bbdf08c775bbfaaf35f9692994629",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T15:16:46.641887+05:30",
+    "selfie_path": "x"
+  },
+  "12945c457a037de870edf053a4d9f3ddaa3900f8f48e70e8": {
+    "token": "12945c457a037de870edf053a4d9f3ddaa3900f8f48e70e8",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T15:16:46.645602+05:30",
+    "selfie_path": "x"
+  },
+  "de378f1b42d865582f1285d8a73ba3c1c5e98a082c35feb2": {
+    "token": "de378f1b42d865582f1285d8a73ba3c1c5e98a082c35feb2",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T15:16:46.650710+05:30",
+    "selfie_path": "x"
+  },
+  "6c39f5815102f2d7c0d52893952eb6141fe33c1726aee15d": {
+    "token": "6c39f5815102f2d7c0d52893952eb6141fe33c1726aee15d",
+    "evaluator_id": "EMP-9001",
+    "name": "Suresh Bhat",
+    "branch_id": "BLR-001",
+    "role": "branch_manager",
+    "login_time": "2026-07-22T15:16:46.654473+05:30",
+    "selfie_path": "x"
   }
 }

@@ -46,6 +46,13 @@ USE_ML_STONES  = os.getenv("USE_ML_STONE_DETECTION", "1") != "0"
 MODEL_WEIGHTS  = os.getenv("MOBILE_SAM_WEIGHTS", "models/mobile_sam.pt")
 MAX_SEED_POINTS = 40   # hard cap — pathological candidate masks shouldn't hang inference
 
+# Two touching same-size stones merge into ONE elongated blob. When it is the
+# only blob in frame, ref_area equals its own area, so the 1.6x "oversized"
+# trigger never fires and the pair was emitted as a single seed (undercount).
+# A blob at least this elongated is multi-seeded along its major axis too, so
+# MobileSAM gets a prompt on each stone and can split them.
+SEED_ASPECT_SPLIT = float(os.getenv("SEED_ASPECT_SPLIT", "1.8"))
+
 # Two ML masks this similar are almost certainly the same underlying stone,
 # reached from two different seed points (e.g. one blob fragmented into
 # several classical candidates by facet reflections, each seeding its own
@@ -88,13 +95,23 @@ def _seed_points(cand_mask: np.ndarray, min_area: float, ref_area: float) -> lis
         area = int(stats[i, cv2.CC_STAT_AREA])
         if area < min_area:
             continue
-        if area <= 1.6 * ref_area:
+        bw = int(stats[i, cv2.CC_STAT_WIDTH]); bh = int(stats[i, cv2.CC_STAT_HEIGHT])
+        aspect = max(bw, bh) / max(1, min(bw, bh))
+        oversized = area > 1.6 * ref_area
+        elongated = aspect >= SEED_ASPECT_SPLIT
+        if not oversized and not elongated:
             cx, cy = centroids[i]
             points.append(((int(cx), int(cy)), area))
             continue
         comp = (labels == i).astype(np.uint8) * 255
         dist = cv2.distanceTransform(comp, cv2.DIST_L2, 5)
-        min_sep = max(4, int(math.sqrt(max(ref_area, 1.0)) * 0.6))
+        # Oversized cluster -> space seeds by the single-stone estimate
+        # (ref_area), unchanged. Elongation-only split -> space by the blob's
+        # own minor axis so seeds land along its length, one per stone.
+        if oversized:
+            min_sep = max(4, int(math.sqrt(max(ref_area, 1.0)) * 0.6))
+        else:
+            min_sep = max(4, int(min(bw, bh) * 0.8))
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (min_sep, min_sep))
         local_max = (dist == cv2.dilate(dist, kernel)) & (dist > 0.3 * dist.max())
         ys, xs = np.where(local_max)
@@ -105,6 +122,29 @@ def _seed_points(cand_mask: np.ndarray, min_area: float, ref_area: float) -> lis
             for x, y in list(zip(xs.tolist(), ys.tolist()))[:6]:
                 points.append(((x, y), area))
     return points[:MAX_SEED_POINTS]
+
+
+def sam_mask_at_point(bgr: np.ndarray, point, item_bool: np.ndarray) -> "np.ndarray | None":
+    """Prompt MobileSAM at a single (x, y) point and return its boolean mask
+    clipped to the item, or None if the model is unavailable / fails. Used to
+    give an AI-only stone (one the classical/ML pass missed) a pixel-precise
+    boundary instead of a raw bounding box. Guarded — never raises."""
+    if not USE_ML_STONES:
+        return None
+    model = _get_model()
+    if model is None:
+        return None
+    try:
+        x, y = int(point[0]), int(point[1])
+        results = model.predict(bgr, points=[[[x, y]]], labels=[[1]], verbose=False)
+        if not results or results[0].masks is None:
+            return None
+        m = (results[0].masks.data.cpu().numpy() > 0.5)
+        mask = m[0] if m.ndim == 3 else m
+        return mask & item_bool
+    except Exception as e:  # noqa: BLE001 — never a hard block
+        logger.warning("sam_mask_at_point failed (%s) — falling back to bbox", e)
+        return None
 
 
 def _mask_iou(a: np.ndarray, b: np.ndarray) -> float:

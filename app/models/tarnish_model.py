@@ -28,6 +28,35 @@ RUST_HUE_LOW, RUST_HUE_HIGH = 0, 14   # orange-brown, OpenCV 0-179 units
 ANOMALY_AREA_FLAG_PCT = 6.0
 
 
+def _classify_discoloration(hsv: np.ndarray, mask: np.ndarray, total: int) -> dict:
+    """Distinguish an INTENTIONAL antique patina (a legitimate finish) from
+    CONTAMINATION tarnish/verdigris (a genuine anomaly).
+
+    Antique patina is applied deliberately and reads as a broad, uniform, warm
+    (orange/brown/red) darkening across most of the piece. Contamination is
+    localised and/or shifts toward green (verdigris) — the corrosion tell. The
+    returned risk_multiplier lets analyze_tarnish DOWN-weight a patina finish
+    instead of flagging it like corrosion."""
+    n = int(mask.sum())
+    if n == 0 or total == 0:
+        return {"type": "none", "risk_multiplier": 1.0, "coverage_frac": 0.0}
+    frac = n / float(total)
+    hh = hsv[..., 0][mask].astype(np.float32)
+    hue_mean = float(np.mean(hh))
+    hue_std  = float(np.std(hh))
+
+    warm     = (hue_mean <= 35) or (hue_mean >= 160)   # orange/brown/red (OpenCV hue 0-180)
+    greenish = 40 <= hue_mean <= 100                    # verdigris / cool contamination
+    broad    = frac >= 0.25
+    uniform  = hue_std <= 20
+
+    if broad and warm and uniform and not greenish:
+        return {"type": "intentional_patina", "risk_multiplier": 0.3,
+                "coverage_frac": round(frac, 3), "hue_mean": round(hue_mean, 1)}
+    return {"type": "contamination_tarnish", "risk_multiplier": 1.0,
+            "coverage_frac": round(frac, 3), "hue_mean": round(hue_mean, 1)}
+
+
 def analyze_tarnish(image_bytes: bytes, declared_karat: int = 22) -> dict:
     try:
         arr = np.frombuffer(image_bytes, dtype=np.uint8)
@@ -57,6 +86,16 @@ def analyze_tarnish(image_bytes: bytes, declared_karat: int = 22) -> dict:
         risk += min(0.5, tarnish_pct / 40.0)
         signals.append(f"{tarnish_pct:.1f}% of the frame is dark and desaturated — consistent with tarnish/oxidation")
     risk = min(1.0, risk)
+
+    # Patina vs contamination: an intentional antique patina is a legitimate
+    # finish, not corrosion — classify the discoloured region and down-weight
+    # the risk when it reads as a broad, uniform, warm patina.
+    disc_mask = rust_mask | tarnish_mask
+    discoloration = _classify_discoloration(hsv, disc_mask, total_px)
+    if discoloration["type"] == "intentional_patina" and risk > 0:
+        risk = round(min(risk, risk * discoloration["risk_multiplier"]), 4)
+        signals.append("Discolouration reads as a broad, uniform warm patina — treated as an intentional antique finish, not corrosion")
+
     if not signals:
         signals.append("No significant rust or tarnish regions detected")
 
@@ -65,7 +104,8 @@ def analyze_tarnish(image_bytes: bytes, declared_karat: int = 22) -> dict:
         "confidence": "medium" if (rust_pct + tarnish_pct) > 2 else "low",
         "mode":       "tarnish_hsv",
         "signals":    signals,
-        "features":   {"rust_area_pct": round(rust_pct, 2), "tarnish_area_pct": round(tarnish_pct, 2)},
+        "features":   {"rust_area_pct": round(rust_pct, 2), "tarnish_area_pct": round(tarnish_pct, 2),
+                       "discoloration_type": discoloration["type"]},
     }
 
 

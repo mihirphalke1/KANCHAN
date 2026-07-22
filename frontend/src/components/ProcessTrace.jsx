@@ -5,7 +5,7 @@ import styles from './ProcessTrace.module.css'
 function mediaUrl(path) {
   if (!path) return null
   if (path.startsWith('data:')) return path          // embedded image
-  return '/' + path.replace(/^data\//, '')
+  return '/' + path.replace(/\\/g, '/').replace(/^data\//, '')
 }
 
 const STATUS_META = {

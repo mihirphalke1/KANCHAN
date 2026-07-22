@@ -56,7 +56,7 @@ def _seed_evaluators() -> list:
     stored in the clear. In production this table is provisioned by branch
     admin (or synced from Canara's HR/IAM system), not seeded in code."""
     seed = [
-        {"evaluator_id": "EMP-1001", "name": "Ramesh Kulkarni", "pin": "1234", "branch_id": "BLR-001", "role": "assessment_officer"},
+        {"evaluator_id": "EMP-1001", "name": "Mihir Phalke", "pin": "1234", "branch_id": "BLR-001", "role": "assessment_officer"},
         {"evaluator_id": "EMP-1002", "name": "Ananya Rao",      "pin": "4321", "branch_id": "BLR-001", "role": "assessment_officer"},
         {"evaluator_id": "EMP-9001", "name": "Suresh Bhat",     "pin": "9999", "branch_id": "BLR-001", "role": "branch_manager"},
     ]

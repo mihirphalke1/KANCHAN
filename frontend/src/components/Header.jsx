@@ -1,11 +1,13 @@
-import { History, LogOut, ShieldCheck } from 'lucide-react'
+import { History, LogOut, ShieldAlert, ShieldCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { getEvaluator, clearSession } from '@/lib/auth'
+import { ADMIN_DASHBOARD_ROLES } from '@/components/RequireRole'
 import styles from './Header.module.css'
 
 export default function Header({ onHistoryClick }) {
   const navigate  = useNavigate()
   const evaluator = getEvaluator()
+  const canSeeAdmin = evaluator && ADMIN_DASHBOARD_ROLES.includes(evaluator.role)
 
   const logout = () => {
     clearSession()
@@ -40,6 +42,12 @@ export default function Header({ onHistoryClick }) {
             <History size={17} />
             <span>History</span>
           </button>
+          {canSeeAdmin && (
+            <button className={styles.historyBtn} onClick={() => navigate('/admin')} aria-label="Regional admin dashboard">
+              <ShieldAlert size={17} />
+              <span>Admin</span>
+            </button>
+          )}
           {evaluator && (
             <button className={styles.logoutBtn} onClick={logout} aria-label="Log out">
               <LogOut size={15} />

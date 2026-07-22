@@ -27,7 +27,7 @@ ELEMENT_DENSITIES = {
 # ── BIS hallmarking fineness grades (parts per 1000 by mass) ──
 # Source: IS 1417:2016, Bureau of Indian Standards — "Gold and Gold Alloys,
 # Jewellery/Artefacts — Fineness and Marking".
-BIS_FINENESS = {24: 0.999, 22: 0.916, 18: 0.750, 14: 0.585}
+BIS_FINENESS = {24: 0.999, 23: 0.958, 22: 0.916, 18: 0.750, 14: 0.585}
 
 # ── Gem specific gravities ──
 # Source: R. Webster, "Gems: Their Sources, Descriptions and Identification",

@@ -1,0 +1,302 @@
+/* LivenessCapture — face-scan selfie capture */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Start / idle button ────────────────────────────────────────── */
+.startBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px dashed var(--border-mid);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-mid);
+  font-size: 13px;
+  font-weight: 600;
+  transition: border-color 120ms, background 120ms, color 120ms;
+}
+.startBtn:hover {
+  border-color: var(--brand-light);
+  background: var(--brand-muted);
+  color: var(--brand);
+}
+
+.starting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  font-size: 13px;
+  color: var(--text-mid);
+}
+
+/* ── Video container ─────────────────────────────────────────────── */
+.videoWrap {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: #000;
+  aspect-ratio: 4 / 3;
+  border: 2.5px solid transparent;
+  transition: border-color 300ms, box-shadow 300ms;
+}
+
+.videoHidden { display: none; }
+.videoVisible { display: block; }
+
+.ringOk {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.20);
+}
+.ringConfirmed {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 7px rgba(34, 197, 94, 0.40);
+  animation: confirmPulse 0.9s ease-out;
+}
+
+@keyframes confirmPulse {
+  0%   { box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15); }
+  40%  { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0.35); }
+  100% { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0.40); }
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.overlayCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transform: scaleX(-1);
+}
+
+/* Camera shutter flash at capture moment */
+.shutterFlash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  pointer-events: none;
+  z-index: 5;
+  animation: shutterPop 280ms ease-out forwards;
+}
+@keyframes shutterPop {
+  0%   { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+/* ── Status banners ──────────────────────────────────────────────── */
+.banner {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+  line-height: 1.4;
+  text-align: center;
+  z-index: 2;
+}
+
+.bannerWait      { background: rgba(30,  78, 156, 0.85); color: #fff; }
+.bannerWarn      { background: rgba(146, 84,   0, 0.90); color: #fff; }
+.bannerConfirmed { background: rgba(22, 101,  52, 0.95); color: #fff; }
+
+.bannerOk {
+  background: rgba(22, 101, 52, 0.88);
+  color: #fff;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 14px;
+}
+
+.scanRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.scanTimer {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.scanBar {
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.30);
+  overflow: hidden;
+}
+.scanFill {
+  height: 100%;
+  background: #bbf7d0;
+  border-radius: 2px;
+  transition: width 200ms linear;
+}
+
+.spin {
+  animation: spin 700ms linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Preview ─────────────────────────────────────────────────────── */
+.previewFrame {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--border);
+  animation: previewIn 400ms ease-out;
+}
+@keyframes previewIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+.badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.badgeOk { background: rgba(22, 101, 52, 0.90); color: #fff; }
+
+.previewFooter {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 14px;
+  background: rgba(11, 44, 95, 0.88);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
+.retakeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-mid);
+  background: #fff;
+  color: var(--text-mid);
+  font-size: 12px;
+  font-weight: 600;
+}
+.retakeBtn:hover { background: var(--bg); }
+
+/* ── Failed state ────────────────────────────────────────────────── */
+.failedBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 16px;
+  background: var(--danger-bg, #FEF2F2);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+.failedIcon { color: var(--danger, #DC2626); }
+.failedMsg  {
+  font-size: 13px;
+  color: var(--danger, #DC2626);
+  line-height: 1.45;
+  max-width: 290px;
+}
+.retryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--danger, #DC2626);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+}
+.retryBtn:hover { opacity: 0.9; }
+
+/* ── Error box ───────────────────────────────────────────────────── */
+.errorBox {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-bg, #FEF2F2);
+  color: var(--danger, #DC2626);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.inlineRetry {
+  margin-left: auto;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--danger, #DC2626);
+  color: var(--danger, #DC2626);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ── Upload fallback (demo/dev) ──────────────────────────────────── */
+.uploadLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: center;
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.uploadLink:hover { color: var(--warn, #D97706); }

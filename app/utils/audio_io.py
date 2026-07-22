@@ -32,3 +32,23 @@ def load_audio_bytes(audio_bytes: bytes, sr: int = 22050, mono: bool = True):
             os.unlink(path)
         except OSError as e:
             logger.warning("Could not remove temp audio file %s: %s", path, e)
+
+
+def load_clean_audio(audio_bytes: bytes, sr: int = 22050, mono: bool = True):
+    """Decode a tap recording AND actively clean it (band-pass + spectral-gating
+    noise reduction) before any feature extraction. Returns (y_clean, sr, info)
+    where info carries pre/post SNR and the noise-profile source for the audit
+    trail. Denoising is on by default; ACOUSTIC_DENOISE=0 returns the raw signal
+    with info["applied"]=False so the old behaviour is one env var away."""
+    y, sr = load_audio_bytes(audio_bytes, sr=sr, mono=mono)
+    if os.getenv("ACOUSTIC_DENOISE", "1").strip() not in ("1", "true", "True"):
+        return y, sr, {"applied": False, "reason": "disabled (ACOUSTIC_DENOISE=0)",
+                       "snr_pre_db": None, "snr_post_db": None}
+    try:
+        from app.utils.audio_denoise import clean_tap_audio
+        y_clean, info = clean_tap_audio(y, sr)
+        return y_clean, sr, info
+    except Exception as e:
+        logger.warning("Audio cleanup failed (%s) — using raw signal", e)
+        return y, sr, {"applied": False, "reason": f"error:{e}",
+                       "snr_pre_db": None, "snr_post_db": None}

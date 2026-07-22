@@ -3,11 +3,14 @@ import VerdictCard from './VerdictCard'
 import ProcessTrace from './ProcessTrace'
 import SignalBars from './SignalBars'
 import ContradictionAlert from './ContradictionAlert'
+import FraudScenarioCard from './FraudScenarioCard'
+import MakerCheckerCard from './MakerCheckerCard'
 import DensityDetails from './DensityDetails'
 import CompositionCard from './CompositionCard'
 import SHAPBreakdown from './SHAPBreakdown'
 import MediaEvidence from './MediaEvidence'
 import XRayView from './XRayView'
+import GoldVsGemsCard from './GoldVsGemsCard'
 import EvidencePanel from './EvidencePanel'
 import EmptyState from './EmptyState'
 import LoadingState from './LoadingState'
@@ -23,8 +26,11 @@ export default function ResultsPanel({ result, loading, error, localMedia }) {
   return (
     <div className={styles.panel}>
       <VerdictCard verdict={verdict} caseId={case_id} />
+      <MakerCheckerCard approval={result.approval} caseId={case_id} />
+      <FraudScenarioCard scenarios={result.fraud_scenarios} />
       <ProcessTrace trace={result.verification_trace} caseData={result} />
       <MediaEvidence caseData={result} localMedia={localMedia} />
+      <GoldVsGemsCard caseData={result} />
       <XRayView caseData={result} />
       <EvidencePanel caseData={result} />
       <SignalBars scores={modality_scores} />
@@ -32,7 +38,11 @@ export default function ResultsPanel({ result, loading, error, localMedia }) {
         <ContradictionAlert contradiction={contradiction} scores={modality_scores} />
       )}
       <DensityDetails density={modality_scores?.density} />
-      <CompositionCard composition={result.composition} weightDry={modality_scores?.density?.weight_dry} />
+      <CompositionCard
+        composition={result.composition}
+        weightDry={modality_scores?.density?.weight_dry}
+        goldGemSplit={result.media?.xray?.gold_gem_split}
+      />
       {fusion?.shap_values && (
         <SHAPBreakdown shap={fusion.shap_values} scores={modality_scores} fusionMode={fusion.mode} />
       )}

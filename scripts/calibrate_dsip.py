@@ -47,7 +47,7 @@ def main(folders: list[str]) -> None:
         print(f"{folder}: {len(photos)} photos")
         for i, p in enumerate(photos):
             try:
-                _, stats = _run_pipeline(_load_bgr(p.read_bytes()))
+                _, stats, _ = _run_pipeline(_load_bgr(p.read_bytes()))
             except Exception:
                 skipped += 1
                 continue

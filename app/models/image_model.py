@@ -18,6 +18,30 @@ GOLD_HUE_HIGH = 58.0
 GOLD_SAT_MIN  = 60.0
 
 
+def _classify_gold_alloy_hue(hue: float, sat: float, val: float) -> tuple[str, float]:
+    """Classify a dominant colour into a known gold-alloy band and a risk.
+
+    Plain yellow-gold hue-gating alone wrongly flags legitimate alloys —
+    rose/pink gold (copper-rich, redder hue) and white gold / rhodium-plated
+    gold (near-neutral, so very low saturation). Each recognised alloy gets a
+    low risk; only colours matching NO gold alloy (e.g. brassy green, blue
+    casts) get a high risk. Returns (alloy_name, risk_0_1)."""
+    # White gold / rhodium plating: near-neutral (very low saturation) and
+    # bright — hue is meaningless at this saturation, so gate on sat/val first.
+    if sat < 40 and val >= 120:
+        return "white_gold", 0.20
+    # Rose / pink gold: copper-rich, hue pulled toward red (below yellow band).
+    if 4 <= hue <= 17 and sat >= 40:
+        return "rose_gold", 0.25
+    # Yellow gold: the classic band.
+    if GOLD_HUE_LOW <= hue <= GOLD_HUE_HIGH and sat >= 40:
+        return "yellow_gold", 0.15
+    # Antique/deep gold can read slightly warm-desaturated — a mild band.
+    if 8 <= hue <= 60 and 25 <= sat < 40 and val >= 90:
+        return "antique_gold", 0.35
+    return "unmatched", 0.60
+
+
 def _load_efficientnet():
     import torch
     import timm
@@ -60,16 +84,12 @@ def _heuristic_risk(image_bytes_list: list[bytes]) -> tuple[float, dict]:
         stats = extract_hsv_stats(rgb)
         hue   = stats["hue_mean"]
         sat   = stats["sat_mean"]
+        val   = stats.get("val_mean", 150.0)
 
-        in_gold_hue = GOLD_HUE_LOW <= hue <= GOLD_HUE_HIGH
-        sufficient_sat = sat >= GOLD_SAT_MIN
-
-        score = 0.0
-        if not in_gold_hue:
-            score += 0.40
-        if not sufficient_sat:
-            score += 0.30
-        scores.append(min(score, 1.0))
+        # Alloy-aware: rose/white/antique gold are legitimate and must not be
+        # flagged just for sitting outside the yellow-gold hue band.
+        alloy, alloy_risk = _classify_gold_alloy_hue(hue, sat, val)
+        scores.append(min(alloy_risk, 1.0))
 
     risk  = float(np.mean(scores)) if scores else 0.5
     stats_out = {"images_analysed": len(scores), "mean_heuristic_risk": round(risk, 4)}

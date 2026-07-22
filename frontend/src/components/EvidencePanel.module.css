@@ -45,12 +45,29 @@
   border: 1px solid var(--warn-border);
 }
 
+.deduction {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.deduction b { color: var(--text); font-family: var(--font-mono); font-weight: 700; }
+.minus { color: var(--text-faint); font-weight: 700; padding: 0 2px; }
+
 .ltvGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 .ltvGrid > div { display: flex; flex-direction: column; gap: 2px; }
+.ltvGrid > div > .ltvLabel { display: inline-flex; align-items: center; gap: 4px; }
 .ltvLabel { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-faint); }
 .ltvValue { font-size: 14px; font-weight: 700; color: var(--text); font-family: var(--font-mono); }
 .ltvHighlight { color: var(--ok); }
@@ -58,3 +75,30 @@
 .note { font-size: 12px; color: var(--text-mid); line-height: 1.55; }
 .alertNote { font-size: 12px; color: var(--danger); font-weight: 600; line-height: 1.55; margin-bottom: 4px; }
 .warnText { color: var(--danger); }
+
+.calibrationWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--warn, #B45309);
+  line-height: 1.5;
+  margin: 6px 0 4px;
+}
+.calibrationWarning svg { flex-shrink: 0; margin-top: 1px; }
+
+.indicativeWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--warn, #B45309);
+  background: var(--warn-bg, #FFFBEB);
+  border: 1px solid var(--warn-border, #FEF3C7);
+  border-radius: 8px;
+  padding: 8px 10px;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+.indicativeWarning svg { flex-shrink: 0; margin-top: 1px; }

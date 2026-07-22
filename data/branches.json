@@ -1,0 +1,9 @@
+{
+  "BLR-001": { "name": "Bengaluru MG Road",  "region_id": "SOUTH", "region_name": "South" },
+  "CHN-007": { "name": "Chennai T. Nagar",    "region_id": "SOUTH", "region_name": "South" },
+  "HYD-002": { "name": "Hyderabad Abids",     "region_id": "SOUTH", "region_name": "South" },
+  "MUM-003": { "name": "Mumbai Andheri",      "region_id": "WEST",  "region_name": "West"  },
+  "DEL-005": { "name": "Delhi Karol Bagh",    "region_id": "NORTH", "region_name": "North" },
+  "HO-000":  { "name": "Head Office",         "region_id": "HQ",    "region_name": "Head Office" },
+  "default": { "name": "Unassigned/Demo",     "region_id": "UNASSIGNED", "region_name": "Unassigned" }
+}

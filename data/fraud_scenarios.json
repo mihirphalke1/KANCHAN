@@ -1,0 +1,13 @@
+{
+  "_note": "Bank spurious-gold fraud-scenario vocabulary (Sl.1-Sl.8). These are the standard gold-loan spurious-collateral scenarios; edit the titles/codes here to match the authoritative list issued by the bank without touching code. app/utils/fraud_scenario.py maps a case's internal verdict + contradiction pattern onto these entries.",
+  "scenarios": [
+    {"sl": "Sl.1", "code": "GOLD_PLATED_BASE_METAL",   "title": "Gold-plated base metal (brass/copper core)"},
+    {"sl": "Sl.2", "code": "UNDER_KARAT",               "title": "Under-karat / purity mis-declaration (lower fineness than declared)"},
+    {"sl": "Sl.3", "code": "TUNGSTEN_CORE",             "title": "Density-matched core fill (tungsten / dense-core, passes weight-in-water)"},
+    {"sl": "Sl.4", "code": "HOLLOW_OR_FILLED",          "title": "Hollow or filler-weighted item (wax/lac/solder adding weight)"},
+    {"sl": "Sl.5", "code": "STONE_WEIGHT_INFLATION",    "title": "Stone/gem weight passed off as gold weight"},
+    {"sl": "Sl.6", "code": "SPURIOUS_HALLMARK",         "title": "Spurious or mismatched BIS hallmark / HUID"},
+    {"sl": "Sl.7", "code": "REPLEDGE_OR_CAP_BREACH",    "title": "Re-pledging / aggregate pledging-cap breach (same borrower across loans)"},
+    {"sl": "Sl.8", "code": "NOT_GOLD",                  "title": "Not gold — no gold alloy matches the physical measurement"}
+  ]
+}
