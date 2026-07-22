@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Center, ContactShadows, Environment, OrbitControls, useGLTF } from '@react-three/drei'
 import { AlertTriangle, Box, Loader2, RefreshCw } from 'lucide-react'
@@ -8,11 +8,50 @@ import styles from './Mesh3dViewer.module.css'
 const POLL_MS = 2500
 const TERMINAL = new Set(['ready', 'failed', 'disabled'])
 
-function GlbScene({ url }) {
+const srgb = (rgb) => (Array.isArray(rgb) && rgb.length >= 3
+  ? rgb.map((c) => Math.min(1, Math.max(0, c / 255)))
+  : null)
+
+/**
+ * Renders the GLB and enforces the colour scheme on every material by node
+ * name (metal vs stone). The backend bakes gold/gem PBR materials, but a fully
+ * metallic surface can wash out to white under a bright studio environment and
+ * some pipelines drop the baked factors — so we re-assert the sampled colours
+ * and a low, always-gold metalness here. Colours come from status.color when
+ * available (the exact tones sampled from the photo), else sane gold/gem.
+ */
+function GlbScene({ url, color }) {
   const { scene } = useGLTF(url)
+  const obj = useMemo(() => {
+    const root = scene.clone(true)
+    const goldRGB = srgb(color?.gold_rgb) || [0.83, 0.66, 0.24]
+    const stoneRGB = srgb(color?.stone_rgb) || [0.62, 0.05, 0.11]
+    root.traverse((c) => {
+      if (!c.isMesh || !c.material) return
+      const mats = Array.isArray(c.material) ? c.material : [c.material]
+      const tag = `${c.name || ''} ${c.parent?.name || ''} ${mats[0]?.name || ''}`.toLowerCase()
+      const isStone = /stone|gem|ruby|sapphire|emerald|red|blue|green/.test(tag)
+      mats.forEach((m) => {
+        if (m.emissive) m.emissive.setRGB(0, 0, 0)
+        m.envMapIntensity = 0.5
+        if (isStone) {
+          m.color?.setRGB(...stoneRGB)
+          m.metalness = 0.0
+          m.roughness = 0.14
+          if (m.emissive) m.emissive.setRGB(stoneRGB[0] * 0.14, stoneRGB[1] * 0.14, stoneRGB[2] * 0.14)
+        } else {
+          m.color?.setRGB(...goldRGB)
+          m.metalness = 0.55
+          m.roughness = 0.38
+        }
+        m.needsUpdate = true
+      })
+    })
+    return root
+  }, [scene, color])
   return (
     <Center>
-      <primitive object={scene.clone()} />
+      <primitive object={obj} />
     </Center>
   )
 }
@@ -125,16 +164,22 @@ export default function Mesh3dViewer({ caseId, initial, visible = true }) {
         <div className={styles.canvasWrap}>
           <Canvas camera={{ position: [0, 0.4, 2.2], fov: 40 }} dpr={[1, 2]}>
             <color attach="background" args={['#0B1220']} />
-            <ambientLight intensity={0.55} />
-            <directionalLight position={[3, 4, 2]} intensity={1.1} />
+            <ambientLight intensity={0.6} />
+            <directionalLight position={[3, 4, 2]} intensity={1.2} />
+            <directionalLight position={[-3, 1, -2]} intensity={0.5} />
             <Suspense fallback={null}>
-              <GlbScene url={glbUrl} />
+              {/* Cache-bust on updated_at so a model that was re-coloured
+                  (white → gold+gem, or a retry) never renders a stale copy. */}
+              <GlbScene
+                url={status?.updated_at ? `${glbUrl}?v=${encodeURIComponent(status.updated_at)}` : glbUrl}
+                color={status?.color}
+              />
               <Environment preset="studio" />
               <ContactShadows opacity={0.35} scale={6} blur={2.5} far={2} />
             </Suspense>
             <OrbitControls makeDefault enablePan autoRotate autoRotateSpeed={0.6} />
           </Canvas>
-          <div className={styles.canvasHint}>Drag to orbit · scroll to zoom · illustrative reconstruction</div>
+          <div className={styles.canvasHint}>Drag to orbit · scroll to zoom · colour-matched reconstruction</div>
         </div>
       )}
     </div>

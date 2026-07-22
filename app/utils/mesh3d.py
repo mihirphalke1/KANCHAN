@@ -80,6 +80,52 @@ def _case_lock(case_id: str) -> threading.Lock:
         return _locks[case_id]
 
 
+def _case_stones(case_id: str) -> list:
+    """Detected set stones for a case, from the saved case record — used to
+    colour the generated mesh (gem colour + presence). Empty on any miss."""
+    for case in _load_history():
+        if case.get("case_id") != case_id:
+            continue
+        media = case.get("media") or {}
+        xray = media.get("xray") or {}
+        stones = xray.get("stones") or xray.get("gems") or []
+        return stones if isinstance(stones, list) else []
+    return []
+
+
+def _colorize_ready_glb(case_id: str, glb_dest: Path) -> Optional[dict]:
+    """Colour the freshly generated white GLB in place: gold metal body + the
+    detected gem, sampled from the case photo. Soft — on any failure the
+    original white GLB is left untouched and None is returned. Never raises."""
+    try:
+        from app.utils.mesh_color import colorize_glb
+
+        case_dir = CASES_DIR / case_id
+        image_path = None
+        for name in ("img_0.jpg", "img_0.png", "img_0.jpeg"):
+            p = case_dir / name
+            if p.exists():
+                image_path = p
+                break
+
+        tmp = glb_dest.with_suffix(".colored.glb")
+        meta = colorize_glb(
+            glb_dest, tmp,
+            stones=_case_stones(case_id),
+            image_path=image_path,
+        )
+        # Keep the untouched white mesh for retry/debug, then swap colour in.
+        raw = glb_dest.with_name("model_raw.glb")
+        if not raw.exists():
+            shutil.copy2(glb_dest, raw)
+        shutil.move(str(tmp), str(glb_dest))
+        logger.info("mesh3d coloured for case %s: %s", case_id, meta)
+        return meta
+    except Exception as e:
+        logger.warning("mesh3d colouring failed for case %s (%s) — keeping white model", case_id, e)
+        return None
+
+
 def initial_mesh3d_status() -> dict:
     """Status blob attached to the analyze response / persisted case."""
     if not USE_MESH3D:
@@ -483,6 +529,10 @@ def run_mesh3d_job(case_id: str, image_bytes: bytes) -> dict:
 
             dest = _glb_path(case_id)
             shutil.copy2(glb_src, dest)
+            # Colour the white mesh to match the item (gold body + set gem),
+            # sampled from the case photo. Additive/cosmetic — never blocks a
+            # ready model if it fails.
+            color_meta = _colorize_ready_glb(case_id, dest)
             elapsed = round(time.time() - started, 1)
             status = write_status(case_id, {
                 "status": "ready",
@@ -490,6 +540,7 @@ def run_mesh3d_job(case_id: str, image_bytes: bytes) -> dict:
                 "error": None,
                 "provider": provider,
                 "elapsed_s": elapsed,
+                "color": color_meta,
                 "message": "3D model ready.",
             })
             _patch_case_history(case_id, status)

@@ -808,5 +808,71 @@
     "case_id": "86fbdad4",
     "image_role": "item_photo_0",
     "timestamp": "2026-07-22T12:49:04.267035"
+  },
+  {
+    "hash": "00169e8e1a160c00",
+    "case_id": "a23034a0",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T17:03:00.781721"
+  },
+  {
+    "hash": "00169e8e1a160c00",
+    "case_id": "c964603b",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T17:28:01.056888"
+  },
+  {
+    "hash": "6320c30b0f642902",
+    "case_id": "24d80a0a",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T17:30:11.236968"
+  },
+  {
+    "hash": "2f498e330fcc3281",
+    "case_id": "083c4b14",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T17:34:17.265948"
+  },
+  {
+    "hash": "0dcfb41717cc7084",
+    "case_id": "083c4b14",
+    "image_role": "item_photo_1",
+    "timestamp": "2026-07-22T17:34:17.265948"
+  },
+  {
+    "hash": "2f498e330fcc3281",
+    "case_id": "c9f23329",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T17:36:03.910517"
+  },
+  {
+    "hash": "0dcfb41717cc7084",
+    "case_id": "c9f23329",
+    "image_role": "item_photo_1",
+    "timestamp": "2026-07-22T17:36:03.910517"
+  },
+  {
+    "hash": "00169e8e1a160c00",
+    "case_id": "e335db05",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T17:48:20.377554"
+  },
+  {
+    "hash": "00169e8e1a160c00",
+    "case_id": "8e301f3a",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T17:50:01.198928"
+  },
+  {
+    "hash": "0080200c8c423200",
+    "case_id": "980751ac",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T17:57:31.159654"
+  },
+  {
+    "hash": "40989c4e4e230904",
+    "case_id": "980751ac",
+    "image_role": "item_photo_1",
+    "timestamp": "2026-07-22T17:57:31.159654"
   }
 ]
