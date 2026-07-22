@@ -344,8 +344,8 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
           Item Photos — live capture
         </legend>
         <p className={styles.helpText}>
-          Place the item on a plain backdrop with today's calibration card visible in-frame
-          (<InfoTip text="Print today's card from Dashboard → Calibration Card. It gives a real-world scale reference for stone sizing and proves the photo was taken today, not reused." />).
+          Photo 1 must show the item flat next to today's calibration card, straight overhead
+          (<InfoTip text="Print today's card from Dashboard → Calibration Card. It gives a real-world scale reference for stone sizing and proves the photo was taken today, not reused. Only this first photo is used for scale — keep the card in it." />).
           Live camera capture is the default — an upload fallback stays available underneath for demos.
         </p>
         <button type="button" className={styles.addBtn} onClick={printCalibrationCard} disabled={cardLoading} style={{ marginTop: 0, marginBottom: 12 }}>
@@ -355,7 +355,11 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
         <div className={styles.photoGrid}>
           {photos.map((file, i) => (
             <div key={i} className={styles.photoSlot}>
-              <CameraCapture facingMode="environment" label={`angle ${i + 1}`} onCapture={f => setPhotoAt(i, f)} />
+              <CameraCapture
+                facingMode="environment"
+                label={i === 0 ? 'item + card (required)' : `stone close-up ${i}`}
+                onCapture={f => setPhotoAt(i, f)}
+              />
               {photos.length > 1 && (
                 <button type="button" className={styles.slotRemove} onClick={() => removePhotoSlot(i)}>
                   <X size={11} /> Remove slot
@@ -366,8 +370,18 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
         </div>
         {photos.length < 4 && (
           <button type="button" className={styles.addBtn} onClick={addPhotoSlot}>
-            <Plus size={13} /> Add another angle
+            <Plus size={13} />
+            {photos.length === 1
+              ? 'Add a stone close-up (no card needed — for small/hard-to-frame stones)'
+              : 'Add another close-up'}
           </button>
+        )}
+        {photos.length > 1 && (
+          <p className={styles.helpText} style={{ marginTop: 6 }}>
+            Close-up photos don't need the card — they only sharpen stone count/type, they can't
+            change size or weight (no scale reference in them). Useful for rings/bangles where the
+            card and the stones can't both be framed clearly in one shot.
+          </p>
         )}
       </fieldset>
 
