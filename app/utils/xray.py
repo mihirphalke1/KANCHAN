@@ -1441,6 +1441,36 @@ def xray_preview(
     return result
 
 
+def rebuild_gem_summaries(stones: list[dict]) -> dict:
+    """Recompute the gems/colourless summary fields from a `stones` list.
+
+    Same shapes reconcile_stones() derives inline — factored out so a caller
+    that edits a stone's `hue_class` after the fact (e.g. a close-up-photo
+    type refinement, see stone_fusion.review_closeup_photos) can rebuild
+    `gems`/`colourless`/area totals to match, instead of them going stale."""
+    gems = [{"area_pct": s["area_pct"], "hue_class": s["hue_class"],
+             "confidence": s["confidence"], "stone_name": s["stone_name"],
+             "match_confidence": s.get("match_confidence", 0.0),
+             "agreement": s.get("agreement", "ml_only"),
+             "gem_type": s.get("gem_type", ""), "colour": s.get("colour", ""),
+             "ai_confidence": s.get("ai_confidence", 0.0)}
+            for s in stones if s["hue_class"] != "colourless"]
+    colourless = [{"area_pct": s["area_pct"], "confidence": s["confidence"],
+                   "kind": s["status"], "stone_name": s["stone_name"],
+                   "match_confidence": s.get("match_confidence", 0.0),
+                   "agreement": s.get("agreement", "ml_only"),
+                   "ai_confidence": s.get("ai_confidence", 0.0)}
+                  for s in stones if s["hue_class"] == "colourless"]
+    return {
+        "gems":                gems,
+        "gem_regions":         len(gems),
+        "gem_area_pct":        round(sum(g["area_pct"] for g in gems), 2),
+        "colourless":          colourless,
+        "colourless_regions":  len(colourless),
+        "colourless_area_pct": round(sum(c["area_pct"] for c in colourless), 2),
+    }
+
+
 def reconcile_stones(ctx: dict, ai_stones) -> tuple[dict, dict]:
     """Fuse AI vision stone detections into the ML result and re-render the
     stone overlays. Returns (stats_patch, stage_patch) the async analysis route

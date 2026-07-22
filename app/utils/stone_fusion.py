@@ -488,3 +488,78 @@ def reconcile(
         "ai_empty_ml_disagree": bool(ai_empty and n_rescued > 0),
     }
     return result, labels_out, meta
+
+
+# ── Close-up stone photos ────────────────────────────────────────────────
+# The primary photo carries the calibration card and is the only frame with
+# a real-world scale reference, so it stays authoritative for stone SIZE and
+# WEIGHT. A ring or bangle often can't show both the card AND its small
+# pavé/cluster stones clearly in one frame, so an officer may take one or
+# more additional close-up photos of just the stones. Those close-ups have
+# no scale reference of their own — they can never contribute size/weight —
+# but their stone COUNT and TYPE read is frequently sharper than the wide
+# sizing shot's, since the item fills much more of the frame.
+CLOSEUP_TYPE_CONFIDENCE_MIN = float(os.getenv("STONE_CLOSEUP_TYPE_CONF_MIN", "0.60"))
+
+
+def review_closeup_photos(primary_stones: list[dict], closeup_passes: list[dict]) -> dict:
+    """Cross-check the primary (scale-referenced) photo's stone read against
+    independent close-up photos of the same item.
+
+    `primary_stones` is xray_result["stones"] from the primary photo.
+    `closeup_passes` is a list of {"photo_index": int, "gems": list[dict]}
+    from an independent gem_vision.detect_gems() call on each additional
+    uploaded photo (no item_bbox — the whole close-up frame is the crop).
+
+    This deliberately does two things and no more:
+      1. FLAG (never auto-correct) when a close-up shows MORE stones than the
+         primary photo — the officer must verify the net-gold deduction
+         accounts for all of them; we never fabricate a position or size for
+         a stone we only saw in an unscaled frame.
+      2. REFINE stone TYPE on the primary list — and only when a close-up is
+         unambiguous (every stone it saw shares one hue_class, at confidence
+         >= CLOSEUP_TYPE_CONFIDENCE_MIN) and the primary read for that stone
+         was in the vague "colourless" bucket. Upgrading "colourless" to a
+         confirmed type (e.g. ruby) changes the density the composition
+         mixture model assumes for it, and with it the net gold weight — a
+         real accuracy gain, not just cosmetic.
+
+    Returns {"stones": <refined primary_stones>, "reviews": [...], "flags": [...]}.
+    Never raises; a malformed closeup pass is skipped, not fatal.
+    """
+    reviews: list[dict] = []
+    flags: list[str] = []
+    refined = [dict(s) for s in primary_stones]
+    primary_n = len(primary_stones)
+
+    for cp in closeup_passes:
+        idx = cp.get("photo_index")
+        gems = cp.get("gems") or []
+        n = len(gems)
+        hue_classes = {g.get("hue_class", "other") for g in gems}
+        avg_conf = round(sum(g.get("ai_confidence", 0.0) for g in gems) / n, 3) if n else 0.0
+        dominant = next(iter(hue_classes)) if len(hue_classes) == 1 else None
+
+        reviews.append({
+            "photo_index":    idx,
+            "n_detected":     n,
+            "dominant_type":  dominant,
+            "hue_classes":    sorted(hue_classes),
+            "avg_confidence": avg_conf,
+            "gems":           gems,
+        })
+
+        if n > primary_n:
+            flags.append(
+                f"stone-count: close-up photo #{idx + 1} shows {n} stone(s) vs "
+                f"{primary_n} in the sizing photo — verify all set stones are "
+                f"captured in the net-gold deduction before finalising."
+            )
+
+        if dominant and dominant != "colourless" and avg_conf >= CLOSEUP_TYPE_CONFIDENCE_MIN:
+            for s in refined:
+                if s.get("hue_class") == "colourless":
+                    s["hue_class"] = dominant
+                    s["type_refined_from_photo"] = idx + 1
+
+    return {"stones": refined, "reviews": reviews, "flags": flags}

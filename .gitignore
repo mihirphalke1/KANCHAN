@@ -19,6 +19,7 @@ models/*.pt
 runs/
 INSTRUCTIONS.md
 AGENT_LOG.md
+CLAUDE.md
 .claude/
 venv/
 .venv/

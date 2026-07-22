@@ -712,5 +712,89 @@
     "case_id": "7ec2292e",
     "image_role": "item_photo_0",
     "timestamp": "2026-07-22T09:50:53.599781"
+  },
+  {
+    "hash": "324cb6368e48a182",
+    "case_id": "36579c09",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T10:33:33.779536"
+  },
+  {
+    "hash": "324cb6368e48a182",
+    "case_id": "a70c1af0",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T10:36:44.242601"
+  },
+  {
+    "hash": "324cb6368e48a182",
+    "case_id": "d37b3f99",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T10:38:05.794741"
+  },
+  {
+    "hash": "324cb6368e48a182",
+    "case_id": "18b51c23",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T10:39:33.735011"
+  },
+  {
+    "hash": "324cb6368e48a182",
+    "case_id": "8fb437f5",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T10:40:50.794357"
+  },
+  {
+    "hash": "0dcfb41717cc7084",
+    "case_id": "393c784c",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T10:51:02.046543"
+  },
+  {
+    "hash": "2f498e330fcc3281",
+    "case_id": "2b5d762d",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T10:53:41.173441"
+  },
+  {
+    "hash": "c030cc1717920c4f",
+    "case_id": "d6e31dcd",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T10:57:47.117824"
+  },
+  {
+    "hash": "228c26330e8e4d32",
+    "case_id": "5a286ab6",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T11:00:50.612257"
+  },
+  {
+    "hash": "228c26330e8e4d32",
+    "case_id": "40edf8c3",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T11:01:53.300660"
+  },
+  {
+    "hash": "c030cc1717920c4f",
+    "case_id": "40edf8c3",
+    "image_role": "item_photo_1",
+    "timestamp": "2026-07-22T11:01:53.300660"
+  },
+  {
+    "hash": "8448483222585820",
+    "case_id": "05df4921",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T12:12:06.431811"
+  },
+  {
+    "hash": "324cb6368e48a182",
+    "case_id": "05df4921",
+    "image_role": "item_photo_1",
+    "timestamp": "2026-07-22T12:12:06.431811"
+  },
+  {
+    "hash": "324cb6368e48a182",
+    "case_id": "816f0741",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-22T12:13:51.532512"
   }
 ]

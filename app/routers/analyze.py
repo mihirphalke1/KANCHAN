@@ -41,7 +41,8 @@ from app.utils.ltv import assess_value, compute_net_gold_weight
 from app.utils.pledging import check_pledging_cap
 from app.utils.phash import check_duplicate, register_photo
 from app.utils.stamp import stamp_image
-from app.utils.xray import xray_preview, reconcile_stones
+from app.utils.xray import xray_preview, reconcile_stones, rebuild_gem_summaries
+from app.utils.stone_fusion import review_closeup_photos
 from app.llm.verdict_prompt import generate_verdict
 from app.llm.gem_vision import detect_gems
 
@@ -610,6 +611,39 @@ async def analyze(
         except Exception as e:
             logger.warning("Stone AI detection failed for case %s: %s", case_id, e)
 
+    # ── Close-up stone photos (angle 2+) ──────────────────────────────────
+    # A ring or bangle often can't show both the calibration card AND small
+    # set stones clearly in one frame, so the officer may add extra photos
+    # that are just a close-up of the stones. Photo 0 stays the ONLY frame
+    # with a scale reference (fiducial card) and therefore stays authoritative
+    # for stone size/weight; extra photos can only sharpen stone COUNT/TYPE —
+    # see stone_fusion.review_closeup_photos for exactly what they're allowed
+    # to change. Stashed here; folded into contra["flags"] once contra exists.
+    closeup_review = None
+    closeup_flags: list[str] = []
+    if xray_result and len(image_bytes_list) > 1:
+        closeup_passes = []
+        for i, extra_bytes in enumerate(image_bytes_list[1:], start=1):
+            try:
+                arr = np.frombuffer(extra_bytes, dtype=np.uint8)
+                extra_bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+                if extra_bgr is None:
+                    continue
+                extra_gems = await detect_gems(extra_bgr, item_bbox=None)
+                if extra_gems is not None:
+                    closeup_passes.append({"photo_index": i, "gems": extra_gems})
+            except Exception as e:
+                logger.warning("Close-up stone detection failed for case %s photo %d: %s", case_id, i, e)
+        if closeup_passes:
+            try:
+                closeup_review = review_closeup_photos(xray_result.get("stones", []), closeup_passes)
+                xray_result["stones"] = closeup_review["stones"]
+                xray_result.update(rebuild_gem_summaries(closeup_review["stones"]))
+                closeup_flags = closeup_review["flags"]
+            except Exception as e:
+                logger.warning("Close-up stone review failed for case %s: %s", case_id, e)
+                closeup_review = None
+
     # ── Fiducial calibration card: tamper-evidence + real-world scale ──
     # Detected in the same primary photo (SOP: place the card flat beside
     # the item in-frame). Best-effort — absence just means no scale
@@ -777,6 +811,8 @@ async def analyze(
         contra_scores["xray"] = xray_result_score["risk_score"]
 
     contra = contradiction_summary(contra_scores)
+    if closeup_flags:
+        contra["flags"].extend(closeup_flags)
 
     # Hidden-volume contradiction: physics demands more non-gold volume than
     # the camera can account for as stones — surfaces in flags and boosts the
@@ -828,11 +864,16 @@ async def analyze(
     # officer — P3-11). The per-evaluator result only fires once that officer
     # has accrued enough attributed readings; until then it reports
     # insufficient_data and never blocks a case.
+    #
+    # Benford is a cross-case pattern signal about the EVALUATOR's history,
+    # not evidence about THIS item's purity — it must stay out of contra
+    # ("flags"), which feeds the contradiction score, the "combining all
+    # tests" trace status, and the LLM verdict prompt. It is surfaced only
+    # via the dedicated benford/benford_evaluator response fields (rendered
+    # by BenfordStatus / the admin dashboard), never mixed into the
+    # authenticity verdict for this case.
     benford = run_benford_test()
     benford_evaluator = run_benford_test(evaluator_id=evaluator_id)
-    if benford_evaluator.get("alert"):
-        contra["flags"].append(
-            f"benford-evaluator: {benford_evaluator['message']}")
 
     # ── Assessed value + RBI-tiered LTV ──
     # Net gold weight = total measured weight − estimated weight of the set
@@ -1047,6 +1088,22 @@ async def analyze(
             "details": {"tap points": spatial_result.get("n_usable"), "spread": spatial_result.get("spread_ratio")},
             "source": "Extension of the single-tap ring-frequency physics check (acoustic_physics.py)",
         })
+    if closeup_review:
+        _n_seen = [r["n_detected"] for r in closeup_review["reviews"]]
+        verification_trace.append({
+            "step": "Close-up stone photo review",
+            "status": "flag" if closeup_review["flags"] else "done",
+            "summary": (
+                f"{len(closeup_review['reviews'])} close-up photo(s) reviewed, "
+                f"{_n_seen} stone(s) seen per photo"
+                + (f" — {len(closeup_review['flags'])} count mismatch flag(s)" if closeup_review["flags"] else "")
+            ),
+            "formula": "Close-ups have no scale reference so they never change stone size/weight; "
+                       "they may only raise a count-mismatch flag or, when unambiguous, upgrade a "
+                       "vague 'colourless' stone to a confirmed type.",
+            "details": {"reviews": closeup_review["reviews"], "flags": closeup_review["flags"]},
+            "source": "app/utils/stone_fusion.py::review_closeup_photos",
+        })
     _dedn = (
         f"Total {net_gold['gross_weight_g']} g − stones ≈ {net_gold['stone_weight_g']} g "
         f"({net_gold.get('n_stones', 0)} stone(s), ~{net_gold.get('stone_carat_total', 0)} ct) "
@@ -1212,6 +1269,7 @@ async def analyze(
         "hallmark":         hallmark_parsed,
         "gem_grid":         gem_grid_result,
         "gem_weight":       gem_weight_result,
+        "stone_closeup_review": closeup_review["reviews"] if closeup_review else None,
         "ltv":              ltv_result,
         "contradiction":    contra,
         "composition":      composition_result,
