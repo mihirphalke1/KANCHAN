@@ -123,6 +123,17 @@
 
 .thumbActive span { color: var(--brand); }
 
+.thumb3d {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  background: #0B1220;
+  color: #E7B93C;
+}
+
 /* ── Composition ── */
 .compSection {
   display: flex;

@@ -1,0 +1,93 @@
+.wrap {
+  width: 100%;
+  min-height: 280px;
+  background: #0B1220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stateBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 28px 22px;
+  max-width: 420px;
+  color: #E2E8F0;
+}
+
+.stateText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stateText strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: #F8FAFC;
+}
+
+.stateText span {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #94A3B8;
+}
+
+.hint {
+  font-size: 11px !important;
+  color: #64748B !important;
+}
+
+.warn { color: #FBBF24; }
+
+.spin {
+  animation: spin 800ms linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.retryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  align-self: flex-start;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.08);
+  color: #F8FAFC;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.retryBtn:hover:not(:disabled) { background: rgba(255,255,255,0.14); }
+.retryBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.canvasWrap {
+  position: relative;
+  width: 100%;
+  height: 320px;
+}
+
+.canvasWrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.canvasHint {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(11, 20, 32, 0.72);
+  color: #CBD5E1;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}

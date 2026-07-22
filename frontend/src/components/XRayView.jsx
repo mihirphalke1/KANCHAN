@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Scan, ZoomIn } from 'lucide-react'
+import { Box, Scan, ZoomIn } from 'lucide-react'
 import InfoTip from './ui/InfoTip'
 import Lightbox from './ui/Lightbox'
+import Mesh3dViewer from './Mesh3dViewer'
 import styles from './XRayView.module.css'
 
 // Build a URL that works in both dev (proxied) and prod (same origin)
@@ -35,6 +36,8 @@ const STAGES = [
     desc: 'Stones the camera picked out on its own, numbered — it never reads the description. Clear or white stones get a “?”: the officer confirms whether each one is really a stone.' },
   { key: 'heatmap',   label: 'Heat view',
     desc: 'Brightness shown on a blue-to-red colour scale. It makes faint differences on the surface easier to spot than plain grey.' },
+  { key: 'mesh3d',    label: '3D Model',
+    desc: 'Interactive 3D reconstruction from the uploaded photo (Microsoft TRELLIS on Hugging Face). Generated in the background after analysis — illustrative only, not used for the loan decision.' },
 ]
 
 // Must stay in sync with CLASS_COLOURS_RGB in app/utils/xray.py
@@ -128,14 +131,22 @@ export default function XRayView({ caseData }) {
 
   const { stages, composition = {}, thresholds = {}, gem_regions,
           item_area_pct, inclusions_unexplained, stone_detection_mode,
-          stone_agreement, stones, gold_gem_split } = xray
+          stone_agreement, stones, gold_gem_split, mesh3d } = xray
+  const mesh3dState = mesh3d || caseData?.media?.mesh3d
+  const caseId = caseData?.case_id
   const activeStage = STAGES.find(s => s.key === active) || STAGES[0]
   const hasScore = xrayScore?.mode === 'dsip_xray'
   const showSignals = hasScore || xrayScore?.mode === 'dsip_unusable'
   const showGoldGem = usable && gold_gem_split && stages.gold_gem
+  const showMesh3dTab = Boolean(caseId && (mesh3dState || stages))
 
   return (
     <div className={styles.card}>
+      {/* Background poller — keeps the TRELLIS job warm while other stages are open */}
+      {showMesh3dTab && active !== 'mesh3d' && (
+        <Mesh3dViewer caseId={caseId} initial={mesh3dState} visible={false} />
+      )}
+
       <div className={styles.titleRow}>
         <h3 className={styles.title}>
           <Scan size={14} />
@@ -186,28 +197,40 @@ export default function XRayView({ caseData }) {
       </div>
 
       <div className={styles.viewer}>
-        <button
-          type="button"
-          className={styles.zoomBtn}
-          onClick={() => setZoom(mediaUrl(stages[active]))}
-          title="Click to zoom"
-        >
-          <img
-            src={mediaUrl(stages[active])}
-            alt={activeStage.label}
-            className={styles.mainImg}
-            onError={e => { e.target.style.visibility = 'hidden' }}
-          />
-          <span className={styles.zoomHint}><ZoomIn size={13} /> Click to zoom</span>
-        </button>
-        <div className={styles.stageCaption}>
-          <strong>{activeStage.label}</strong>
-          <span>{activeStage.desc}</span>
-        </div>
+        {active === 'mesh3d' ? (
+          <>
+            <Mesh3dViewer caseId={caseId} initial={mesh3dState} visible />
+            <div className={styles.stageCaption}>
+              <strong>{activeStage.label}</strong>
+              <span>{activeStage.desc}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className={styles.zoomBtn}
+              onClick={() => setZoom(mediaUrl(stages[active]))}
+              title="Click to zoom"
+            >
+              <img
+                src={mediaUrl(stages[active])}
+                alt={activeStage.label}
+                className={styles.mainImg}
+                onError={e => { e.target.style.visibility = 'hidden' }}
+              />
+              <span className={styles.zoomHint}><ZoomIn size={13} /> Click to zoom</span>
+            </button>
+            <div className={styles.stageCaption}>
+              <strong>{activeStage.label}</strong>
+              <span>{activeStage.desc}</span>
+            </div>
+          </>
+        )}
       </div>
 
       <div className={styles.thumbStrip}>
-        {STAGES.filter(s => stages[s.key]).map(s => (
+        {STAGES.filter(s => s.key === 'mesh3d' ? showMesh3dTab : stages[s.key]).map(s => (
           <button
             key={s.key}
             type="button"
@@ -215,7 +238,13 @@ export default function XRayView({ caseData }) {
             onClick={() => setActive(s.key)}
             title={s.desc}
           >
-            <img src={mediaUrl(stages[s.key])} alt={s.label} loading="lazy" />
+            {s.key === 'mesh3d' ? (
+              <span className={styles.thumb3d}>
+                <Box size={18} />
+              </span>
+            ) : (
+              <img src={mediaUrl(stages[s.key])} alt={s.label} loading="lazy" />
+            )}
             <span>{s.label}</span>
           </button>
         ))}
