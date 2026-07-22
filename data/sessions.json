@@ -5299,5 +5299,23 @@
     "role": "branch_manager",
     "login_time": "2026-07-22T17:25:32.427979+05:30",
     "selfie_path": "x"
+  },
+  "97cc1d1ecc9f634480de2026b7aedb0af78f9c67fab16254": {
+    "token": "97cc1d1ecc9f634480de2026b7aedb0af78f9c67fab16254",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T18:10:32.673593+05:30",
+    "selfie_path": "data\\sessions\\97cc1d1ecc9f634480de2026b7aedb0af78f9c67fab16254\\selfie.jpg"
+  },
+  "4b575bc37edbbe672d4f50e8c237feba216b07f9b21f7b4f": {
+    "token": "4b575bc37edbbe672d4f50e8c237feba216b07f9b21f7b4f",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-22T18:17:52.011121+05:30",
+    "selfie_path": "data\\sessions\\4b575bc37edbbe672d4f50e8c237feba216b07f9b21f7b4f\\selfie.jpg"
   }
 }

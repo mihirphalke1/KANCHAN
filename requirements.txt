@@ -25,3 +25,4 @@ requests==2.32.2
 reportlab==4.2.0
 fonttools==4.63.0
 slowapi==0.1.10
+gradio_client>=1.0.0

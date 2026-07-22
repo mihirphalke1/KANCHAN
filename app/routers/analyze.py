@@ -43,6 +43,7 @@ from app.utils.phash import check_duplicate, register_photo
 from app.utils.stamp import stamp_image
 from app.utils.xray import xray_preview, reconcile_stones, rebuild_gem_summaries
 from app.utils.stone_fusion import review_closeup_photos
+from app.utils.mesh3d import initial_mesh3d_status, start_mesh3d_job
 from app.llm.verdict_prompt import generate_verdict
 from app.llm.gem_vision import detect_gems
 
@@ -1207,6 +1208,16 @@ async def analyze(
             except Exception as e:
                 logger.warning("Could not save xray stage '%s' for case %s: %s", stage_name, case_id, e)
 
+    # Async TRELLIS 3D — status only here; generation starts after persist.
+    mesh3d_meta = initial_mesh3d_status() if image_bytes_list else {
+        "status": "disabled",
+        "glb_url": None,
+        "error": "No item photo — 3D generation skipped.",
+        "updated_at": None,
+    }
+    if isinstance(xray_result, dict):
+        xray_result["mesh3d"] = mesh3d_meta
+
     case = {
         "case_id":          case_id,
         "timestamp":        analysis_ts.isoformat() + "Z",
@@ -1255,6 +1266,7 @@ async def analyze(
             "streak":          saved_streak,
             "uv":              saved_uv,
             "xray":            xray_result,
+            "mesh3d":          mesh3d_meta,
         },
         "modality_scores": {
             "image":            image_result,
@@ -1310,4 +1322,13 @@ async def analyze(
     if ((persist_case.get("media") or {}).get("xray") or {}).get("stages") is not None:
         persist_case["media"]["xray"]["stages"] = saved_xray_stages
     _save_case(persist_case)
+
+    # Kick off TRELLIS 3D in a daemon thread AFTER the case is saved so the
+    # HTTP response is not blocked. Soft-fails if token/Space unavailable.
+    if image_bytes_list and mesh3d_meta.get("status") == "pending":
+        try:
+            start_mesh3d_job(case_id, image_bytes_list[0])
+        except Exception as e:
+            logger.warning("Could not start mesh3d job for case %s: %s", case_id, e)
+
     return JSONResponse(content=safe_case)
