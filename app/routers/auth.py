@@ -22,10 +22,11 @@ Liveness gate (two places):
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.auth import attach_selfie, authenticate, create_session, require_login
+from app.rate_limit import LOGIN_RATE_LIMIT, limiter
 from app.utils.liveness import detect_blink_from_frames, detect_face, detect_head_turn_from_frames
 
 logger = logging.getLogger(__name__)
@@ -40,7 +41,8 @@ ENFORCE_FACE_ON_SELFIE = os.getenv("ENFORCE_FACE_ON_SELFIE", "1") != "0"
 
 
 @router.post("/auth/login")
-async def login(evaluator_id: str = Form(...), pin: str = Form(...)):
+@limiter.limit(LOGIN_RATE_LIMIT)
+async def login(request: Request, evaluator_id: str = Form(...), pin: str = Form(...)):
     evaluator = authenticate(evaluator_id, pin)
     if not evaluator:
         raise HTTPException(status_code=401, detail="Invalid evaluator ID or PIN")

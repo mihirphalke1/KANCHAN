@@ -12,8 +12,9 @@ import { connectScale, isWebHIDSupported } from '@/lib/usbScale'
 import styles from './AnalysisForm.module.css'
 
 const KARATS = [
-  { value: 22, label: '22K - 91.7% gold' },
   { value: 24, label: '24K - 99.9% gold' },
+  { value: 23, label: '23K - 95.8% gold' },
+  { value: 22, label: '22K - 91.7% gold' },
   { value: 18, label: '18K - 75.0% gold' },
   { value: 14, label: '14K - 58.3% gold' },
   { value: 0,  label: 'Not declared — identify from physics' },
@@ -49,7 +50,11 @@ const BLANK_FORM = {
   loan_app_no:       '',
   huid:              '',
   hollow_item:       false,
-  borrower_present:  false,
+  // Defaults to checked — the common case is the borrower standing right
+  // there at the counter. An officer running a case with no borrower present
+  // (e.g. a re-check) explicitly unchecks it, which is what marks the LTV as
+  // indicative-only rather than final (see EvidencePanel's LTV card).
+  borrower_present:  true,
 }
 
 // Image-first flow: photos + weights get a verdict; text details are an
@@ -72,6 +77,27 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
   const [weightSource, setWeightSource] = useState('manual')
   const [scaleBusy, setScaleBusy]       = useState(null)   // 'dry' | 'submerged' | null
   const [scaleError, setScaleError]     = useState(null)
+
+  // Water-displacement reading (g) — a cup of water sits on the scale,
+  // tared to zero; the item hangs from a hand-held thread into the water
+  // (nothing touching the scale but the cup), and the scale shows the mass
+  // of water displaced directly. `form.weight_submerged` (what the backend
+  // formula actually uses — see app/utils/density.py) is then just
+  // dry_weight - displaced, derived below so no backend change is needed:
+  // this is the same Archimedes physics, just measured without needing the
+  // item itself suspended from the scale.
+  const [waterDisplaced, setWaterDisplaced] = useState('')
+
+  useEffect(() => {
+    const displaced = parseFloat(waterDisplaced)
+    const dry = parseFloat(form.weight_dry)
+    if (waterDisplaced !== '' && !isNaN(displaced) && !isNaN(dry)) {
+      set('weight_submerged', (dry - displaced).toFixed(2))
+    } else if (waterDisplaced === '') {
+      set('weight_submerged', '')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waterDisplaced, form.weight_dry])
 
   const [geo, setGeo] = useState(null)
   useEffect(() => {
@@ -115,14 +141,17 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
     form.water_temp_c !== '' && (isNaN(tempC) || tempC <= 0 || tempC >= 45)
       ? 'Water temperature must be between 0 and 45 °C'
       : null
+  const displacedW = parseFloat(waterDisplaced)
   const weightError =
     form.weight_dry && dryW <= 0
       ? 'Dry weight must be greater than zero'
-      : form.weight_dry && form.weight_submerged && subW <= 0
-        ? 'Submerged weight must be greater than zero'
-        : form.weight_dry && form.weight_submerged && dryW <= subW
-          ? 'Submerged weight must be less than dry weight — check for air bubbles or a touching container'
-          : null
+      : waterDisplaced && displacedW <= 0
+        ? 'Water displaced must be greater than zero'
+        : form.weight_dry && form.weight_submerged && subW <= 0
+          ? 'Water displaced looks too high for this item’s weight — check the reading and re-tare the scale'
+          : form.weight_dry && form.weight_submerged && dryW <= subW
+            ? 'Water displaced looks too high for this item’s weight — check the reading and re-tare the scale'
+            : null
 
   const capturedPhotos = photos.filter(Boolean)
 
@@ -152,8 +181,13 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
       const { grams } = await connectScale()
       if (grams === null) {
         setScaleError('No weight reading received — check the scale is on and stable, or enter manually.')
+      } else if (which === 'dry') {
+        set('weight_dry', grams.toFixed(2))
+        setWeightSource('usb_device')
       } else {
-        set(which === 'dry' ? 'weight_dry' : 'weight_submerged', grams.toFixed(2))
+        // Scale is tared to the water cup at this point — this reading IS
+        // the displaced-water mass directly, not the item's own weight.
+        setWaterDisplaced(grams.toFixed(2))
         setWeightSource('usb_device')
       }
     } catch (e) {
@@ -370,15 +404,15 @@ export default function AnalysisForm({ onSubmit, loading, hasResult }) {
             </div>
           </div>
           <div className={styles.field}>
-            <label htmlFor="weight_submerged" className={styles.label}>
-              Submerged <span className={styles.unit}>g</span>
-              <InfoTip text="Weigh again with the item fully underwater, hanging from a thin thread — no contact with the container, no air bubbles." />
+            <label htmlFor="water_displaced" className={styles.label}>
+              Water Displaced <span className={styles.unit}>g</span>
+              <InfoTip text="Tare the scale with a cup of water on it. Lower the item in on a hand-held thread, not touching the sides or bottom — the reading shown is the water displaced." />
             </label>
             <div className={styles.inlineRow}>
               <input
-                id="weight_submerged" className={styles.input} type="number" step="0.01" min="0.1"
-                placeholder="0.00" value={form.weight_submerged}
-                onChange={e => { set('weight_submerged', e.target.value); setWeightSource('manual') }} required
+                id="water_displaced" className={styles.input} type="number" step="0.01" min="0.01"
+                placeholder="0.20" value={waterDisplaced}
+                onChange={e => { setWaterDisplaced(e.target.value); setWeightSource('manual') }} required
               />
               {isWebHIDSupported() && (
                 <button type="button" className={styles.smallActionBtn} onClick={() => useScale('submerged')} disabled={scaleBusy !== null}>

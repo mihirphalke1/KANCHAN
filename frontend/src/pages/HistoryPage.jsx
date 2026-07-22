@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Search, CheckCircle2, AlertTriangle, XCircle,
   Clock, ChevronRight, BarChart3, X, Filter,
@@ -32,15 +32,22 @@ const VERDICT_OPTIONS = ['All', 'GENUINE', 'BORDERLINE', 'REJECT']
 
 export default function HistoryPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  // Drill-down from the admin dashboard (or any deep link): ?branch=BLR-001,
+  // ?verdict=REJECT, ?case=<case_id> pre-filter/pre-select on load.
+  const initialBranch  = searchParams.get('branch')  || 'All'
+  const initialVerdict = searchParams.get('verdict') || 'All'
+  const initialCaseId  = searchParams.get('case')
+
   const [cases, setCases]       = useState([])
   const [total, setTotal]       = useState(0)
   const [loading, setLoading]   = useState(true)
   const [selected, setSelected] = useState(null)
 
   const [search, setSearch]   = useState('')
-  const [verdict, setVerdict] = useState('All')
+  const [verdict, setVerdict] = useState(initialVerdict)
   const [karat, setKarat]     = useState('All')
-  const [branch, setBranch]   = useState('All')
+  const [branch, setBranch]   = useState(initialBranch)
   const [sortDir, setSortDir] = useState('desc')
 
   useEffect(() => {
@@ -50,10 +57,19 @@ export default function HistoryPage() {
         const all = d.cases || []
         setCases(all)
         setTotal(d.total || 0)
-        if (all.length > 0) setSelected(all[0])
+        const deepLinked = initialCaseId && all.find(c => c.case_id === initialCaseId)
+        const firstMatchingFilter = (initialBranch !== 'All' || initialVerdict !== 'All')
+          && all.find(c =>
+            (initialBranch === 'All' || c.branch_id === initialBranch) &&
+            (initialVerdict === 'All' || c.verdict?.risk_level === initialVerdict)
+          )
+        if (deepLinked) setSelected(deepLinked)
+        else if (firstMatchingFilter) setSelected(firstMatchingFilter)
+        else if (all.length > 0) setSelected(all[0])
       })
       .catch(() => {})
       .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const branches = useMemo(() => {

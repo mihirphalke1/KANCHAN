@@ -4,9 +4,10 @@ Professional 3-page bank-quality gold purity assessment report.
 """
 import io
 import json
+import logging
 import math
 from datetime import datetime, timezone, timedelta
-from xml.sax.saxutils import escape as _esc
+from xml.sax.saxutils import escape as _xml_escape
 from pathlib import Path
 from typing import Optional
 
@@ -18,6 +19,8 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     BaseDocTemplate, Frame, HRFlowable, PageTemplate,
     Paragraph, Spacer, Table, TableStyle, KeepTogether, PageBreak
@@ -28,6 +31,35 @@ from reportlab.graphics import renderPDF
 from reportlab.platypus import Image as RLImage
 
 router = APIRouter()
+
+# ── Unicode-capable fonts ────────────────────────────────────────────────
+# reportlab's built-in Helvetica/Courier are the 14 base PDF fonts and only
+# cover WinAnsi (cp1252) — they have NO glyph for ₹, ✓, ✗, ⚠, Δ, ρ, σ, √, →,
+# ≥, etc., all of which this report uses (currency, status marks, physics
+# formulas in the verification trace). Under Helvetica those silently render
+# as missing/garbled glyphs — the "broken text" in the certificate. DejaVu
+# Sans covers the full set used across the codebase (verified against every
+# non-ASCII character in app/**/*.py) and is vendored in data/fonts/ (public
+# domain / Bitstream-Vera-licensed, redistributable) so PDF generation never
+# depends on matplotlib happening to be installed at a particular version.
+_FONT_DIR = Path("data/fonts")
+FONT_REGULAR = "DejaVuSans"
+FONT_BOLD    = "DejaVuSans-Bold"
+FONT_MONO    = "DejaVuSansMono"
+
+_FONT_CMAP = frozenset()
+try:
+    pdfmetrics.registerFont(TTFont(FONT_REGULAR, str(_FONT_DIR / "DejaVuSans.ttf")))
+    pdfmetrics.registerFont(TTFont(FONT_BOLD,    str(_FONT_DIR / "DejaVuSans-Bold.ttf")))
+    pdfmetrics.registerFont(TTFont(FONT_MONO,    str(_FONT_DIR / "DejaVuSansMono.ttf")))
+    pdfmetrics.registerFontFamily(FONT_REGULAR, normal=FONT_REGULAR, bold=FONT_BOLD)
+    from fontTools.ttLib import TTFont as _FTFont
+    _FONT_CMAP = frozenset(_FTFont(str(_FONT_DIR / "DejaVuSans.ttf")).getBestCmap().keys())
+except Exception as _e:  # pragma: no cover - defensive; falls back to base-14 fonts
+    logging.getLogger(__name__).warning(
+        "Could not register DejaVu Sans (%s) — PDF falls back to Helvetica/Courier, "
+        "which cannot render ₹/✓/✗/⚠/Δ and similar glyphs", _e)
+    FONT_REGULAR, FONT_BOLD, FONT_MONO = "Helvetica", "Helvetica-Bold", "Courier"
 
 # ── Colours ────────────────────────────────────────────────────────────
 BLUE        = colors.HexColor('#019EEC')
@@ -56,6 +88,45 @@ W, H  = A4
 MARGIN = 18 * mm
 
 
+# ── Text safety ──────────────────────────────────────────────────────────
+# Case data isn't all authored by us: customer names/descriptions are free
+# text an officer typed, and verdict.plain_english/action are LLM output —
+# either can contain "&"/"<" (breaks reportlab's Paragraph mini-XML parser,
+# previously unescaped in several places) or a character the chosen font has
+# no glyph for (previously EVERY non-ASCII symbol under Helvetica). _esc()
+# is the single funnel both problems go through before reaching a Paragraph.
+_EMOJI_REPLACEMENTS = {
+    '\U0001F6A8': '⚠',   # 🚨 has no text-font glyph; ⚠ (used elsewhere here) does
+    '️':     '',    # variation selector-16 (emoji presentation) — drop, invisible
+}
+
+
+def _pdf_safe(text: str) -> str:
+    """Replace/strip characters the registered PDF font can't render, so a
+    stray glyph never shows as a blank box or corrupts layout."""
+    if not text:
+        return text
+    for bad, good in _EMOJI_REPLACEMENTS.items():
+        text = text.replace(bad, good)
+    # Supplementary-plane codepoints (U+10000+: emoji, rare scripts) are
+    # stripped unconditionally rather than trusting the cmap lookup below —
+    # fontTools' getBestCmap() can report a codepoint as "present" via a
+    # format-12 subtable entry that doesn't correspond to a sane glyph for
+    # it (observed: an emoji rendering as an unrelated garbled character).
+    # DejaVu Sans has no legitimate glyphs up there for this report anyway.
+    text = ''.join(c for c in text if ord(c) < 0x10000)
+    if _FONT_CMAP:
+        text = ''.join(c for c in text if ord(c) < 128 or ord(c) in _FONT_CMAP)
+    return text
+
+
+def _esc(txt) -> str:
+    """XML-escape (for reportlab's Paragraph markup) + font-safe sanitize.
+    Use for EVERY piece of case-derived text placed in a Paragraph — the
+    single place both classes of "broken text" bug are fixed at once."""
+    return _xml_escape(_pdf_safe(str(txt)))
+
+
 # ── Drawing flowable (module-level so helpers can use it) ──────────────
 class _Drawing(Flowable):
     def __init__(self, d: Drawing):
@@ -74,18 +145,18 @@ def _styles():
     def s(name, **kw):
         return ParagraphStyle(name, parent=base['Normal'], **kw)
     return {
-        'h2':         s('h2',  fontName='Helvetica-Bold', fontSize=14, textColor=GREY_900,  leading=20),
-        'h3':         s('h3',  fontName='Helvetica-Bold', fontSize=11, textColor=GREY_700,  leading=16),
-        'body':       s('bd',  fontName='Helvetica',      fontSize=9,  textColor=GREY_700,  leading=14),
-        'small':      s('sm',  fontName='Helvetica',      fontSize=8,  textColor=GREY_500,  leading=12),
-        'mono':       s('mo',  fontName='Courier',        fontSize=8,  textColor=GREY_700,  leading=12),
-        'label':      s('lb',  fontName='Helvetica-Bold', fontSize=7,  textColor=GREY_500,  leading=11, spaceAfter=1),
-        'value':      s('vl',  fontName='Helvetica',      fontSize=9,  textColor=GREY_900,  leading=13),
-        'value_bold': s('vb',  fontName='Helvetica-Bold', fontSize=9,  textColor=GREY_900,  leading=13),
-        'verdict_g':  s('vg',  fontName='Helvetica-Bold', fontSize=20, textColor=GREEN,     leading=26, alignment=TA_CENTER),
-        'verdict_b':  s('va',  fontName='Helvetica-Bold', fontSize=20, textColor=AMBER,     leading=26, alignment=TA_CENTER),
-        'verdict_r':  s('vr',  fontName='Helvetica-Bold', fontSize=20, textColor=RED,       leading=26, alignment=TA_CENTER),
-        'center_sm':  s('cs',  fontName='Helvetica',      fontSize=8,  textColor=GREY_500,  leading=12, alignment=TA_CENTER),
+        'h2':         s('h2',  fontName=FONT_BOLD, fontSize=14, textColor=GREY_900,  leading=20),
+        'h3':         s('h3',  fontName=FONT_BOLD, fontSize=11, textColor=GREY_700,  leading=16),
+        'body':       s('bd',  fontName=FONT_REGULAR,      fontSize=9,  textColor=GREY_700,  leading=14),
+        'small':      s('sm',  fontName=FONT_REGULAR,      fontSize=8,  textColor=GREY_500,  leading=12),
+        'mono':       s('mo',  fontName=FONT_MONO,        fontSize=8,  textColor=GREY_700,  leading=12),
+        'label':      s('lb',  fontName=FONT_BOLD, fontSize=7,  textColor=GREY_500,  leading=11, spaceAfter=1),
+        'value':      s('vl',  fontName=FONT_REGULAR,      fontSize=9,  textColor=GREY_900,  leading=13),
+        'value_bold': s('vb',  fontName=FONT_BOLD, fontSize=9,  textColor=GREY_900,  leading=13),
+        'verdict_g':  s('vg',  fontName=FONT_BOLD, fontSize=20, textColor=GREEN,     leading=26, alignment=TA_CENTER),
+        'verdict_b':  s('va',  fontName=FONT_BOLD, fontSize=20, textColor=AMBER,     leading=26, alignment=TA_CENTER),
+        'verdict_r':  s('vr',  fontName=FONT_BOLD, fontSize=20, textColor=RED,       leading=26, alignment=TA_CENTER),
+        'center_sm':  s('cs',  fontName=FONT_REGULAR,      fontSize=8,  textColor=GREY_500,  leading=12, alignment=TA_CENTER),
     }
 
 
@@ -98,7 +169,7 @@ def _risk_gauge(risk: float, width: int, height: int = 12) -> Drawing:
     fc = GREEN if risk < 0.35 else (GOLD if risk < 0.65 else RED)
     d.add(Rect(0, label_h, fill_w, height, fillColor=fc, strokeColor=None))
     for xp, lbl, anc in [(0, '0', 'start'), (width/2, '50%', 'middle'), (width, '100%', 'end')]:
-        d.add(String(xp, 1, lbl, fontName='Helvetica', fontSize=6,
+        d.add(String(xp, 1, lbl, fontName=FONT_REGULAR, fontSize=6,
                      fillColor=GREY_500, textAnchor=anc))
     return d
 
@@ -124,7 +195,7 @@ def _benford_chart(observed, expected, width: int, height: int = 90) -> Drawing:
         exp_h = max(exp * chart_h * 2.8, 1)
         d.add(Rect(x,          label_h, bar,       obs_h, fillColor=BLUE,    strokeColor=None))
         d.add(Rect(x+bar+2,    label_h, bar * 0.6, exp_h, fillColor=GREY_300, strokeColor=None))
-        d.add(String(x+bar/2,  2, str(i+1), fontName='Helvetica', fontSize=7,
+        d.add(String(x+bar/2,  2, str(i+1), fontName=FONT_REGULAR, fontSize=7,
                      fillColor=GREY_700, textAnchor='middle'))
         x += gap + bar
     return d
@@ -157,7 +228,7 @@ def _waveform(audio_path: str, width: int, height: int = 70) -> Optional[Drawing
             d.add(Rect(xp, mid,      bw*0.72, bh,  fillColor=fc, strokeColor=None))
             d.add(Rect(xp, mid - bh, bw*0.72, bh,  fillColor=fc, strokeColor=None))
         for xp, lbl, anc in [(2, '0s', 'start'), (width/2, '2s', 'middle'), (width-2, '4s', 'end')]:
-            d.add(String(xp, 2, lbl, fontName='Helvetica', fontSize=6,
+            d.add(String(xp, 2, lbl, fontName=FONT_REGULAR, fontSize=6,
                          fillColor=GREY_500, textAnchor=anc))
         return d
     except Exception:
@@ -173,7 +244,7 @@ def _no_waveform(width: int, height: int = 70) -> Drawing:
         d.add(Line(x, mid, min(x+dash, width-4), mid, strokeColor=GREY_300, strokeWidth=1))
         x += dash * 2
     d.add(String(width/2, mid+5, 'No audio recording provided — acoustic test not available',
-                 fontName='Helvetica', fontSize=7, fillColor=GREY_500, textAnchor='middle'))
+                 fontName=FONT_REGULAR, fontSize=7, fillColor=GREY_500, textAnchor='middle'))
     return d
 
 
@@ -203,26 +274,26 @@ class _DocCanvas:
                 text_x = MARGIN + logo_w + 5*mm
             except Exception:
                 text_x = MARGIN
-                canvas.setFont('Helvetica-Bold', 15)
+                canvas.setFont(FONT_BOLD, 15)
                 canvas.setFillColor(WHITE)
                 canvas.drawString(MARGIN, H - 16*mm, 'CANARA BANK')
-                canvas.setFont('Helvetica', 8)
+                canvas.setFont(FONT_REGULAR, 8)
                 canvas.setFillColor(colors.HexColor('#BEE8FB'))
                 canvas.drawString(MARGIN, H - 22*mm, 'Gold Loan Division  ·  AI-Assisted Purity Assessment')
         else:
             text_x = MARGIN
-            canvas.setFont('Helvetica-Bold', 15)
+            canvas.setFont(FONT_BOLD, 15)
             canvas.setFillColor(WHITE)
             canvas.drawString(MARGIN, H - 16*mm, 'CANARA BANK')
-            canvas.setFont('Helvetica', 8)
+            canvas.setFont(FONT_REGULAR, 8)
             canvas.setFillColor(colors.HexColor('#BEE8FB'))
             canvas.drawString(MARGIN, H - 22*mm, 'Gold Loan Division  ·  AI-Assisted Purity Assessment')
 
         # Right: system name
-        canvas.setFont('Helvetica-Bold', 10)
+        canvas.setFont(FONT_BOLD, 10)
         canvas.setFillColor(GOLD)
         canvas.drawRightString(W - MARGIN, H - 16*mm, 'KANCHAN-AI')
-        canvas.setFont('Helvetica', 8)
+        canvas.setFont(FONT_REGULAR, 8)
         canvas.setFillColor(colors.HexColor('#BEE8FB'))
         canvas.drawRightString(W - MARGIN, H - 22*mm, 'Gold Fraud Detection System')
 
@@ -238,7 +309,7 @@ class _DocCanvas:
         canvas.setStrokeColor(GREY_200)
         canvas.setLineWidth(0.5)
         canvas.line(MARGIN, y + 8, W - MARGIN, y + 8)
-        canvas.setFont('Helvetica', 7)
+        canvas.setFont(FONT_REGULAR, 7)
         canvas.setFillColor(GREY_500)
         canvas.drawString(MARGIN, y,
             f'CONFIDENTIAL  ·  Case #{self.case_id}  ·  {self.timestamp}')
@@ -249,7 +320,7 @@ class _DocCanvas:
         if doc.page == 1:
             canvas.saveState()
             canvas.setFillColor(colors.HexColor('#F0F7FF'))
-            canvas.setFont('Helvetica-Bold', 52)
+            canvas.setFont(FONT_BOLD, 52)
             canvas.translate(W/2, H/2)
             canvas.rotate(35)
             canvas.drawCentredString(0, 0, 'CONFIDENTIAL')
@@ -259,8 +330,8 @@ class _DocCanvas:
 
 # ── Cell paragraph helper ────────────────────────────────────────────────
 def _cell(txt, bold=False, color=GREY_700, size=8):
-    return Paragraph(str(txt), ParagraphStyle(
-        'tc', fontName='Helvetica-Bold' if bold else 'Helvetica',
+    return Paragraph(_esc(txt), ParagraphStyle(
+        'tc', fontName=FONT_BOLD if bold else FONT_REGULAR,
         fontSize=size, textColor=color, leading=size + 4))
 
 
@@ -402,7 +473,7 @@ def build_report(case: dict) -> bytes:
          _cell('REPORT DATE',  bold=True, color=GREY_500),
          _cell('BRANCH',       bold=True, color=GREY_500),
          _cell('STATUS',       bold=True, color=GREY_500)],
-        [Paragraph(f'#{case_id}', ParagraphStyle('mid', fontName='Courier', fontSize=8,
+        [Paragraph(f'#{case_id}', ParagraphStyle('mid', fontName=FONT_MONO, fontSize=8,
                                                   textColor=GREY_700, leading=12)),
          _cell(ts_display),
          _cell(case.get('branch_id', '—')),
@@ -448,7 +519,7 @@ def build_report(case: dict) -> bytes:
     # Verdict box
     v_ps  = S[v_skey]
     conf_ps = ParagraphStyle('cp', parent=v_ps, fontSize=10, leading=14)
-    loan_ps = ParagraphStyle('lp', fontName='Helvetica-Bold', fontSize=11,
+    loan_ps = ParagraphStyle('lp', fontName=FONT_BOLD, fontSize=11,
                               textColor=l_ink, leading=16, alignment=TA_CENTER)
     vt = Table([
         [[Paragraph(v_txt, v_ps), Paragraph(f'{confidence} CONFIDENCE · {l_txt}', loan_ps)]],
@@ -468,7 +539,7 @@ def build_report(case: dict) -> bytes:
     if plain:
         et = _section_tbl([
             [_cell('ASSESSMENT', bold=True, color=GREY_500)],
-            [Paragraph(plain, S['body'])],
+            [Paragraph(_esc(plain), S['body'])],
         ])
         story.append(et)
         story.append(Spacer(1, 3*mm))
@@ -494,7 +565,7 @@ def build_report(case: dict) -> bytes:
             ap_bg, ap_ink = AMBER_LIGHT, GREY_900
         apt = _section_tbl([
             [_cell('MAKER-CHECKER SIGN-OFF', bold=True, color=GREY_500)],
-            [Paragraph(ap_txt, ParagraphStyle('mc', fontName='Helvetica-Bold',
+            [Paragraph(_esc(ap_txt), ParagraphStyle('mc', fontName=FONT_BOLD,
                                               fontSize=8.5, textColor=ap_ink, leading=13))],
         ])
         apt.setStyle(TableStyle(_TS_BASE + [
@@ -511,7 +582,7 @@ def build_report(case: dict) -> bytes:
     if action:
         at = _section_tbl([
             [_cell('RECOMMENDED ACTION', bold=True, color=GREY_500)],
-            [Paragraph(action, ParagraphStyle('ac', fontName='Helvetica-Bold',
+            [Paragraph(_esc(action), ParagraphStyle('ac', fontName=FONT_BOLD,
                                                fontSize=9, textColor=GREY_900, leading=14))],
         ])
         at.setStyle(TableStyle(_TS_BASE + [
@@ -582,7 +653,7 @@ def build_report(case: dict) -> bytes:
         ('BACKGROUND',   (0,0), (-1,0),  GREY_100),
         ('BOX',          (0,0), (-1,-1), 0.5, GREY_200),
         ('GRID',         (0,0), (-1,-1), 0.3, GREY_200),
-        ('FONTNAME',     (0,0), (-1,0),  'Helvetica-Bold'),
+        ('FONTNAME',     (0,0), (-1,0),  FONT_BOLD),
         ('FONTSIZE',     (0,0), (-1,0),  7),
         ('TEXTCOLOR',    (0,0), (-1,0),  GREY_500),
     ]))
@@ -630,7 +701,7 @@ def build_report(case: dict) -> bytes:
             ('BACKGROUND',   (0,0), (-1,0),  GREY_100),
             ('BOX',          (0,0), (-1,-1), 0.5, GREY_200),
             ('GRID',         (0,0), (-1,-1), 0.3, GREY_200),
-            ('FONTNAME',     (0,0), (-1,0),  'Helvetica-Bold'),
+            ('FONTNAME',     (0,0), (-1,0),  FONT_BOLD),
             ('FONTSIZE',     (0,0), (-1,0),  7),
             ('TEXTCOLOR',    (0,0), (-1,0),  GREY_500),
         ]))
@@ -657,7 +728,8 @@ def build_report(case: dict) -> bytes:
     mode_labels = {
         'computed':          'Archimedes physics',
         'efficientnet':      'EfficientNet-B3',
-        'svm':               'MFCC-ΔΔ SVM',
+        'svm':               'MFCC-ΔΔ SVM (122-dim)',
+        'svm_data_limited':  'MFCC-ΔΔ SVM — data-limited, ring physics carries verdict',
         'heuristic':         'HSV Heuristic',
         'heuristic:heuristic': 'ZCR+RMS heuristic',
         'heuristic:silent_audio': 'Silent audio (50% default)',
@@ -696,7 +768,7 @@ def build_report(case: dict) -> bytes:
         ('BACKGROUND',   (0,0), (-1,0),  GREY_100),
         ('BOX',          (0,0), (-1,-1), 0.5, GREY_200),
         ('GRID',         (0,0), (-1,-1), 0.3, GREY_200),
-        ('FONTNAME',     (0,0), (-1,0),  'Helvetica-Bold'),
+        ('FONTNAME',     (0,0), (-1,0),  FONT_BOLD),
         ('FONTSIZE',     (0,0), (-1,0),  7),
         ('TEXTCOLOR',    (0,0), (-1,0),  GREY_500),
         ('VALIGN',       (0,0), (-1,-1), 'MIDDLE'),
@@ -750,8 +822,8 @@ def build_report(case: dict) -> bytes:
         ('BACKGROUND',   (0,3), (-1,3),  BLUE_LIGHT),   # boosted risk row highlighted
         ('BOX',          (0,0), (-1,-1), 0.5, GREY_200),
         ('GRID',         (0,0), (-1,-1), 0.3, GREY_200),
-        ('FONTNAME',     (0,0), (-1,0),  'Helvetica-Bold'),
-        ('FONTNAME',     (0,3), (-1,3),  'Helvetica-Bold'),  # boosted row bold
+        ('FONTNAME',     (0,0), (-1,0),  FONT_BOLD),
+        ('FONTNAME',     (0,3), (-1,3),  FONT_BOLD),  # boosted row bold
         ('FONTSIZE',     (0,0), (-1,0),  7),
         ('TEXTCOLOR',    (0,0), (-1,0),  GREY_500),
     ]))
@@ -791,16 +863,32 @@ def build_report(case: dict) -> bytes:
             defects.append(f"{brk['n_stones']} set stone(s) deducted")
         defects_txt = '; '.join(defects) if defects else 'None noted'
 
+        valuation_karat = ltv.get('valuation_karat')
+        rate_declared_txt = f"₹ {ltv.get('rate_per_gram_inr', 0):,.0f} / g" + (
+            f" at {valuation_karat}K" if valuation_karat else "")
+
         val_rows = [
-            [_cell('METRIC'), _cell('VALUE'), _cell('BASIS')],
+            ['METRIC', 'VALUE', 'BASIS'],
             ['Gross weight (measured)', f"{brk.get('gross_weight_g', density.get('weight_dry', '—'))} g",
              'Dry weight on the branch scale'],
             ['Less: set-stone weight', f"− {brk.get('stone_weight_g', 0)} g",
              brk.get('method', '—').replace('_', ' ')],
             ['Net gold weight', f"{ltv.get('net_gold_weight_g', '—')} g",
              'Gold charged for — stones are not lent against at the gold rate'],
-            ['Gold rate applied', f"₹ {ltv.get('rate_per_gram_inr', 0):,.0f} / g",
-             f'{rate_src} · as of {rate_date}'],
+            ['Gold rate applied', rate_declared_txt,
+             f'{rate_src} · as of {rate_date} · 999-fine rate × BIS fineness for the karat'],
+        ]
+        # Physics-matched karat rate shown for comparison ONLY when it differs
+        # from the declared karat — never substituted into the valuation itself
+        # (a mismatch is a misdeclared-purity flag elsewhere, handled by
+        # revaluation, not a silent rate swap here).
+        matched_karat = ltv.get('matched_karat')
+        if matched_karat and matched_karat != valuation_karat:
+            val_rows.append([
+                'Rate at physics-matched karat', f"₹ {ltv['rate_per_gram_calculated_karat']:,.0f} / g at {matched_karat}K",
+                'For comparison only — not used in this valuation',
+            ])
+        val_rows += [
             ['Assessed value', f"₹ {ltv.get('assessed_value_inr', 0):,.0f}",
              'Net gold weight × rate'],
             ['Maximum LTV', f"{ltv.get('ltv_pct', 0)*100:.0f}%",
@@ -812,27 +900,52 @@ def build_report(case: dict) -> bytes:
         vt_body = [[_cell(c) for c in val_rows[0]]]
         for r in val_rows[1:]:
             vt_body.append([_cell(r[0], color=GREY_500), _cell(r[1], bold=True, color=GREY_900), _cell(r[2])])
+        _loan_row = len(val_rows) - 2   # "Maximum eligible loan" is always 2nd-to-last
         vt = Table(vt_body, colWidths=[bw*0.30, bw*0.24, bw*0.46])
         vt.setStyle(TableStyle(_TS_BASE + [
             ('BACKGROUND', (0,0), (-1,0), GREY_100),
-            ('BACKGROUND', (0,7), (-1,7), BLUE_LIGHT),   # max eligible loan row
+            ('BACKGROUND', (0,_loan_row), (-1,_loan_row), BLUE_LIGHT),
             ('BOX',        (0,0), (-1,-1), 0.5, GREY_200),
             ('GRID',       (0,0), (-1,-1), 0.3, GREY_200),
-            ('FONTNAME',   (0,0), (-1,0), 'Helvetica-Bold'),
-            ('FONTNAME',   (0,7), (-1,7), 'Helvetica-Bold'),
+            ('FONTNAME',   (0,0), (-1,0), FONT_BOLD),
+            ('FONTNAME',   (0,_loan_row), (-1,_loan_row), FONT_BOLD),
             ('FONTSIZE',   (0,0), (-1,0), 7),
             ('TEXTCOLOR',  (0,0), (-1,0), GREY_500),
         ]))
-        borrower_note = ('Borrower attested present at valuation.'
-                         if case.get('borrower_present')
-                         else 'NOTE: borrower-present attestation not recorded — confirm before disbursal.')
-        story.append(KeepTogether([
-            Paragraph('5. Valuation & Loan Eligibility', S['h3']),
-            Spacer(1, 2*mm),
-            vt,
-            Spacer(1, 2*mm),
-            Paragraph(borrower_note, S['body']),
-        ]))
+        is_final = case.get('borrower_present') or ltv.get('status') == 'final'
+        borrower_note = (
+            'Borrower attested present at valuation — this valuation is FINAL.'
+            if is_final else
+            'INDICATIVE VALUATION ONLY — borrower-present attestation was not recorded. '
+            'This assessed value, LTV, and maximum loan figure are PROVISIONAL and must be '
+            're-confirmed as FINAL, with the borrower attested present, before disbursal.'
+        )
+        note_ps = ParagraphStyle('bn', fontName=FONT_BOLD if not is_final else FONT_REGULAR,
+                                  fontSize=8.5, textColor=GREY_900 if not is_final else GREY_700, leading=13)
+        if is_final:
+            story.append(KeepTogether([
+                Paragraph('5. Valuation & Loan Eligibility', S['h3']),
+                Spacer(1, 2*mm),
+                vt,
+                Spacer(1, 2*mm),
+                Paragraph(borrower_note, note_ps),
+            ]))
+        else:
+            note_tbl = Table([[Paragraph(borrower_note, note_ps)]], colWidths=[bw])
+            note_tbl.setStyle(TableStyle([
+                ('BACKGROUND',    (0,0),(-1,-1), AMBER_LIGHT),
+                ('BOX',           (0,0),(-1,-1), 0.5, AMBER),
+                ('TOPPADDING',    (0,0),(-1,-1), 7),
+                ('BOTTOMPADDING', (0,0),(-1,-1), 7),
+                ('LEFTPADDING',   (0,0),(-1,-1), 10),
+            ]))
+            story.append(KeepTogether([
+                Paragraph('5. Valuation & Loan Eligibility', S['h3']),
+                Spacer(1, 2*mm),
+                vt,
+                Spacer(1, 2*mm),
+                note_tbl,
+            ]))
         story.append(Spacer(1, 4*mm))
 
     # ── 4. Contradiction flags ───────────────────────────────────────
@@ -883,23 +996,41 @@ def build_report(case: dict) -> bytes:
         story.append(Spacer(1, 5*mm))
 
     # ── 6. Item photographs + material scan ───────────────────────────
+    # Every evidence photo captured for the case — not just the first few —
+    # each shown as a small thumbnail (fixed column count, independent of how
+    # many photos exist) so the certificate never renders a single photo at
+    # near-full-page size.
     img_paths   = [p for p in (media.get('images') or []) if p and Path(p).exists()]
     streak_path = (media.get('streak') or '')
     streak_path = streak_path if streak_path and Path(streak_path).exists() else None
+    uv_path     = (media.get('uv') or '')
+    uv_path     = uv_path if uv_path and Path(uv_path).exists() else None
     audio_path  = (media.get('audio') or '')
     audio_path  = audio_path  if audio_path  and Path(audio_path).exists()  else None
 
-    xray_stages    = (media.get('xray') or {}).get('stages') or {}
-    material_path  = xray_stages.get('material')
-    material_path  = material_path if material_path and Path(material_path).exists() else None
-    gems_path      = xray_stages.get('gems')
-    gems_path      = gems_path if gems_path and Path(gems_path).exists() else None
+    xray_stages     = (media.get('xray') or {}).get('stages') or {}
+    material_path   = xray_stages.get('material')
+    material_path   = material_path if material_path and Path(material_path).exists() else None
+    gems_path       = xray_stages.get('gems')
+    gems_path       = gems_path if gems_path and Path(gems_path).exists() else None
+    gold_gem_path   = xray_stages.get('gold_gem')
+    gold_gem_path   = gold_gem_path if gold_gem_path and Path(gold_gem_path).exists() else None
+    stones_grid_path = xray_stages.get('stones_grid')
+    stones_grid_path = stones_grid_path if stones_grid_path and Path(stones_grid_path).exists() else None
 
+    # (path, label) pairs, not a path-keyed dict — a dict would silently
+    # collapse two entries that happen to share the same file path (e.g. a
+    # xray stage reused across roles) down to whichever label was set last.
     all_photos = (
-        img_paths[:4]
-        + ([streak_path] if streak_path else [])
-        + ([material_path] if material_path else [])
-        + ([gems_path] if gems_path else [])
+        [(p, f'Photo {idx + 1}') for idx, p in enumerate(img_paths)]
+        + [(p, lbl) for p, lbl in (
+            (streak_path, 'Touchstone streak'),
+            (uv_path, 'UV-pass'),
+            (material_path, 'Material map'),
+            (gems_path, 'Stones found'),
+            (gold_gem_path, 'Gold / gem split'),
+            (stones_grid_path, 'Stone grid overlay'),
+        ) if p]
     )
 
     if all_photos:
@@ -907,25 +1038,23 @@ def build_report(case: dict) -> bytes:
         story.append(Spacer(1, 2*mm))
         # (photos grid is large enough that KeepTogether would force a page break — leave as-is)
 
-        n_cols  = min(len(all_photos), 3)
-        img_w   = (bw - (n_cols - 1) * 6) / n_cols
+        # Fixed column count -> consistently small thumbnails whether there's
+        # 1 photo or 12; extra photos simply wrap onto further rows.
+        n_cols  = min(len(all_photos), 4)
+        img_w   = (bw - (n_cols - 1) * 5) / n_cols
         img_h   = img_w * 0.72
 
         cells, row_buf = [], []
-        for i, path in enumerate(all_photos):
-            lbl = ('Touchstone streak' if path == streak_path else
-                   'Material map' if path == material_path else
-                   'Stones found' if path == gems_path else
-                   f'Photo {i+1}')
+        for path, lbl in all_photos:
             try:
                 img_f = RLImage(path, width=img_w, height=img_h, kind='bound')
-                cell  = Table([[img_f], [_cell(lbl, color=GREY_500, size=7)]],
+                cell  = Table([[img_f], [_cell(lbl, color=GREY_500, size=6.5)]],
                               colWidths=[img_w])
                 cell.setStyle(TableStyle([
                     ('ALIGN',        (0,0),(-1,-1), 'CENTER'),
                     ('BOX',          (0,0),(-1,-1), 0.5, GREY_200),
-                    ('TOPPADDING',   (0,0),(-1,-1), 4),
-                    ('BOTTOMPADDING',(0,0),(-1,-1), 4),
+                    ('TOPPADDING',   (0,0),(-1,-1), 3),
+                    ('BOTTOMPADDING',(0,0),(-1,-1), 3),
                     ('BACKGROUND',   (0,1),(-1, 1), GREY_50),
                 ]))
                 row_buf.append(cell)
@@ -952,10 +1081,13 @@ def build_report(case: dict) -> bytes:
         story.append(Spacer(1, 2*mm))
         story.append(Paragraph(
             f'{len(img_paths)} item photograph(s)' +
-            (' + 1 touchstone streak image' if streak_path else '') +
+            (' + touchstone streak' if streak_path else '') +
+            (' + UV-pass image' if uv_path else '') +
             (' + material scan' if material_path else '') +
             (' + stone-detection overlay' if gems_path else '') +
-            ' captured at time of assessment.',
+            (' + gold/gem split map' if gold_gem_path else '') +
+            (' + stone grid overlay' if stones_grid_path else '') +
+            ' — all evidence captured at time of assessment.',
             S['small']))
         story.append(Spacer(1, 5*mm))
 
@@ -968,7 +1100,7 @@ def build_report(case: dict) -> bytes:
             ac_row = Table([[
                 _cell('Acoustic Risk Score', color=GREY_500),
                 _cell(f'{a_r:.1%}', bold=True, color=ac),
-                _cell('MFCC-ΔΔ feature extraction (82-dim) + RBF-SVM classifier', color=GREY_500),
+                _cell(mode_labels.get(acoustic.get('mode', ''), acoustic.get('mode', '—')), color=GREY_500),
             ]], colWidths=[bw*0.28, bw*0.14, bw*0.58])
             ac_row.setStyle(TableStyle(_TS_BASE + [
                 ('BOX',       (0,0),(-1,-1), 0.5, GREY_200),
@@ -1098,7 +1230,7 @@ def build_report(case: dict) -> bytes:
         ('BACKGROUND',   (0,0), (-1,0),  GREY_100),
         ('BOX',          (0,0), (-1,-1), 0.5, GREY_200),
         ('GRID',         (0,0), (-1,-1), 0.3, GREY_200),
-        ('FONTNAME',     (0,0), (-1,0),  'Helvetica-Bold'),
+        ('FONTNAME',     (0,0), (-1,0),  FONT_BOLD),
         ('FONTSIZE',     (0,0), (-1,0),  7),
         ('TEXTCOLOR',    (0,0), (-1,0),  GREY_500),
     ]))

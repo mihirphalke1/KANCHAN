@@ -12,10 +12,11 @@ from typing import Optional
 
 import cv2
 import numpy as np
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.auth import require_session
+from app.rate_limit import ANALYZE_RATE_LIMIT, limiter
 from app.models.acoustic_model import analyze_acoustic
 from app.models.acoustic_physics import extract_ring_frequency, ring_frequency_check
 from app.models.contradiction import contradiction_summary
@@ -188,18 +189,36 @@ def _build_trace(
     physics_says = f" Physics best match: {best.get('name', '—')}"
     if density_result.get("misdeclared_purity"):
         physics_says += " — likely purity mis-declaration, not fake metal"
+
+    # Status reflects the discrete verdict bucket (does the point estimate sit
+    # in the expected band?), NOT the raw Gaussian-CDF risk_score directly.
+    # risk_score is P(true density outside the band | measurement uncertainty)
+    # — it can exceed 0.5 purely from a large sigma (a light item on the same
+    # balance has proportionally more measurement noise) even when the
+    # measured density sits squarely inside the band, which used to show this
+    # step as "flag" (amber) despite karat_verdict == IN_RANGE. That
+    # uncertainty is still real and worth surfacing, so it's now a caution
+    # note in the summary rather than a false "this looks wrong" flag.
+    _density_ok = density_result["karat_verdict"] in ("IN_RANGE", "IDENTIFIED_FROM_PHYSICS")
+    _low_confidence = _density_ok and not density_result.get("measurement_adequate", True)
+    confidence_note = (
+        " Note: measurement precision is limited for an item this light — the "
+        "reading passes, but a heavier sample or repeat weighing would be more conclusive."
+        if _low_confidence else ""
+    )
     steps.append({
         "step": "Does the density match the declared karat?",
-        "status": "flag" if density_result["risk_score"] > 0.5 else "done",
+        "status": "done" if _density_ok else "flag",
         "summary": f"{verdict_text}; chance it matches: "
                    f"{round(density_result['conformity_probability'] * 100, 1)}%."
-                   + physics_says,
+                   + physics_says + confidence_note,
         "formula": "risk = P(true ρ outside karat band | measurement), Gaussian CDF",
         "details": {
             "declared band (g/cm³)": f"{density_result['expected_low']} – {density_result['expected_high']}",
             "raw density risk":      density_result["risk_score"],
             "closest fake metal":    density_result["closest_fake"] or "—",
             "tungsten blind spot":   density_result["tungsten_warning"],
+            "measurement adequate":  density_result.get("measurement_adequate", True),
         },
         "source": "Band derived from IS 1417:2016 fineness + CRC densities (mixture rule); scoring per JCGM 106",
     })
@@ -437,7 +456,9 @@ def _build_trace(
 
 
 @router.post("/analyze")
+@limiter.limit(ANALYZE_RATE_LIMIT)
 async def analyze(
+    request: Request,
     response: Response,
     item_description: str = Form(""),
     declared_karat: int = Form(...),
@@ -494,13 +515,14 @@ async def analyze(
     officer_name = session["name"]
     evaluator_id = session["evaluator_id"]
 
-    if declared_karat not in (0, 14, 18, 22, 24):
+    if declared_karat not in (0, 14, 18, 22, 23, 24):
         raise HTTPException(status_code=422,
-                            detail="declared_karat must be 14, 18, 22, 24, or 0 (not declared)")
+                            detail="declared_karat must be 14, 18, 22, 23, 24, or 0 (not declared)")
     if weight_dry <= 0 or weight_submerged <= 0:
         raise HTTPException(status_code=422, detail="Weights must be positive")
     if weight_submerged >= weight_dry:
-        raise HTTPException(status_code=422, detail="Submerged weight must be less than dry weight")
+        raise HTTPException(status_code=422,
+                            detail="Water displaced must be greater than zero — check the reading and that the scale was tared")
     if not 0.0 < water_temp_c < 45.0:
         raise HTTPException(status_code=422, detail="water_temp_c must be between 0 and 45 °C")
 
@@ -819,7 +841,9 @@ async def analyze(
     # the density mixture model, then gross weight. See ltv.compute_net_gold_weight.
     net_gold = compute_net_gold_weight(weight_dry, gem_weight_result, composition_result, gem_grid_result)
     net_gold_weight_g = net_gold["net_gold_weight_g"]
-    ltv_result = assess_value(net_gold_weight_g)
+    _density_best_match = density_result.get("best_match") or {}
+    _matched_karat = _density_best_match.get("karat") if _density_best_match.get("kind") == "karat" else None
+    ltv_result = assess_value(net_gold_weight_g, declared_karat=declared_karat or None, matched_karat=_matched_karat)
     ltv_result["net_gold_breakdown"] = net_gold
 
     # Per-borrower aggregate pledging cap (RBI Para 16, P4-15): a breach blocks
@@ -1030,16 +1054,21 @@ async def analyze(
         if net_gold["method"] == "stone_weight_deduction"
         else f"Net gold {net_gold['net_gold_weight_g']} g ({net_gold['method']}). "
     )
+    _rate_note = f"₹{ltv_result['rate_per_gram_inr']:,.0f}/g at {ltv_result['valuation_karat']}K"
+    if ltv_result.get("rate_per_gram_calculated_karat") and ltv_result["valuation_karat"] != _matched_karat:
+        _rate_note += (f" (physics matched {_matched_karat}K ≈ "
+                       f"₹{ltv_result['rate_per_gram_calculated_karat']:,.0f}/g, for comparison only)")
     verification_trace.append({
         "step": "Net gold weight, assessed value & RBI-tiered LTV",
         "status": "done",
         "summary": (
             _dedn
-            + f"₹{ltv_result['rate_per_gram_inr']:,.0f}/g → value ₹{ltv_result['assessed_value_inr']:,.0f}; "
+            + f"{_rate_note} → value ₹{ltv_result['assessed_value_inr']:,.0f}; "
             f"LTV {ltv_result['ltv_pct']*100:.0f}% ({ltv_result['tier']}) "
             f"→ max loan ₹{ltv_result['max_loan_inr']:,.0f}"
         ),
         "formula": ("net_gold = total_weight − Σ(stone size→carat→grams);  "
+                    "rate_per_gram = rate_24k_999 × BIS fineness(karat);  "
                     "assessed_value = net_gold × rate_per_gram;  max_loan = assessed_value × tiered LTV%"),
         "details": {"tier": ltv_result["tier"], "ltv_pct": ltv_result["ltv_pct"],
                     "method": net_gold["method"], **net_gold},

@@ -85,6 +85,26 @@ def refresh_gold_rate(timeout_s: float = 8.0) -> dict:
         current["refresh"] = f"live feed unreachable ({e}) — using static fallback"
         return current
 
+# Karat pricing ratio — plain karat/24, the standard jeweller rate-card
+# convention (a published "24K rate" already IS the market price for 24K/99.9
+# gold; other karats are simply that price × karat/24). This is deliberately
+# NOT the same table as density.py's BIS/IS-1417 fineness bands (916/750/585
+# etc.) — those describe the REGULATED minimum purity for hallmarking and
+# matter for physics; rate cards use the simpler proportional convention.
+# Verified against a real rate card (24K ₹14,651 -> 23K ₹14,040, 22K ₹13,430,
+# 18K ₹10,988, 14K ₹8,546/g): karat/24 matches every figure to within ₹1.
+KARAT_FINENESS = {24: 1.0, 23: 23/24, 22: 22/24, 18: 18/24, 14: 14/24}
+
+
+def karat_rate_per_gram(karat: int | None, rate_24k_per_gram: float) -> float | None:
+    """₹/gram at a given karat, derived from the fetched 24K rate by the
+    karat/24 pricing ratio — the standard way jeweller/bank rate cards derive
+    23K/22K/18K/14K rates from a single published 24K rate (bullion feeds like
+    IBJA publish one 24K/999 rate; they don't publish a separate feed per karat)."""
+    fineness = KARAT_FINENESS.get(karat)
+    return round(rate_24k_per_gram * fineness, 2) if fineness else None
+
+
 TIERS = [
     {"max_amount": 250_000, "ltv_pct": 0.85, "label": "up to ₹2,50,000"},
     {"max_amount": 500_000, "ltv_pct": 0.80, "label": "₹2,50,001 – ₹5,00,000"},
@@ -251,13 +271,41 @@ def compute_net_gold_weight(gross_weight_g: float, gem_weight_result: dict = Non
     }
 
 
-def assess_value(net_gold_weight_g: float) -> dict:
+def assess_value(net_gold_weight_g: float, declared_karat: int | None = None,
+                  matched_karat: int | None = None) -> dict:
+    """Assessed value = net gold weight x the RATE FOR THE KARAT THE LOAN IS
+    ACTUALLY BEING VALUED AT.
+
+    Previously this always applied the flat 999/24K rate to net_gold_weight_g
+    regardless of declared karat — that overvalues everything below 24K (e.g.
+    ~8% over for 22K, ~25% over for 18K), since a gram of 22K alloy contains
+    only 91.7% actual gold. Fixed to apply the declared karat's fineness-
+    adjusted rate (the officer's own declaration — a physics/declaration
+    mismatch is a separate misdeclared-purity flag elsewhere in the pipeline
+    that sends the case for revaluation, not a silent rate substitution here).
+
+    `matched_karat` (from density.infer_best_match, when the physics matches a
+    different karat than declared) is reported alongside for transparency —
+    it does NOT drive the valuation, only informs the officer."""
     rate = load_gold_rate()
-    value = net_gold_weight_g * rate["rate_per_gram_inr"]
+    rate_24k = rate["rate_per_gram_inr"]
+
+    valuation_karat = declared_karat or matched_karat or 24
+    rate_declared  = karat_rate_per_gram(declared_karat, rate_24k) if declared_karat else None
+    rate_matched   = karat_rate_per_gram(matched_karat, rate_24k) if matched_karat else None
+    rate_used      = rate_declared or karat_rate_per_gram(valuation_karat, rate_24k) or rate_24k
+
+    value = net_gold_weight_g * rate_used
     ltv = compute_ltv(value)
     return {
         "net_gold_weight_g":  round(net_gold_weight_g, 3),
-        "rate_per_gram_inr":  rate["rate_per_gram_inr"],
+        "rate_per_gram_inr":  rate_used,
+        "valuation_karat":    valuation_karat,
+        "rate_24k_per_gram_inr":          rate_24k,
+        "rate_per_gram_declared_karat":   rate_declared,
+        "rate_per_gram_calculated_karat": rate_matched,
+        "matched_karat":                  matched_karat,
+        "karat_rates_per_gram": {str(k): karat_rate_per_gram(k, rate_24k) for k in KARAT_FINENESS},
         "rate_updated_at":    rate.get("updated_at"),
         "rate_source":        rate.get("rate_source", "static"),
         "rate_stale":         rate.get("stale", False),

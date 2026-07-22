@@ -9,7 +9,7 @@ const MARGIN = 8
  * Small (i) icon that reveals officer guidance on hover, focus, or tap.
  * The tooltip is rendered with viewport-fixed positioning and clamped to the
  * screen edges, so it can never be clipped by a scrolling column or an
- * adjacent panel. Usage: <InfoTip text="Weigh the item fully underwater…" />
+ * adjacent panel. Usage: <InfoTip text="Tare the scale with the water cup on it…" />
  */
 export default function InfoTip({ text }) {
   const iconRef = useRef(null)

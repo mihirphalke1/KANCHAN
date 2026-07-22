@@ -53,10 +53,34 @@ export default function EvidencePanel({ caseData }) {
                 <InfoTip text={ltv.net_gold_breakdown.explanation} side="right" />
               )}
             </div>
+            <div>
+              <span className={styles.ltvLabel}>Rate applied</span>
+              <span className={styles.ltvValue}>
+                {formatInr(ltv.rate_per_gram_inr)}/g
+                {ltv.valuation_karat ? ` · ${ltv.valuation_karat}K` : ''}
+              </span>
+              <InfoTip text="Derived from the daily 999-fine (24K) gold rate × BIS fineness for the declared karat — not a flat rate applied regardless of purity." side="right" />
+            </div>
             <div><span className={styles.ltvLabel}>Assessed value</span><span className={styles.ltvValue}>{formatInr(ltv.assessed_value_inr)}</span></div>
             <div><span className={styles.ltvLabel}>LTV tier</span><span className={styles.ltvValue}>{Math.round(ltv.ltv_pct * 100)}% · {ltv.tier}</span></div>
             <div><span className={styles.ltvLabel}>Max eligible loan</span><span className={`${styles.ltvValue} ${styles.ltvHighlight}`}>{formatInr(ltv.max_loan_inr)}</span></div>
           </div>
+
+          {ltv.matched_karat && ltv.matched_karat !== ltv.valuation_karat && ltv.rate_per_gram_calculated_karat && (
+            <p className={styles.note}>
+              For comparison only: the density physics matched <b>{ltv.matched_karat}K</b> (
+              {formatInr(ltv.rate_per_gram_calculated_karat)}/g) rather than the declared {ltv.valuation_karat}K —
+              this valuation still uses the declared karat's rate above. A genuine mismatch should be resolved
+              by re-running the analysis with the corrected declared karat, not by silently reweighting here.
+            </p>
+          )}
+
+          {ltv.status !== 'final' && (
+            <p className={styles.indicativeWarning}>
+              <ShieldAlert size={12} /> INDICATIVE VALUATION ONLY — borrower-present attestation not recorded.
+              This assessed value, LTV, and maximum loan are provisional until the borrower is attested present.
+            </p>
+          )}
         </div>
       )}
 

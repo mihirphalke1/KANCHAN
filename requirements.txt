@@ -23,3 +23,5 @@ python-dotenv==1.0.1
 kaggle==1.6.12
 requests==2.32.2
 reportlab==4.2.0
+fonttools==4.63.0
+slowapi==0.1.10

@@ -42,6 +42,13 @@ SCALE_SIGMA_G = float(os.getenv("SCALE_SIGMA_G", "0.005"))
 
 KARAT_DENSITY_TABLE = {
     24: {"nominal": 19.32, "low": 19.10, "high": 19.40},
+    # 23K has no independent reference sample — interpolated between the 22K
+    # and 24K bands by BIS fineness fraction (references.py BIS_FINENESS:
+    # 22K=0.916, 23K=0.958, 24K=0.999; t=(0.958-0.916)/(0.999-0.916)=0.506),
+    # matching this table's curated tightness rather than the wider bands
+    # app/utils/references.py's first-principles mixture-rule derivation
+    # gives (that tool is a cross-check on this table, not its source here).
+    23: {"nominal": 18.57, "low": 18.26, "high": 18.76},
     22: {"nominal": 17.80, "low": 17.40, "high": 18.10},
     18: {"nominal": 15.55, "low": 15.20, "high": 15.90},
     14: {"nominal": 13.07, "low": 12.80, "high": 13.40},
