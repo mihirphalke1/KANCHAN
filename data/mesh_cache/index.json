@@ -86,5 +86,28 @@
     },
     "provider": "tencent/Hunyuan3D-2",
     "created": "2026-07-23T19:55:05.313805+00:00"
+  },
+  {
+    "hash": "9428e8ccd4682854",
+    "glb_file": "9428e8ccd4682854.glb",
+    "color": {
+      "gold_rgb": [
+        160,
+        132,
+        83
+      ],
+      "stone_rgb": [
+        124,
+        116,
+        96
+      ],
+      "stone_hue_class": "colourless",
+      "metal_type": "yellow",
+      "stone_face_pct": 10.75,
+      "shaded": true,
+      "colored": true
+    },
+    "provider": "tencent/Hunyuan3D-2",
+    "created": "2026-07-23T20:23:50.275473+00:00"
   }
 ]

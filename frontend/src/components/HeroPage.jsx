@@ -84,7 +84,7 @@ export default function HeroPage() {
         <h1 className={styles.heroH1}>
           <span className={styles.h1Line1}>Detect Spurious Gold</span>
           <span className={styles.h1Line2}>
-            in <em className={styles.heroAccent}>Under 10 Seconds</em>
+            in <em className={styles.heroAccent}>Under 30 Seconds</em>
           </span>
         </h1>
 
@@ -309,7 +309,7 @@ export default function HeroPage() {
               <p className={styles.ctaDesc}>
                 Photos, a tap recording, and two weight readings — the three
                 mandatory tests — give a verdict you can verify step by step,
-                in under 10 seconds.
+                in under 30 seconds.
               </p>
               <Button size="lg" className={styles.ctaBtn} onClick={() => navigate('/dashboard')}>
                 Open analysis dashboard <ArrowRight size={16} />

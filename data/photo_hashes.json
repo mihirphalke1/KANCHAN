@@ -1036,5 +1036,41 @@
     "case_id": "b2cfcb91",
     "image_role": "item_photo_1",
     "timestamp": "2026-07-23T20:06:21.332569"
+  },
+  {
+    "hash": "30484830225858a0",
+    "case_id": "949ec669",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-23T20:16:06.497653"
+  },
+  {
+    "hash": "000c12274d4b523c",
+    "case_id": "949ec669",
+    "image_role": "item_photo_1",
+    "timestamp": "2026-07-23T20:16:06.497653"
+  },
+  {
+    "hash": "30484830225858a0",
+    "case_id": "26662e73",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-23T20:17:54.913305"
+  },
+  {
+    "hash": "000c12274d4b523c",
+    "case_id": "26662e73",
+    "image_role": "item_photo_1",
+    "timestamp": "2026-07-23T20:17:54.913305"
+  },
+  {
+    "hash": "6800e8c8e8004400",
+    "case_id": "4af2369d",
+    "image_role": "item_photo_0",
+    "timestamp": "2026-07-23T20:23:22.132921"
+  },
+  {
+    "hash": "200270ccf8004400",
+    "case_id": "4af2369d",
+    "image_role": "item_photo_1",
+    "timestamp": "2026-07-23T20:23:22.132921"
   }
 ]
