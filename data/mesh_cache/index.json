@@ -1,0 +1,44 @@
+[
+  {
+    "hash": "98e68d99312b6650",
+    "glb_file": "98e68d99312b6650.glb",
+    "color": {
+      "gold_rgb": [
+        122,
+        107,
+        88
+      ],
+      "stone_rgb": [
+        201,
+        205,
+        214
+      ],
+      "stone_hue_class": "blue",
+      "stone_face_pct": 2.6,
+      "colored": true
+    },
+    "provider": "tencent/Hunyuan3D-2",
+    "created": "2026-07-23T18:14:39.915949+00:00"
+  },
+  {
+    "hash": "92e79d392b664698",
+    "glb_file": "92e79d392b664698.glb",
+    "color": {
+      "gold_rgb": [
+        122,
+        107,
+        88
+      ],
+      "stone_rgb": [
+        201,
+        205,
+        214
+      ],
+      "stone_hue_class": "blue",
+      "stone_face_pct": 2.15,
+      "colored": true
+    },
+    "provider": "tencent/Hunyuan3D-2",
+    "created": "2026-07-23T18:22:49.105794+00:00"
+  }
+]

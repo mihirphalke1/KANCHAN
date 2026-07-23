@@ -24,25 +24,31 @@ function GlbScene({ url, color }) {
   const { scene } = useGLTF(url)
   const obj = useMemo(() => {
     const root = scene.clone(true)
-    const goldRGB = srgb(color?.gold_rgb) || [0.83, 0.66, 0.24]
-    const stoneRGB = srgb(color?.stone_rgb) || [0.62, 0.05, 0.11]
+    // Photo-sampled colours when the status carries them; otherwise keep the
+    // colours already baked into the GLB (they were sampled from the photo at
+    // generation time) and only correct the shading. Fallback constants apply
+    // only if the GLB somehow has no colour at all.
+    const goldRGB = srgb(color?.gold_rgb)
+    const stoneRGB = srgb(color?.stone_rgb)
     root.traverse((c) => {
       if (!c.isMesh || !c.material) return
       const mats = Array.isArray(c.material) ? c.material : [c.material]
       const tag = `${c.name || ''} ${c.parent?.name || ''} ${mats[0]?.name || ''}`.toLowerCase()
       const isStone = /stone|gem|ruby|sapphire|emerald|red|blue|green/.test(tag)
       mats.forEach((m) => {
-        if (m.emissive) m.emissive.setRGB(0, 0, 0)
         m.envMapIntensity = 0.5
         if (isStone) {
-          m.color?.setRGB(...stoneRGB)
+          if (stoneRGB) m.color?.setRGB(...stoneRGB)
+          else if (!m.color || (m.color.r > 0.95 && m.color.g > 0.95 && m.color.b > 0.95)) m.color?.setRGB(0.62, 0.05, 0.11)
           m.metalness = 0.0
           m.roughness = 0.14
-          if (m.emissive) m.emissive.setRGB(stoneRGB[0] * 0.14, stoneRGB[1] * 0.14, stoneRGB[2] * 0.14)
+          if (m.emissive) m.emissive.setRGB(m.color.r * 0.14, m.color.g * 0.14, m.color.b * 0.14)
         } else {
-          m.color?.setRGB(...goldRGB)
+          if (goldRGB) m.color?.setRGB(...goldRGB)
+          else if (!m.color || (m.color.r > 0.95 && m.color.g > 0.95 && m.color.b > 0.95)) m.color?.setRGB(0.83, 0.66, 0.24)
           m.metalness = 0.55
           m.roughness = 0.38
+          if (m.emissive) m.emissive.setRGB(0, 0, 0)
         }
         m.needsUpdate = true
       })

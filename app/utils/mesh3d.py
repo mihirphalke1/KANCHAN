@@ -80,6 +80,115 @@ def _case_lock(case_id: str) -> threading.Lock:
         return _locks[case_id]
 
 
+def _decode_bgr(image_bytes: bytes):
+    import cv2
+    import numpy as np
+    arr = np.frombuffer(image_bytes, dtype=np.uint8)
+    return cv2.imdecode(arr, cv2.IMREAD_COLOR)
+
+
+def _select_mesh_image(images: list[bytes]) -> bytes:
+    """Pick the best photo to reconstruct in 3D. The calibration card must
+    never become part of the model, so a photo WITHOUT a card (a clean item
+    shot) is always preferred; only if every photo carries the card do we fall
+    back to the first and mask the card out in _prepare_mesh_image."""
+    if not images:
+        raise ValueError("no images")
+    try:
+        from app.utils.fiducial import locate_card
+        for b in images:
+            try:
+                bgr = _decode_bgr(b)
+                if bgr is not None and locate_card(bgr) is None:
+                    return b            # first card-free photo wins
+            except Exception:
+                continue
+    except Exception as e:
+        logger.info("mesh image selection skipped (%s)", e)
+    return images[0]
+
+
+def _prepare_mesh_image(image_bytes: bytes) -> bytes:
+    """Remove the calibration card from the frame so the Space reconstructs
+    only the jewellery. The card is detected geometrically (its finder
+    squares), its region is painted over with the background colour, and the
+    frame is cropped to the remaining item so it fills the view. Soft — returns
+    the original bytes unchanged on any miss (no card, decode failure, etc.)."""
+    try:
+        import cv2
+        import numpy as np
+        from app.utils.fiducial import locate_card
+
+        bgr = _decode_bgr(image_bytes)
+        if bgr is None:
+            return image_bytes
+        H, W = bgr.shape[:2]
+
+        # Strip the forensic caption bar burned onto saved evidence photos
+        # (a dark full-width band at the bottom) so it isn't reconstructed as a
+        # slab. Live-analysis images have no stamp, so this is a no-op there.
+        gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+        dark_frac = (gray < 60).mean(axis=1)
+        cut = H
+        for y in range(H - 1, int(H * 0.80), -1):
+            if dark_frac[y] > 0.6:
+                cut = y
+            else:
+                break
+        if cut < H - 2:
+            bgr = bgr[:cut, :, :]
+            H = bgr.shape[0]
+
+        card = locate_card(bgr)
+        if not card or not card.get("bbox"):
+            # No card: still crop to the item so it fills the frame (helps
+            # small items reconstruct in more detail). Reuses the crop below.
+            card_bbox = None
+        else:
+            card_bbox = [int(v) for v in card["bbox"]]
+
+        # Background colour from a thin frame border (away from the item).
+        border = np.concatenate([
+            bgr[:6, :, :].reshape(-1, 3), bgr[-6:, :, :].reshape(-1, 3),
+            bgr[:, :6, :].reshape(-1, 3), bgr[:, -6:, :].reshape(-1, 3),
+        ])
+        bg = np.median(border, axis=0).astype(np.uint8)
+
+        if card_bbox is not None:
+            x0, y0, x1, y1 = card_bbox
+            x0, y0 = max(0, x0), max(0, min(H, y0))
+            x1, y1 = min(W, x1), min(H, y1)
+            if x1 > x0 and y1 > y0:
+                bgr[y0:y1, x0:x1] = bg           # erase the card
+
+        # Crop to the item: the largest non-background, non-card blob.
+        diff = np.linalg.norm(bgr.astype(np.int16) - bg.astype(np.int16), axis=2)
+        fg = (diff > 32).astype(np.uint8)
+        if card_bbox is not None:
+            fg[max(0, card_bbox[1]):min(H, card_bbox[3]),
+               max(0, card_bbox[0]):min(W, card_bbox[2])] = 0
+        fg = cv2.morphologyEx(fg, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+        n, labels, stats, _ = cv2.connectedComponentsWithStats(fg, connectivity=8)
+        if n > 1:
+            # largest component (excluding background label 0) = the item
+            areas = stats[1:, cv2.CC_STAT_AREA]
+            k = 1 + int(np.argmax(areas))
+            if stats[k, cv2.CC_STAT_AREA] > 200:
+                bx = stats[k, cv2.CC_STAT_LEFT]; by = stats[k, cv2.CC_STAT_TOP]
+                bw = stats[k, cv2.CC_STAT_WIDTH]; bh = stats[k, cv2.CC_STAT_HEIGHT]
+                pad = int(0.15 * max(bw, bh))
+                cx0, cy0 = max(0, bx - pad), max(0, by - pad)
+                cx1, cy1 = min(W, bx + bw + pad), min(H, by + bh + pad)
+                if cx1 - cx0 > 20 and cy1 - cy0 > 20:
+                    bgr = bgr[cy0:cy1, cx0:cx1]
+
+        ok, buf = cv2.imencode(".png", bgr)
+        return buf.tobytes() if ok else image_bytes
+    except Exception as e:
+        logger.warning("mesh image preparation failed (%s) — using original", e)
+        return image_bytes
+
+
 def _case_stones(case_id: str) -> list:
     """Detected set stones for a case, from the saved case record — used to
     colour the generated mesh (gem colour + presence). Empty on any miss."""
@@ -484,6 +593,33 @@ def run_mesh3d_job(case_id: str, image_bytes: bytes) -> dict:
             status = initial_mesh3d_status()
             write_status(case_id, status)
             return status
+
+        # ── Cache first: a near-identical photo reuses a stored coloured GLB
+        # with no Space call. Works even without a token — a cached model can
+        # still be served — so this runs before the token gate.
+        try:
+            from app.utils.mesh_cache import lookup as _cache_lookup
+            hit = _cache_lookup(image_bytes)
+        except Exception as e:
+            logger.warning("mesh cache lookup failed for %s: %s", case_id, e)
+            hit = None
+        if hit:
+            dest = _glb_path(case_id)
+            shutil.copy2(hit["_path"], dest)
+            status = write_status(case_id, {
+                "status": "ready",
+                "glb_url": _glb_url(case_id),
+                "error": None,
+                "provider": hit.get("provider", DEFAULT_PROVIDER),
+                "color": hit.get("color"),
+                "cached": True,
+                "elapsed_s": 0.0,
+                "message": "3D model loaded from cache (matched a previous photo).",
+            })
+            _patch_case_history(case_id, status)
+            logger.info("mesh3d served from cache for case %s", case_id)
+            return status
+
         if not _runtime_token():
             status = initial_mesh3d_status()
             write_status(case_id, status)
@@ -533,6 +669,13 @@ def run_mesh3d_job(case_id: str, image_bytes: bytes) -> dict:
             # sampled from the case photo. Additive/cosmetic — never blocks a
             # ready model if it fails.
             color_meta = _colorize_ready_glb(case_id, dest)
+            # Cache the finished coloured model against the photo so an
+            # identical re-upload / retry skips the Space next time.
+            try:
+                from app.utils.mesh_cache import store as _cache_store
+                _cache_store(image_bytes, dest, color_meta, provider)
+            except Exception as e:
+                logger.warning("mesh cache store failed for %s: %s", case_id, e)
             elapsed = round(time.time() - started, 1)
             status = write_status(case_id, {
                 "status": "ready",
@@ -563,10 +706,15 @@ def run_mesh3d_job(case_id: str, image_bytes: bytes) -> dict:
         lock.release()
 
 
-def start_mesh3d_job(case_id: str, image_bytes: bytes) -> dict:
+def start_mesh3d_job(case_id: str, images) -> dict:
     """
     Mark job pending and spawn a daemon thread. Safe to call from analyze
     after the HTTP response path — never raises into the caller.
+
+    `images` may be a single bytes object or a list of item photos. When a list
+    is given, the card-free photo is preferred and the calibration card is
+    masked out of whichever photo is used, so the card never becomes part of
+    the 3D model (it is still used elsewhere for scale/tamper-evidence).
     """
     try:
         status = initial_mesh3d_status()
@@ -574,8 +722,15 @@ def start_mesh3d_job(case_id: str, image_bytes: bytes) -> dict:
         if status["status"] == "disabled":
             return status
 
+        image_list = images if isinstance(images, (list, tuple)) else [images]
+        image_list = [b for b in image_list if b]
+        if not image_list:
+            return status
+        chosen = _select_mesh_image(image_list)
+        chosen = _prepare_mesh_image(chosen)
+
         # Copy bytes so caller can discard its buffer.
-        payload = bytes(image_bytes)
+        payload = bytes(chosen)
 
         def _runner():
             try:
@@ -615,3 +770,19 @@ def find_case_image_bytes(case_id: str) -> Optional[bytes]:
             if p.is_file():
                 return p.read_bytes()
     return None
+
+
+def find_all_case_images(case_id: str) -> list[bytes]:
+    """All saved item photos for a case, in order — so a retry can still
+    prefer a card-free shot for 3D, same as the original analysis."""
+    case_dir = CASES_DIR / case_id
+    if not case_dir.exists():
+        return []
+    out = []
+    for p in sorted(case_dir.glob("img_*")):
+        if p.is_file():
+            try:
+                out.append(p.read_bytes())
+            except Exception:
+                continue
+    return out

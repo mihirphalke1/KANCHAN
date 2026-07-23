@@ -34,6 +34,9 @@ from app.utils.bis_registry import lookup_huid
 from app.utils.composition import analyze_composition
 from app.benford.monitor import append_density_reading, run_benford_test
 from app.utils.fiducial import detect_marker
+from app.utils.card_calibration import (
+    classify_photos, white_balance_gains, apply_white_balance,
+)
 from app.utils.gem_grid import build_grid_stats
 from app.utils.gem_weight import estimate_gem_weights
 from app.utils.hashchain import append_with_chain
@@ -565,16 +568,44 @@ async def analyze(
                 "distance": match["distance"],
             })
 
-    # ── Material scan on the primary photograph ──
+    # ── Card-free item photo for all CV; card photo for calibration only ──
+    # The calibration card must never be counted as part of the item. So we
+    # pick the CARD-FREE photo as the frame every CV stage runs on (material
+    # scan, stone detection, gold-vs-gems, tarnish, 3D), and use the CARD photo
+    # for two things only: real-world scale (px-per-mm) and colour quality
+    # (a white-balance reference sampled from the card's neutral body, applied
+    # to the item photo so gold/gem colours read true). Falls back cleanly to
+    # single-photo behaviour when there's no separate card/item pair.
+    photo_split = classify_photos(image_bytes_list) if image_bytes_list else {
+        "item_index": None, "card_index": None, "other_index": [], "has_card": []
+    }
+    item_index = photo_split["item_index"]
+    card_index = photo_split["card_index"]
+
+    # Colour calibration: neutralise the item photo's colour cast using the
+    # card's white body as a reference (only when card and item are separate
+    # frames — a card in the item frame is handled by masking downstream).
+    wb_applied = False
+    cv_image_bytes = image_bytes_list[item_index] if item_index is not None else None
+    if cv_image_bytes is not None and card_index is not None and card_index != item_index:
+        try:
+            gains = white_balance_gains(image_bytes_list[card_index])
+            if gains is not None:
+                cv_image_bytes = apply_white_balance(cv_image_bytes, gains)
+                wb_applied = True
+        except Exception as e:
+            logger.warning("Colour calibration failed for case %s: %s", case_id, e)
+
+    # ── Material scan on the CARD-FREE item photograph ──
     # Uploaded photos/audio/streak and the processed X-ray stages are saved
     # under data/cases/<case_id>/ further down (once case_id-scoped data is
     # ready) so the PDF report and the History page can show real evidence,
     # not just the live response the browser already has.
     xray_result = None
     xray_ctx = None
-    if image_bytes_list:
+    if cv_image_bytes is not None:
         try:
-            xray_result, xray_ctx = xray_preview(image_bytes_list[0], _return_ctx=True)
+            xray_result, xray_ctx = xray_preview(cv_image_bytes, _return_ctx=True)
         except Exception as e:
             logger.warning("Material scan failed for case %s: %s", case_id, e)
 
@@ -622,11 +653,14 @@ async def analyze(
     # to change. Stashed here; folded into contra["flags"] once contra exists.
     closeup_review = None
     closeup_flags: list[str] = []
-    if xray_result and len(image_bytes_list) > 1:
+    if xray_result and photo_split["other_index"]:
+        # Close-ups are the extra photos that are neither the item frame nor
+        # the calibration-card frame — the card photo is calibration-only and
+        # is never read for stone content.
         closeup_passes = []
-        for i, extra_bytes in enumerate(image_bytes_list[1:], start=1):
+        for i in photo_split["other_index"]:
             try:
-                arr = np.frombuffer(extra_bytes, dtype=np.uint8)
+                arr = np.frombuffer(image_bytes_list[i], dtype=np.uint8)
                 extra_bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
                 if extra_bgr is None:
                     continue
@@ -646,15 +680,17 @@ async def analyze(
                 closeup_review = None
 
     # ── Fiducial calibration card: tamper-evidence + real-world scale ──
-    # Detected in the same primary photo (SOP: place the card flat beside
-    # the item in-frame). Best-effort — absence just means no scale
-    # reference for stone sizing, never a hard block.
+    # Read from the CARD photo (the calibration frame), not the item frame —
+    # the card contributes scale (px-per-mm) and tamper-evidence only, and is
+    # never part of the analysed item. Best-effort — absence just means no
+    # scale reference for stone sizing, never a hard block.
     fiducial_result = None
     gem_grid_result = None
     gem_weight_result = None
-    if image_bytes_list:
+    calib_index = card_index if card_index is not None else item_index
+    if calib_index is not None and image_bytes_list:
         try:
-            arr = np.frombuffer(image_bytes_list[0], dtype=np.uint8)
+            arr = np.frombuffer(image_bytes_list[calib_index], dtype=np.uint8)
             bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
             if bgr is not None:
                 fiducial_result = detect_marker(bgr, branch_id)
@@ -679,10 +715,12 @@ async def analyze(
                 gem_weight_result = None
 
     # ── Tarnish/rust + UV-pass fluorescence (assistive, low-weight) ──
+    # Runs on the card-free, colour-calibrated item frame like every other CV
+    # stage, so the calibration card can't be read as tarnish/rust.
     tarnish_result = None
-    if image_bytes_list:
+    if cv_image_bytes is not None:
         try:
-            tarnish_result = analyze_tarnish(image_bytes_list[0], declared_karat or 22)
+            tarnish_result = analyze_tarnish(cv_image_bytes, declared_karat or 22)
         except Exception as e:
             logger.warning("Tarnish analysis failed for case %s: %s", case_id, e)
     uv_result = None
@@ -1254,6 +1292,15 @@ async def analyze(
         "integrity": {
             "duplicate_photo_flags": duplicate_flags,
             "fiducial":              fiducial_result,
+            "photo_roles": {
+                "item_photo_index":  item_index,
+                "card_photo_index":  card_index,
+                "closeup_indexes":   photo_split["other_index"],
+                "colour_calibrated": wb_applied,
+                "note": ("All image analysis ran on the card-free item photo; "
+                         "the calibration card photo was used only for scale"
+                         + (" and colour white-balance." if wb_applied else ".")),
+            },
         },
         "media": {
             "images_provided": len(image_bytes_list),
@@ -1327,7 +1374,9 @@ async def analyze(
     # HTTP response is not blocked. Soft-fails if token/Space unavailable.
     if image_bytes_list and mesh3d_meta.get("status") == "pending":
         try:
-            start_mesh3d_job(case_id, image_bytes_list[0])
+            # Pass every photo: the job prefers a card-free shot and masks the
+            # calibration card out, so the card never enters the 3D model.
+            start_mesh3d_job(case_id, image_bytes_list)
         except Exception as e:
             logger.warning("Could not start mesh3d job for case %s: %s", case_id, e)
 
