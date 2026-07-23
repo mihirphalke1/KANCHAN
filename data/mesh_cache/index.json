@@ -4,41 +4,87 @@
     "glb_file": "98e68d99312b6650.glb",
     "color": {
       "gold_rgb": [
-        122,
-        107,
-        88
+        129,
+        104,
+        76
       ],
       "stone_rgb": [
+        200,
         201,
-        205,
-        214
+        203
       ],
       "stone_hue_class": "blue",
+      "metal_type": "yellow",
       "stone_face_pct": 2.6,
+      "shaded": true,
       "colored": true
     },
     "provider": "tencent/Hunyuan3D-2",
-    "created": "2026-07-23T18:14:39.915949+00:00"
+    "created": "2026-07-23T19:40:11.616343+00:00"
   },
   {
     "hash": "92e79d392b664698",
     "glb_file": "92e79d392b664698.glb",
     "color": {
       "gold_rgb": [
-        122,
-        107,
-        88
+        130,
+        105,
+        76
       ],
-      "stone_rgb": [
-        201,
-        205,
-        214
-      ],
-      "stone_hue_class": "blue",
-      "stone_face_pct": 2.15,
+      "stone_rgb": null,
+      "stone_hue_class": null,
+      "metal_type": "yellow",
+      "stone_face_pct": 0.0,
+      "shaded": true,
       "colored": true
     },
     "provider": "tencent/Hunyuan3D-2",
-    "created": "2026-07-23T18:22:49.105794+00:00"
+    "created": "2026-07-23T19:43:39.825927+00:00"
+  },
+  {
+    "hash": "c91e737517178e71",
+    "glb_file": "c91e737517178e71.glb",
+    "color": {
+      "gold_rgb": [
+        133,
+        115,
+        84
+      ],
+      "stone_rgb": [
+        201,
+        207,
+        203
+      ],
+      "stone_hue_class": "colourless",
+      "metal_type": "yellow",
+      "stone_face_pct": 6.97,
+      "shaded": true,
+      "colored": true
+    },
+    "provider": "tencent/Hunyuan3D-2",
+    "created": "2026-07-23T19:47:48.638779+00:00"
+  },
+  {
+    "hash": "02e0dcaee8f82802",
+    "glb_file": "02e0dcaee8f82802.glb",
+    "color": {
+      "gold_rgb": [
+        163,
+        140,
+        98
+      ],
+      "stone_rgb": [
+        114,
+        100,
+        77
+      ],
+      "stone_hue_class": "colourless",
+      "metal_type": "yellow",
+      "stone_face_pct": 9.14,
+      "shaded": true,
+      "colored": true
+    },
+    "provider": "tencent/Hunyuan3D-2",
+    "created": "2026-07-23T19:55:05.313805+00:00"
   }
 ]

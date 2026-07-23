@@ -348,3 +348,68 @@
 }
 
 .zoomBtn:hover .zoomHint { opacity: 1; }
+
+/* ── Calibrated section ── */
+.calibRow {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+}
+.calibThumb {
+  position: relative;
+  flex: 0 0 40%;
+  max-width: 220px;
+  padding: 0;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: zoom-in;
+  background: #0b1220;
+  line-height: 0;
+}
+.calibThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 160ms;
+}
+.calibThumb:hover img { transform: scale(1.03); }
+.calibThumb:hover .zoomHint { opacity: 1; }
+.calibInfo {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.calibLead {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted, #64748b);
+}
+.calibInsights {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.calibInsights li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--border, #e8edf3);
+}
+.calibInsights li:last-child { border-bottom: none; }
+.calibInsights li span { color: var(--muted, #64748b); }
+.calibInsights li strong { color: var(--text, #0f172a); font-weight: 600; text-align: right; }
+
+@media (max-width: 560px) {
+  .calibRow { flex-direction: column; }
+  .calibThumb { flex-basis: auto; max-width: 100%; }
+}

@@ -134,6 +134,8 @@ export default function XRayView({ caseData }) {
           stone_agreement, stones, gold_gem_split, mesh3d } = xray
   const mesh3dState = mesh3d || caseData?.media?.mesh3d
   const caseId = caseData?.case_id
+  const calibration = caseData?.calibration
+  const calibratedImg = calibration?.image || caseData?.media?.calibrated
   const activeStage = STAGES.find(s => s.key === active) || STAGES[0]
   const hasScore = xrayScore?.mode === 'dsip_xray'
   const showSignals = hasScore || xrayScore?.mode === 'dsip_unusable'
@@ -249,6 +251,64 @@ export default function XRayView({ caseData }) {
           </button>
         ))}
       </div>
+
+      {calibratedImg && (
+        <div className={styles.compSection}>
+          <div className={styles.sectionLabel}>
+            Calibrated
+            <span className={styles.thresholdNote}>calibration-card reference · click to zoom</span>
+          </div>
+          <div className={styles.calibRow}>
+            <button
+              type="button"
+              className={styles.calibThumb}
+              onClick={() => setZoom(mediaUrl(calibratedImg))}
+              title="Click to zoom the calibration-card photo"
+            >
+              <img
+                src={mediaUrl(calibratedImg)}
+                alt="Calibration card reference photo"
+                loading="lazy"
+                onError={e => { e.target.style.visibility = 'hidden' }}
+              />
+              <span className={styles.zoomHint}><ZoomIn size={13} /> Zoom</span>
+            </button>
+            <div className={styles.calibInfo}>
+              <p className={styles.calibLead}>
+                The calibration-card photo — the reference used to fix real-world
+                scale (px per mm) and colour, so the item photo's measurements and
+                gold/gem colours read true. The card is never counted as part of the item.
+              </p>
+              <ul className={styles.calibInsights}>
+                <li>
+                  <span>Scale</span>
+                  <strong>{calibration?.px_per_mm
+                    ? `1 mm ≈ ${calibration.px_per_mm} px`
+                    : 'no card — scale unavailable'}</strong>
+                </li>
+                <li>
+                  <span>Calibration card</span>
+                  <strong>{calibration?.card_detected
+                    ? `${Math.round(calibration.card_side_mm)} mm reference detected`
+                    : 'not detected'}</strong>
+                </li>
+                <li>
+                  <span>Colour</span>
+                  <strong>{calibration?.colour_calibrated
+                    ? 'white-balanced from card'
+                    : 'no correction applied'}</strong>
+                </li>
+                {calibration?.checksum_valid != null && (
+                  <li>
+                    <span>Card checksum</span>
+                    <strong>{calibration.checksum_valid ? "today's card verified" : 'did not match today'}</strong>
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showGoldGem && (
         <div className={styles.compSection}>

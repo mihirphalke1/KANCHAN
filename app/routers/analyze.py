@@ -33,7 +33,7 @@ from app.utils.fraud_scenario import map_scenarios
 from app.utils.bis_registry import lookup_huid
 from app.utils.composition import analyze_composition
 from app.benford.monitor import append_density_reading, run_benford_test
-from app.utils.fiducial import detect_marker
+from app.utils.fiducial import detect_marker, CARD_SIDE_MM
 from app.utils.card_calibration import (
     classify_photos, white_balance_gains, apply_white_balance,
 )
@@ -586,6 +586,7 @@ async def analyze(
     # card's white body as a reference (only when card and item are separate
     # frames — a card in the item frame is handled by masking downstream).
     wb_applied = False
+    wb_gains = None
     cv_image_bytes = image_bytes_list[item_index] if item_index is not None else None
     if cv_image_bytes is not None and card_index is not None and card_index != item_index:
         try:
@@ -593,6 +594,7 @@ async def analyze(
             if gains is not None:
                 cv_image_bytes = apply_white_balance(cv_image_bytes, gains)
                 wb_applied = True
+                wb_gains = [round(float(x), 3) for x in gains]  # BGR
         except Exception as e:
             logger.warning("Colour calibration failed for case %s: %s", case_id, e)
 
@@ -1195,6 +1197,15 @@ async def analyze(
         register_photo(img_bytes, case_id=case_id, image_role=f"item_photo_{i}",
                         timestamp=analysis_ts.isoformat())
 
+    # The calibrated frame: the card-free item photo every CV stage ran on,
+    # white-balanced from the card. Saved so the officer can inspect exactly
+    # what the analysis saw, with true colours.
+    saved_calibrated = None
+    if cv_image_bytes is not None:
+        cp = case_dir / "calibrated.jpg"
+        cp.write_bytes(_stamp(cv_image_bytes, "Calibrated (card-free, colour-corrected)"))
+        saved_calibrated = str(cp)
+
     saved_audio = None
     if audio_bytes:
         # Save with the container the browser actually recorded (webm/opus
@@ -1308,12 +1319,39 @@ async def analyze(
             "streak_provided": streak_bytes is not None,
             "uv_provided":     uv_bytes is not None,
             "images":          saved_images,
+            "calibrated":      saved_calibrated,
             "audio":           saved_audio,
             "tap_audio":       saved_tap_audio,
             "streak":          saved_streak,
             "uv":              saved_uv,
             "xray":            xray_result,
             "mesh3d":          mesh3d_meta,
+        },
+        "calibration": {
+            # The Calibrated section shows the CALIBRATION-CARD photo — the
+            # reference frame the scale (px/mm) and colour white-balance are
+            # derived from. Every other stage uses the card-free item frame;
+            # this is the one place the card itself is shown.
+            "image": (
+                saved_images[card_index]
+                if (card_index is not None and card_index < len(saved_images))
+                else saved_calibrated
+            ),
+            "calibrated_item_image": saved_calibrated,
+            "item_photo_index":   item_index,
+            "card_photo_index":   card_index,
+            "card_detected":      bool((fiducial_result or {}).get("detected")),
+            "px_per_mm":          (fiducial_result or {}).get("px_per_mm"),
+            "card_side_mm":       CARD_SIDE_MM,
+            "checksum_valid":     (fiducial_result or {}).get("checksum_valid"),
+            "colour_calibrated":  wb_applied,
+            "white_balance_gains_bgr": wb_gains,
+            "scale_note": (
+                f"1 mm ≈ {round((fiducial_result or {}).get('px_per_mm'), 1)} px "
+                f"(from the {CARD_SIDE_MM:.0f} mm calibration card)"
+                if (fiducial_result or {}).get("px_per_mm") else
+                "No calibration card detected — scale reference unavailable"
+            ),
         },
         "modality_scores": {
             "image":            image_result,

@@ -202,31 +202,46 @@ def _case_stones(case_id: str) -> list:
     return []
 
 
+def _item_image_path(case_id: str) -> Optional[Path]:
+    """The card-free item photo the colouring should sample from — the same
+    frame the CV pipeline used. Prefers the saved calibrated frame; else the
+    card-free item photo; else the first photo."""
+    case_dir = CASES_DIR / case_id
+    cal = case_dir / "calibrated.jpg"
+    if cal.exists():
+        return cal
+    imgs = [p for p in sorted(case_dir.glob("img_*"))
+            if p.suffix.lower() in (".jpg", ".jpeg", ".png")]
+    if not imgs:
+        return None
+    try:
+        from app.utils.card_calibration import classify_photos
+        split = classify_photos([p.read_bytes() for p in imgs])
+        idx = split.get("item_index")
+        return imgs[idx] if idx is not None else imgs[0]
+    except Exception:
+        return imgs[0]
+
+
 def _colorize_ready_glb(case_id: str, glb_dest: Path) -> Optional[dict]:
-    """Colour the freshly generated white GLB in place: gold metal body + the
-    detected gem, sampled from the case photo. Soft — on any failure the
-    original white GLB is left untouched and None is returned. Never raises."""
+    """Colour the white mesh: predictive metal + gem colours sampled from the
+    card-free item photo, with baked photographic shading. Always colours FROM
+    the pristine white snapshot (model_raw.glb) INTO model.glb, so re-colouring
+    never compounds on an already-coloured mesh. Soft — never raises."""
     try:
         from app.utils.mesh_color import colorize_glb
 
-        case_dir = CASES_DIR / case_id
-        image_path = None
-        for name in ("img_0.jpg", "img_0.png", "img_0.jpeg"):
-            p = case_dir / name
-            if p.exists():
-                image_path = p
-                break
+        raw = glb_dest.with_name("model_raw.glb")
+        if not raw.exists():
+            # First colour of this model: snapshot the white mesh as the source.
+            shutil.copy2(glb_dest, raw)
 
         tmp = glb_dest.with_suffix(".colored.glb")
         meta = colorize_glb(
-            glb_dest, tmp,
+            raw, tmp,
             stones=_case_stones(case_id),
-            image_path=image_path,
+            image_path=_item_image_path(case_id),
         )
-        # Keep the untouched white mesh for retry/debug, then swap colour in.
-        raw = glb_dest.with_name("model_raw.glb")
-        if not raw.exists():
-            shutil.copy2(glb_dest, raw)
         shutil.move(str(tmp), str(glb_dest))
         logger.info("mesh3d coloured for case %s: %s", case_id, meta)
         return meta
@@ -665,8 +680,12 @@ def run_mesh3d_job(case_id: str, image_bytes: bytes) -> dict:
 
             dest = _glb_path(case_id)
             shutil.copy2(glb_src, dest)
-            # Colour the white mesh to match the item (gold body + set gem),
-            # sampled from the case photo. Additive/cosmetic — never blocks a
+            # Snapshot the freshly generated white mesh as the pristine source
+            # (overwriting any stale snapshot from an earlier generation), so
+            # colouring always runs on THIS generation's geometry.
+            shutil.copy2(dest, dest.with_name("model_raw.glb"))
+            # Colour the white mesh to match the item (predictive metal + gem
+            # colours + baked shading). Additive/cosmetic — never blocks a
             # ready model if it fails.
             color_meta = _colorize_ready_glb(case_id, dest)
             # Cache the finished coloured model against the photo so an
