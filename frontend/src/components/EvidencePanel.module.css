@@ -61,9 +61,11 @@
 .deduction b { color: var(--text); font-family: var(--font-mono); font-weight: 700; }
 .minus { color: var(--text-faint); font-weight: 700; padding: 0 2px; }
 
+/* auto-fit keeps two columns wherever they fit and drops to one on a narrow
+   phone, instead of crushing the mono values into an unreadable pair. */
 .ltvGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 10px;
 }
 .ltvGrid > div { display: flex; flex-direction: column; gap: 2px; }

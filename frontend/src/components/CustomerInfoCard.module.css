@@ -7,7 +7,7 @@
 }
 
 .header {
-  display: flex;
+  display: flex; flex-wrap: wrap; min-width: 0;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
@@ -44,7 +44,7 @@
 }
 
 .row {
-  display: flex;
+  display: flex; flex-wrap: wrap; min-width: 0;
   justify-content: space-between;
   align-items: center;
   padding: 7px 0;

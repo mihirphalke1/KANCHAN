@@ -75,7 +75,7 @@
 }
 
 .gaugeLabels {
-  display: flex;
+  display: flex; flex-wrap: wrap; min-width: 0;
   justify-content: space-between;
   font-size: 10px;
   color: var(--text-faint);
@@ -89,7 +89,7 @@
 }
 
 .row {
-  display: flex;
+  display: flex; flex-wrap: wrap; min-width: 0;
   justify-content: space-between;
   align-items: center;
   padding: 7px 0;

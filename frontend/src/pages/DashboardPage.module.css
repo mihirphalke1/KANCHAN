@@ -9,7 +9,7 @@
 
 .main {
   flex: 1;
-  padding: 18px 16px 48px;
+  padding: 18px 16px 96px;
 }
 
 .layout {
@@ -20,24 +20,34 @@
   gap: 24px;
 }
 
-@media (min-width: 768px) {
+/* Grid tracks default to min-width:auto, so they refuse to shrink below their
+   content's intrinsic width. A single wide result (a trace detail row, a
+   chart, the 3D canvas) would then widen the whole grid and make the PAGE
+   scroll sideways once a verdict rendered. Letting the tracks shrink is what
+   keeps every result inside the viewport. */
+.formCol,
+.resultsCol {
+  min-width: 0;
+}
+
+.formCol { position: static; }
+.resultsCol { min-height: 200px; }
+
+@media (min-width: 640px) {
+  .main { padding: 24px 20px 96px; }
+}
+
+/* Two columns only once the results column is wide enough to read. At the old
+   768px breakpoint a 380px sticky sidebar left results barely ~300px, which is
+   where the layout fell apart after analysis. Below this the form stacks above
+   full-width results. */
+@media (min-width: 1024px) {
   .main   { padding: 32px 24px 64px; }
-  .layout { grid-template-columns: 380px 1fr; gap: 28px; align-items: start; }
+  .layout { grid-template-columns: 360px minmax(0, 1fr); gap: 28px; align-items: start; }
+  .formCol { position: sticky; top: 96px; }
+  .resultsCol { min-height: 400px; }
 }
 
-@media (min-width: 1200px) {
-  .layout { grid-template-columns: 420px 1fr; gap: 32px; }
-}
-
-.formCol {
-  position: sticky;
-  top: 96px;
-}
-
-.resultsCol { min-height: 400px; }
-
-@media (max-width: 767px) {
-  .formCol { position: static; }
-  .resultsCol { min-height: 200px; }
-  .main { padding-bottom: 96px; }
+@media (min-width: 1280px) {
+  .layout { grid-template-columns: 420px minmax(0, 1fr); gap: 32px; }
 }

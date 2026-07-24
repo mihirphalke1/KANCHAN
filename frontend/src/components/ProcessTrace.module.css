@@ -9,7 +9,7 @@
 }
 
 .titleRow {
-  display: flex;
+  display: flex; flex-wrap: wrap; min-width: 0;
   align-items: center;
   justify-content: space-between;
   background: none;
@@ -71,6 +71,8 @@
   align-items: center;
   gap: 8px;
   width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
   background: none;
   border: none;
   padding: 6px 0;
@@ -104,11 +106,16 @@
 .flag .stepIcon { color: #B45309; }
 .skip .stepIcon { color: var(--text-faint); }
 
+/* Titles wrap by default. They used to be `nowrap`, which on a narrow screen
+   forced the header row wider than its container and pushed the whole results
+   column sideways — long steps like "Does the density match the declared
+   karat?" were the trigger. Kept on one line only where there is room. */
 .stepTitle {
   font-size: 12px;
   font-weight: 700;
   color: var(--text);
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .skip .stepTitle { color: var(--text-faint); }
@@ -116,9 +123,15 @@
 .stepSummary {
   font-size: 11px;
   color: var(--text-muted);
-  flex: 1;
+  flex: 1 1 100%;
   min-width: 0;
+  overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 700px) {
+  .stepTitle   { white-space: nowrap; }
+  .stepSummary { flex: 1 1 auto; }
 }
 
 /* ── Body ── */
@@ -127,8 +140,10 @@
   flex-direction: column;
   gap: 8px;
   padding: 2px 0 10px;
+  min-width: 0;
 }
 
+/* Long formulas scroll inside their own box rather than widening the card. */
 .formula {
   font-family: var(--font-mono);
   font-size: 10.5px;
@@ -137,25 +152,36 @@
   background: var(--brand-muted);
   border-radius: var(--r-sm);
   padding: 6px 9px;
+  max-width: 100%;
   overflow-x: auto;
 }
 
 .detailTable {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
+/* Label and value sit on one line when they fit and wrap onto two when they
+   don't — the label was `flex-shrink: 0`, so a long label plus a long value
+   overflowed the card instead of stacking. */
 .detailRow {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 2px 12px;
   padding: 3px 0;
   border-bottom: 1px dashed var(--border);
   font-size: 11px;
+  min-width: 0;
 }
 
 .detailRow:last-child { border-bottom: none; }
-.detailRow > span:first-child { color: var(--text-muted); flex-shrink: 0; }
+.detailRow > span:first-child {
+  color: var(--text-muted);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 
 .detailValue {
   font-family: var(--font-mono);

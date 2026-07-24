@@ -6,13 +6,19 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0;
 }
 
+/* Header wraps: the badge row drops onto its own line instead of squeezing the
+   title down to three words per line — or, as it did, running off the right
+   edge of the card entirely. */
 .titleRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
 }
 
 .title {
@@ -23,12 +29,17 @@
   font-weight: 700;
   color: var(--text);
   margin: 0;
+  min-width: 0;
 }
 
+/* Every badge is nowrap by design, so the ROW itself must wrap — five of them
+   are far wider than a phone-width card. */
 .badgeRow {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
+  min-width: 0;
 }
 
 .badge {
@@ -59,14 +70,25 @@
   background: #0B1220;
 }
 
+/* Stacks on narrow screens: the label kept its own column and crushed the
+   description into a sliver. Side-by-side only where there is room. */
 .stageCaption {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
   padding: 6px 10px;
   border-top: 1px solid var(--border);
   font-size: 11px;
   color: var(--text-muted);
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .stageCaption {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
 }
 
 .stageCaption strong {
@@ -142,7 +164,7 @@
 }
 
 .sectionLabel {
-  display: flex;
+  display: flex; flex-wrap: wrap; min-width: 0;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
@@ -206,7 +228,7 @@
 }
 
 .stoneRow {
-  display: flex;
+  display: flex; flex-wrap: wrap; min-width: 0;
   align-items: center;
   gap: 8px;
   font-size: 11px;

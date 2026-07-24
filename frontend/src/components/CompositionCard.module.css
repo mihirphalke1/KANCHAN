@@ -141,7 +141,7 @@
 }
 
 .row {
-  display: flex;
+  display: flex; flex-wrap: wrap; min-width: 0;
   justify-content: space-between;
   align-items: baseline;
   padding: 5px 0;

@@ -47,7 +47,10 @@
 .body { display: flex; gap: 16px; flex-wrap: wrap; }
 .hero { flex: 0 0 240px; max-width: 100%; }
 .hero img { width: 100%; border-radius: var(--r); display: block; }
-.right { flex: 1 1 260px; min-width: 240px; }
+/* flex-basis still prefers ~260px (so it wraps to its own line rather than
+   squeezing), but min-width:0 lets it shrink instead of overflowing on a
+   narrow phone. */
+.right { flex: 1 1 260px; min-width: 0; }
 
 .bar {
   display: flex;
@@ -69,7 +72,7 @@
 .legendItem i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 
 .weights { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
-.weightRow { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; }
+.weightRow { display: flex; flex-wrap: wrap; min-width: 0; justify-content: space-between; align-items: baseline; font-size: 13px; }
 .weightLabel { color: var(--text-muted); }
 .weightValue { font-weight: 700; color: var(--text); }
 .weightMuted { color: var(--text-faint); font-style: italic; font-size: 12px; }

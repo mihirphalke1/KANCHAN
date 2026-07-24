@@ -2,7 +2,16 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
   animation: fadeIn 300ms ease both;
+}
+
+/* Backstop: no result card may exceed the column, whatever it contains.
+   Anything genuinely wide (charts, the 3D canvas, code) scrolls inside its
+   own box rather than pushing the page sideways. */
+.panel > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .errorState {
