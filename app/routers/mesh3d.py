@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 from app.auth import require_login
 from app.utils.mesh3d import (
+    find_all_case_images,
     find_case_image_bytes,
     get_mesh3d_status,
     start_mesh3d_job,
@@ -34,8 +35,10 @@ async def mesh3d_retry(case_id: str, session: dict = Depends(require_login)):
             "message": "Generation is already in progress.",
         })
 
-    image_bytes = find_case_image_bytes(case_id)
-    if not image_bytes:
+    images = find_all_case_images(case_id) or (
+        [find_case_image_bytes(case_id)] if find_case_image_bytes(case_id) else []
+    )
+    if not images:
         raise HTTPException(
             status_code=404,
             detail=f"No saved item photo found for case {case_id} — cannot retry 3D generation.",
@@ -48,5 +51,5 @@ async def mesh3d_retry(case_id: str, session: dict = Depends(require_login)):
         "message": "Retry queued.",
         "provider": current.get("provider"),
     })
-    status = start_mesh3d_job(case_id, image_bytes)
+    status = start_mesh3d_job(case_id, images)
     return JSONResponse(content=status)

@@ -5335,5 +5335,14 @@
     "role": "assessment_officer",
     "login_time": "2026-07-22T22:31:58.571769+05:30",
     "selfie_path": "data/sessions/23cd5fdd73cd157ca56baa483cad929e25023105d685a32c/selfie.jpg"
+  },
+  "a4ed48866515050d19132c69c66e0adcdce869138413d11a": {
+    "token": "a4ed48866515050d19132c69c66e0adcdce869138413d11a",
+    "evaluator_id": "EMP-1001",
+    "name": "Mihir Phalke",
+    "branch_id": "BLR-001",
+    "role": "assessment_officer",
+    "login_time": "2026-07-23T23:04:23.730342+05:30",
+    "selfie_path": "data/sessions/a4ed48866515050d19132c69c66e0adcdce869138413d11a/selfie.jpg"
   }
 }

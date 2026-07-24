@@ -71,15 +71,29 @@ def _match_rules(signals: dict) -> dict:
             "dense-core-fill (tungsten) signature."
         )
 
-    # Sl.1 — gold-plated base metal: too light for the declared karat, or a
-    # base-metal best match, or plating flagged on the surface/streak.
-    if karat_verdict == "LOW_DENSITY" or "plat" in flags or (closest_fake and any(
-            m in str(closest_fake).lower() for m in ("brass", "copper", "silver", "steel", "base"))):
-        if not misdeclared:
-            matched["GOLD_PLATED_BASE_METAL"] = (
-                f"Density below the declared-karat band"
-                + (f"; closest base metal: {closest_fake}." if closest_fake else ".")
-            )
+    # Sl.1 — gold-plated base metal. The DENSITY must be the evidence: either
+    # the reading is too light for the declared karat, or it sits on a base
+    # metal.
+    #
+    # Deliberately NOT triggered by the contradiction flags' wording. Those
+    # strings are auto-generated hypotheses the engine prints for ANY modality
+    # disagreement ("possible plated or composite surface structure"), so a
+    # substring match on "plat" fired this scenario on items whose density was
+    # squarely inside the declared band — the classifier then asserted "density
+    # below the declared-karat band" while the trace right above it said
+    # "within the expected range". A disagreement is not a plating finding.
+    base_metal_match = bool(closest_fake) and any(
+        m in str(closest_fake).lower() for m in ("brass", "copper", "silver", "steel", "base")
+    )
+    if (karat_verdict == "LOW_DENSITY" or base_metal_match) and not misdeclared:
+        # Evidence text is built from what actually fired, so it can never
+        # contradict the density step.
+        reasons = []
+        if karat_verdict == "LOW_DENSITY":
+            reasons.append("Density is below the declared-karat band")
+        if base_metal_match:
+            reasons.append(f"closest metal to the reading is {closest_fake}")
+        matched["GOLD_PLATED_BASE_METAL"] = "; ".join(reasons) + "."
 
     # Sl.2 — under-karat / purity mis-declaration: density low but consistent
     # with a genuine lower-fineness gold alloy (not a base metal).

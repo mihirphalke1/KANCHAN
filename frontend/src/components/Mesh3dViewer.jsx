@@ -24,16 +24,27 @@ function GlbScene({ url, color }) {
   const { scene } = useGLTF(url)
   const obj = useMemo(() => {
     const root = scene.clone(true)
+    // New models bake photo-sampled colour + photographic shading into the mesh
+    // as per-vertex colours (COLOR_0) with correct metalness per material — we
+    // trust those and only tune the environment. Older flat-material models
+    // (no vertex colours) fall back to enforcing colour + metalness by node
+    // name from status.color so they still render gold/gem, never washed white.
     const goldRGB = srgb(color?.gold_rgb) || [0.83, 0.66, 0.24]
     const stoneRGB = srgb(color?.stone_rgb) || [0.62, 0.05, 0.11]
     root.traverse((c) => {
       if (!c.isMesh || !c.material) return
       const mats = Array.isArray(c.material) ? c.material : [c.material]
+      const hasVertexColour = !!c.geometry?.attributes?.color
       const tag = `${c.name || ''} ${c.parent?.name || ''} ${mats[0]?.name || ''}`.toLowerCase()
       const isStone = /stone|gem|ruby|sapphire|emerald|red|blue|green/.test(tag)
       mats.forEach((m) => {
-        if (m.emissive) m.emissive.setRGB(0, 0, 0)
-        m.envMapIntensity = 0.5
+        m.envMapIntensity = 0.55
+        if (hasVertexColour) {
+          m.vertexColors = true          // baked colour + shading — leave as-is
+          m.needsUpdate = true
+          return
+        }
+        // Legacy flat model: enforce colour + metalness so it isn't white.
         if (isStone) {
           m.color?.setRGB(...stoneRGB)
           m.metalness = 0.0
@@ -43,6 +54,7 @@ function GlbScene({ url, color }) {
           m.color?.setRGB(...goldRGB)
           m.metalness = 0.55
           m.roughness = 0.38
+          if (m.emissive) m.emissive.setRGB(0, 0, 0)
         }
         m.needsUpdate = true
       })

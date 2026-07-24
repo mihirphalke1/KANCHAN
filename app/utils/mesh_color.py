@@ -194,6 +194,99 @@ def _sample_colours(image_path: Optional[Path], stones: list[dict]) -> tuple[tup
     return gold, stone_rgb, hue_class
 
 
+# ── Metal type: yellow / rose / white gold from the sampled tone ─────────────
+def _metal_type(gold_rgb) -> tuple[str, float, float]:
+    """Classify the metal from its sampled colour → (label, metalness,
+    roughness). White gold is far more metallic (silvery sheen); yellow/rose
+    keep a strong warm diffuse so they read gold in any lighting."""
+    import colorsys
+    r, g, b = [c / 255.0 for c in gold_rgb]
+    h, s, v = colorsys.rgb_to_hsv(r, g, b)
+    hd = h * 360.0
+    if s < 0.18 and v > 0.55:
+        return "white", 0.85, 0.25
+    if (hd < 22 or hd > 335) and s >= 0.18:
+        return "rose", 0.60, 0.34
+    return "yellow", 0.55, 0.38
+
+
+# ── Baked shading: photographic depth as per-vertex colours ──────────────────
+def _bake_vertex_colours(mesh, gem_vmask, gold_rgb, stone_rgb) -> np.ndarray:
+    """Per-vertex RGBA that gives the flat regions photographic depth without
+    any texture: an ambient-occlusion proxy darkens crevices (under the band,
+    around the setting), and the set stone gets a bright centre table fading to
+    darker edges like a real cut gem. Colours are the true tones sampled from
+    the photo; this only modulates their brightness by geometry."""
+    from scipy.spatial import cKDTree
+
+    V = np.asarray(mesh.vertices)
+    F = np.asarray(mesh.faces)
+    vn = np.asarray(mesh.vertex_normals)
+    scale = float(np.linalg.norm(V.max(0) - V.min(0))) or 1.0
+
+    def _n01(a):
+        rng = np.ptp(a)
+        return (a - a.min()) / rng if rng > 0 else np.zeros_like(a)
+
+    # Ambient-occlusion proxy: a vertex whose neighbours sit outward of it along
+    # its own normal is tucked into a concavity → more occluded → darker.
+    tree = cKDTree(V)
+    balls = tree.query_ball_point(V, 0.05 * scale)
+    ao = np.zeros(len(V))
+    for i, b in enumerate(balls):
+        if len(b) >= 3:
+            ao[i] = float(np.dot(V[b].mean(0) - V[i], vn[i]))
+    ao = _n01(ao)
+    shade = (1.0 - 0.5 * ao)[:, None]           # crevices up to 50% darker
+
+    gold = np.array(_srgb01(gold_rgb))
+    col = np.tile(gold, (len(V), 1)) * shade
+
+    if gem_vmask is not None and gem_vmask.any() and stone_rgb is not None:
+        gem = np.array(_srgb01(stone_rgb))
+        gc = V[gem_vmask].mean(0)
+        d = np.linalg.norm(V - gc, axis=1)
+        dg = 1.0 - _n01(np.where(gem_vmask, d, d.max()))   # 1 at table centre
+        col[gem_vmask] = gem * (0.70 + 0.55 * dg[gem_vmask, None])
+
+    col = np.clip(col, 0, 1)
+    rgba = np.empty((len(V), 4), dtype=np.uint8)
+    rgba[:, :3] = (col * 255).astype(np.uint8)
+    rgba[:, 3] = 255
+    return rgba
+
+
+def _assign_pbr_materials(glb_path: Path, specs: dict) -> None:
+    """trimesh exports vertex colours (COLOR_0) but leaves the material null,
+    so a viewer would default it to full metalness and wash out. Attach a real
+    PBR material per mesh (matched by name) with baseColorFactor white so the
+    vertex colours show through, plus the right metalness/roughness/emissive."""
+    from pygltflib import GLTF2, Material, PbrMetallicRoughness
+
+    g = GLTF2().load(str(glb_path))
+    if g.materials is None:
+        g.materials = []
+    name_to_idx = {}
+    for name, s in specs.items():
+        g.materials.append(Material(
+            name=name,
+            doubleSided=True,
+            emissiveFactor=s.get("emissive", [0.0, 0.0, 0.0]),
+            pbrMetallicRoughness=PbrMetallicRoughness(
+                baseColorFactor=[1.0, 1.0, 1.0, 1.0],
+                metallicFactor=s["metallic"],
+                roughnessFactor=s["roughness"],
+            ),
+        ))
+        name_to_idx[name] = len(g.materials) - 1
+    default_idx = name_to_idx.get("metal", 0)
+    for mesh in g.meshes:
+        idx = name_to_idx.get(mesh.name, default_idx)
+        for prim in mesh.primitives:
+            prim.material = idx
+    g.save(str(glb_path))
+
+
 # ── Public entry point ───────────────────────────────────────────────────────
 def colorize_glb(
     glb_path: Path,
@@ -203,12 +296,15 @@ def colorize_glb(
 ) -> dict:
     """Write a colourised copy of `glb_path` to `out_path`.
 
-    Returns a small metadata dict (colours used, stone-region size). Raises on
-    hard failure so the caller can decide to keep the white model.
+    Predictive region colouring: the true metal tone + metal type and the true
+    stone colour are sampled from the photo, applied to the geometric regions
+    (metal body vs the set stone's outward table), and given photographic depth
+    with baked ambient-occlusion + gem-table shading. No photo is projected or
+    textured onto the surface — the model is coloured as the item looks, in
+    real 3D. Raises on hard failure so the caller can keep the white model.
     """
     import trimesh
-    from trimesh.visual.material import PBRMaterial
-    from trimesh.visual import TextureVisuals
+    from trimesh.visual.color import ColorVisuals
 
     scene = trimesh.load(str(glb_path), process=False)
     if isinstance(scene, trimesh.Scene):
@@ -218,21 +314,9 @@ def colorize_glb(
     if mesh is None or len(mesh.faces) == 0:
         raise ValueError("Empty mesh — nothing to colour")
 
-    vertices = np.asarray(mesh.vertices)
     faces = np.asarray(mesh.faces)
-
     gold, stone_rgb, hue_class = _sample_colours(image_path, stones or [])
-
-    # Metalness kept moderate, not 1.0: a fully-metallic surface shows almost
-    # only its reflected environment, so under a bright studio HDR the gold
-    # blows out to pale white and its warm baseColor barely reads. ~0.55 keeps
-    # a strong gold diffuse that looks gold in any lighting.
-    gold_mat = PBRMaterial(
-        name="gold",
-        baseColorFactor=_srgb01(gold) + [1.0],
-        metallicFactor=0.55,
-        roughnessFactor=0.38,
-    )
+    metal_label, metalness, roughness = _metal_type(gold)
 
     have_stone = bool(stones) and stone_rgb is not None
     stone_face_mask = np.zeros(len(faces), dtype=bool)
@@ -241,35 +325,40 @@ def colorize_glb(
         if stone_face_mask.sum() < 20:
             have_stone = False
 
-    out = trimesh.Scene()
-
+    gem_vmask = np.zeros(len(mesh.vertices), dtype=bool)
     if have_stone and stone_face_mask.any():
-        gem_srgb = _srgb01(stone_rgb)
-        # A touch of self-illumination reads as gem depth under studio light.
-        stone_mat = PBRMaterial(
-            name=f"stone_{hue_class or 'gem'}",
-            baseColorFactor=gem_srgb + [1.0],
-            metallicFactor=0.0,
-            roughnessFactor=0.12,
-            emissiveFactor=[c * 0.18 for c in gem_srgb],
-        )
+        gem_vmask[faces[stone_face_mask].reshape(-1)] = True
+
+    vcolours = _bake_vertex_colours(mesh, gem_vmask if have_stone else None, gold, stone_rgb)
+    mesh.visual = ColorVisuals(mesh=mesh, vertex_colors=vcolours)
+
+    out = trimesh.Scene()
+    specs = {"metal": {"metallic": metalness, "roughness": roughness}}
+    if have_stone and stone_face_mask.any():
         metal = mesh.submesh([np.where(~stone_face_mask)[0]], only_watertight=False, append=True)
         gem = mesh.submesh([np.where(stone_face_mask)[0]], only_watertight=False, append=True)
-        metal.visual = TextureVisuals(material=gold_mat)
-        gem.visual = TextureVisuals(material=stone_mat)
         out.add_geometry(metal, geom_name="metal")
         out.add_geometry(gem, geom_name="stone")
+        specs["stone"] = {
+            "metallic": 0.0, "roughness": 0.12,
+            "emissive": [c * 0.12 for c in _srgb01(stone_rgb)],
+        }
     else:
-        mesh.visual = TextureVisuals(material=gold_mat)
         out.add_geometry(mesh, geom_name="metal")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out.export(str(out_path), file_type="glb")
+    try:
+        _assign_pbr_materials(out_path, specs)
+    except Exception as e:
+        logger.warning("PBR material assignment failed (%s) — vertex colours only", e)
 
     return {
         "gold_rgb": list(gold),
         "stone_rgb": list(stone_rgb) if (have_stone and stone_rgb) else None,
         "stone_hue_class": hue_class if have_stone else None,
+        "metal_type": metal_label,
         "stone_face_pct": round(100.0 * float(stone_face_mask.mean()), 2) if have_stone else 0.0,
+        "shaded": True,
         "colored": True,
     }
